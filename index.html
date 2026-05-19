@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResponsibleHub 🌍📚</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header>
+    <nav class="navbar">
+      <div class="logo">🌱 ResponsibleHub</div>
+      <ul class="nav-links">
+        <li><a href="#hero">Home</a></li>
+        <li><a href="#study">📚 Study</a></li>
+        <li><a href="#eco">🌍 Eco</a></li>
+        <li><a href="#tutor" class="nav-ai">🎓 AI Tutor</a></li>
+      </ul>
+      <button class="nav-toggle" aria-label="Toggle menu">☰</button>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- HERO -->
+    <section id="hero" class="hero">
+      <div class="hero-deco hero-deco-1"></div>
+      <div class="hero-deco hero-deco-2"></div>
+      <div class="symbols-bg">
+        <span>∑</span><span>π</span><span>√</span><span>∞</span>
+        <span>×</span><span>!</span><span>?</span><span>"</span>
+        <span>.</span><span>,</span><span>;</span><span>÷</span>
+        <span>∫</span><span>Δ</span><span>≈</span><span>θ</span>
+      </div>
+      <div class="hero-content">
+        <div class="hero-badge">🌿 For Students, By Students</div>
+        <h1>Be the Change<br><span class="gradient-text">You Want to See!</span></h1>
+        <p>Level up your study game AND help save the planet.<br>Small actions = Big impact!</p>
+        <div class="hero-btns">
+          <a href="#study" class="btn btn-hero-primary">📚 Start Studying</a>
+          <a href="#eco" class="btn btn-hero-ghost">🌍 Go Green</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><span id="challenges-done">0</span><label>Challenges Done</label></div>
+          <div class="stat"><span id="tasks-done">0</span><label>Tasks Complete</label></div>
+          <div class="stat"><span id="co2-saved">0</span><label>kg CO₂ Tracked</label></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== STUDY HABITS SECTION ===== -->
+    <section id="study" class="section study-section">
+      <div class="section-header study-header">
+        <div class="section-leaf"><span>🍃</span><span>🌿</span></div>
+        <div class="section-icon">📚</div>
+        <h2>Study Habits</h2>
+        <p>Build awesome study skills one day at a time!</p>
+      </div>
+
+      <div class="container cards-grid">
+
+        <!-- Daily Study Challenge -->
+        <div class="card card-study" id="study-challenge-card">
+          <div class="card-tag">🎯 Daily Challenge</div>
+          <h3>Today's Study Challenge</h3>
+          <div class="challenge-display">
+            <div class="challenge-emoji" id="study-challenge-emoji">🍅</div>
+            <p class="challenge-text" id="study-challenge-text">Loading your challenge...</p>
+          </div>
+          <div class="challenge-meta">
+            <span class="xp-badge" id="study-xp">+15 XP</span>
+            <span class="diff-badge" id="study-diff">Medium</span>
+          </div>
+          <div class="challenge-actions">
+            <button class="btn btn-study" id="complete-study-btn">✅ Mark Complete</button>
+            <button class="btn btn-outline" id="new-study-challenge-btn">🔀 New Challenge</button>
+          </div>
+          <div class="streak-bar">
+            <span>🔥 Study Streak:</span>
+            <div class="streak-dots" id="study-streak-dots"></div>
+            <span id="study-streak-count">0 days</span>
+          </div>
+        </div>
+
+        <!-- Homework Tracker -->
+        <div class="card card-study" id="homework-card">
+          <div class="card-tag">📝 Homework Tracker</div>
+          <h3>My Homework</h3>
+          <div class="hw-add">
+            <input type="text" id="hw-input" placeholder="Add a task (e.g. Math p.42)..." maxlength="60" />
+            <select id="hw-subject">
+              <option value="📐">📐 Math</option>
+              <option value="📖">📖 English</option>
+              <option value="🔬">🔬 Science</option>
+              <option value="🌍">🌍 Geography</option>
+              <option value="🎨">🎨 Art</option>
+              <option value="📋">📋 Other</option>
+            </select>
+            <button class="btn btn-study btn-sm" id="hw-add-btn">+ Add</button>
+          </div>
+          <ul class="hw-list" id="hw-list">
+            <!-- Tasks injected by JS -->
+          </ul>
+          <div class="hw-footer">
+            <span id="hw-progress-text">0 of 0 done</span>
+            <div class="progress-bar"><div class="progress-fill study-fill" id="hw-progress-fill"></div></div>
+          </div>
+        </div>
+
+        <!-- Study Tips -->
+        <div class="card card-study" id="study-tips-card">
+          <div class="card-tag">💡 Study Tips</div>
+          <h3>Power-Up Your Brain!</h3>
+          <div class="tip-carousel">
+            <div class="tip-card" id="tip-card">
+              <div class="tip-emoji" id="tip-emoji">🧠</div>
+              <p class="tip-text" id="tip-text">Loading tip...</p>
+            </div>
+          </div>
+          <div class="tip-nav">
+            <button class="btn btn-outline btn-sm" id="prev-tip-btn">← Prev</button>
+            <span id="tip-counter">1 / 8</span>
+            <button class="btn btn-outline btn-sm" id="next-tip-btn">Next →</button>
+          </div>
+          <div class="tip-categories">
+            <button class="chip chip-active" data-cat="all">All</button>
+            <button class="chip" data-cat="focus">Focus</button>
+            <button class="chip" data-cat="memory">Memory</button>
+            <button class="chip" data-cat="wellbeing">Wellbeing</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== ECO RESPONSIBILITY SECTION ===== -->
+    <section id="eco" class="section eco-section">
+      <div class="section-header eco-header">
+        <div class="section-leaf"><span>🌱</span><span>🍀</span></div>
+        <div class="section-icon">🌍</div>
+        <h2>Eco Responsibility</h2>
+        <p>Every small action you take helps protect our planet!</p>
+      </div>
+
+      <div class="container cards-grid">
+
+        <!-- Eco Daily Challenge -->
+        <div class="card card-eco" id="eco-challenge-card">
+          <div class="card-tag eco-tag">🌿 Eco Challenge</div>
+          <h3>Today's Eco Mission</h3>
+          <div class="challenge-display">
+            <div class="challenge-emoji" id="eco-challenge-emoji">🚴</div>
+            <p class="challenge-text" id="eco-challenge-text">Loading your mission...</p>
+          </div>
+          <div class="challenge-meta">
+            <span class="xp-badge eco-xp" id="eco-xp">+20 XP</span>
+            <span class="diff-badge eco-diff" id="eco-diff">Easy</span>
+          </div>
+          <div class="challenge-actions">
+            <button class="btn btn-eco" id="complete-eco-btn">✅ Mission Complete!</button>
+            <button class="btn btn-outline" id="new-eco-challenge-btn">🔀 New Mission</button>
+          </div>
+          <div class="streak-bar">
+            <span>🌱 Eco Streak:</span>
+            <div class="streak-dots" id="eco-streak-dots"></div>
+            <span id="eco-streak-count">0 days</span>
+          </div>
+        </div>
+
+        <!-- Climate Facts -->
+        <div class="card card-eco" id="climate-facts-card">
+          <div class="card-tag eco-tag">🌡️ Climate Facts</div>
+          <h3>Did You Know?</h3>
+          <div class="fact-display">
+            <div class="fact-number" id="fact-number">01</div>
+            <div class="fact-emoji" id="fact-emoji">🌊</div>
+            <p class="fact-text" id="fact-text">Loading fact...</p>
+          </div>
+          <div class="fact-impact" id="fact-impact"></div>
+          <div class="fact-nav">
+            <button class="btn btn-eco btn-sm" id="prev-fact-btn">← Prev</button>
+            <div class="fact-dots" id="fact-dots"></div>
+            <button class="btn btn-eco btn-sm" id="next-fact-btn">Next →</button>
+          </div>
+          <button class="btn btn-outline btn-sm share-btn" id="share-fact-btn">📤 Share this fact</button>
+        </div>
+
+        <!-- Carbon Footprint Tracker -->
+        <div class="card card-eco" id="carbon-card">
+          <div class="card-tag eco-tag">♻️ Carbon Tracker</div>
+          <h3>My Carbon Footprint</h3>
+          <div class="carbon-form" id="carbon-form">
+            <div class="carbon-question">
+              <label>🚗 How do you get to school?</label>
+              <div class="radio-group">
+                <label class="radio-opt"><input type="radio" name="transport" value="0" checked /> 🚶 Walk/Bike</label>
+                <label class="radio-opt"><input type="radio" name="transport" value="1" /> 🚌 Bus/Train</label>
+                <label class="radio-opt"><input type="radio" name="transport" value="3" /> 🚗 Car</label>
+              </div>
+            </div>
+            <div class="carbon-question">
+              <label>🥗 How do you eat mostly?</label>
+              <div class="radio-group">
+                <label class="radio-opt"><input type="radio" name="diet" value="0" checked /> 🥦 Plant-based</label>
+                <label class="radio-opt"><input type="radio" name="diet" value="2" /> 🍗 Mixed diet</label>
+                <label class="radio-opt"><input type="radio" name="diet" value="4" /> 🥩 Meat every day</label>
+              </div>
+            </div>
+            <div class="carbon-question">
+              <label>💡 Do you turn off lights/devices?</label>
+              <div class="radio-group">
+                <label class="radio-opt"><input type="radio" name="energy" value="0" checked /> ✅ Always</label>
+                <label class="radio-opt"><input type="radio" name="energy" value="1" /> 😐 Sometimes</label>
+                <label class="radio-opt"><input type="radio" name="energy" value="3" /> ❌ Rarely</label>
+              </div>
+            </div>
+            <div class="carbon-question">
+              <label>🛍️ Do you recycle/reuse?</label>
+              <div class="radio-group">
+                <label class="radio-opt"><input type="radio" name="waste" value="0" checked /> ♻️ Yes, always</label>
+                <label class="radio-opt"><input type="radio" name="waste" value="1" /> 🤷 Sometimes</label>
+                <label class="radio-opt"><input type="radio" name="waste" value="3" /> ❌ Not really</label>
+              </div>
+            </div>
+            <button class="btn btn-eco" id="calc-carbon-btn">🌍 Calculate My Score</button>
+          </div>
+          <div class="carbon-result hidden" id="carbon-result">
+            <div class="carbon-gauge">
+              <div class="gauge-arc" id="gauge-arc"></div>
+              <div class="gauge-score" id="gauge-score">0</div>
+              <div class="gauge-label">/ 10</div>
+            </div>
+            <div class="carbon-grade" id="carbon-grade"></div>
+            <p class="carbon-msg" id="carbon-msg"></p>
+            <ul class="carbon-tips" id="carbon-tips"></ul>
+            <button class="btn btn-outline btn-sm" id="retake-carbon-btn">🔄 Retake Quiz</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== AI TUTOR SECTION ===== -->
+    <section id="tutor" class="section tutor-section">
+      <div class="section-header tutor-header">
+        <div class="section-leaf"><span>✏️</span><span>📖</span></div>
+        <div class="section-icon">🎓</div>
+        <h2>AI Tutor</h2>
+        <p>Pick a subject, choose a topic, and get quizzed by your personal AI tutor!</p>
+      </div>
+
+      <div class="container tutor-container">
+
+        <!-- Screen 1: Setup -->
+        <div class="tutor-screen" id="tutor-setup">
+          <h3 class="tutor-screen-title">Choose Your Subject 🎯</h3>
+          <div class="subject-grid" id="subject-grid">
+            <button class="subject-btn" data-subject="Math">📐 Math</button>
+            <button class="subject-btn" data-subject="English">📖 English</button>
+            <button class="subject-btn" data-subject="Science">🔬 Science</button>
+            <button class="subject-btn" data-subject="Geography">🌍 Geography</button>
+            <button class="subject-btn" data-subject="History">🏛️ History</button>
+            <button class="subject-btn" data-subject="Biology">🧬 Biology</button>
+            <button class="subject-btn" data-subject="Chemistry">⚗️ Chemistry</button>
+            <button class="subject-btn" data-subject="Physics">⚡ Physics</button>
+            <button class="subject-btn" data-subject="Computer Science">💻 CS</button>
+            <button class="subject-btn" data-subject="Art">🎨 Art</button>
+          </div>
+          <div class="topic-row">
+            <label class="topic-label">What topic do you want to practise?</label>
+            <input type="text" id="tutor-topic-input" placeholder='e.g. "fractions" or "World War 2"' maxlength="80" autocomplete="off" />
+            <button class="btn btn-tutor" id="tutor-start-btn" disabled>🚀 Start Quiz!</button>
+          </div>
+        </div>
+
+        <!-- Screen 2: Loading -->
+        <div class="tutor-screen hidden" id="tutor-loading">
+          <div class="loading-anim">
+            <div class="loading-ring"></div>
+            <div class="loading-emoji" id="loading-emoji">🧠</div>
+          </div>
+          <p class="loading-msg" id="loading-msg">Generating your quiz…</p>
+          <p class="loading-sub">Hang tight! Your AI tutor is crafting the perfect questions ✨</p>
+        </div>
+
+        <!-- Screen 3: Question -->
+        <div class="tutor-screen hidden" id="tutor-question">
+          <div class="quiz-header">
+            <div class="quiz-meta">
+              <span class="quiz-subject-badge" id="quiz-subject-badge">📐 Math</span>
+              <span class="quiz-topic-badge" id="quiz-topic-badge">Topic</span>
+            </div>
+            <div class="progress-dots" id="progress-dots"></div>
+          </div>
+          <div class="question-card" id="question-card">
+            <div class="q-number" id="q-number">Question 1 of 5</div>
+            <p class="q-text" id="q-text">Loading question…</p>
+          </div>
+          <div class="answer-row">
+            <input type="text" id="tutor-answer-input" placeholder="Type your answer here…" maxlength="200" autocomplete="off" />
+            <button class="btn btn-tutor" id="tutor-submit-btn">✅ Submit</button>
+          </div>
+          <button class="hint-btn" id="hint-btn">💡 Show Hint</button>
+          <div class="hint-box hidden" id="hint-box"></div>
+        </div>
+
+        <!-- Screen 4: Feedback -->
+        <div class="tutor-screen hidden" id="tutor-feedback">
+          <div class="feedback-icon" id="feedback-icon">⭐</div>
+          <div class="feedback-text" id="feedback-text"></div>
+          <button class="btn btn-tutor" id="tutor-next-btn">Next Question →</button>
+        </div>
+
+        <!-- Screen 5: Summary -->
+        <div class="tutor-screen hidden" id="tutor-summary">
+          <h3 class="tutor-screen-title">Quiz Complete! 🎉</h3>
+          <div class="score-ring-wrap">
+            <svg class="score-ring" viewBox="0 0 120 120">
+              <circle class="ring-bg"   cx="60" cy="60" r="50"/>
+              <circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="50"/>
+            </svg>
+            <div class="score-text">
+              <span class="score-num" id="score-num">0</span>
+              <span class="score-denom">/5</span>
+            </div>
+          </div>
+          <div class="result-dots" id="result-dots"></div>
+          <div class="summary-text" id="summary-text"></div>
+          <button class="btn btn-tutor" id="tutor-restart-btn">🔄 Try Another Quiz</button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">🌱 ResponsibleHub</div>
+      <p>Made with 💚 for students who want to change the world.</p>
+      <p class="footer-small">Be kind. Study hard. Stay green. 🌍</p>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
