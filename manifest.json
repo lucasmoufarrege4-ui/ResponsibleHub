@@ -1,0 +1,17 @@
+{
+  "name": "ResponsibleHub",
+  "short_name": "RH",
+  "description": "Your all-in-one student productivity hub",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#2d6a4f",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
