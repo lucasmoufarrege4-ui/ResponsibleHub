@@ -1451,96 +1451,291 @@ document.getElementById('rai-input').addEventListener('keydown', e => {
 
 /* ─── QUIZ INTERATIVO ────────────────────────────────────────────────── */
 
+// ── 200-question bank: 40 per subject, 5 picked randomly each attempt ──
 const QUIZ_DATA = {
   math: {
     label: '📐 Math',
     questions: [
-      { q: 'What is 7 × 8?',
-        opts: ['54', '56', '48', '62'], ans: 1 },
-      { q: 'What is 15% of 200?',
-        opts: ['20', '25', '30', '35'], ans: 2 },
-      { q: 'A triangle has angles of 45° and 60°. What is the third angle?',
-        opts: ['70°', '75°', '80°', '85°'], ans: 1 },
-      { q: 'What is the square root of 144?',
-        opts: ['11', '12', '13', '14'], ans: 1 },
-      { q: 'If x + 9 = 24, what is x?',
-        opts: ['13', '14', '15', '16'], ans: 2 },
+      // Algebra
+      { q: 'Solve: x + 7 = 15. What is x?',                       opts: ['6','7','8','9'],              ans: 2 },
+      { q: 'Simplify: 3x + 2x',                                    opts: ['5x²','5x','6x','x⁵'],        ans: 1 },
+      { q: 'What is 2a + 3 when a = 4?',                           opts: ['9','10','11','14'],           ans: 2 },
+      { q: 'Expand: 2(x + 5)',                                      opts: ['2x + 5','2x + 10','x + 10','2x + 7'], ans: 1 },
+      { q: 'Solve: 3x = 21. What is x?',                           opts: ['5','6','7','8'],              ans: 2 },
+      { q: 'Simplify: 4y − y',                                     opts: ['3y','4y','5y','3'],           ans: 0 },
+      { q: 'If n = 3, what is 4n − 2?',                            opts: ['8','10','12','14'],           ans: 1 },
+      { q: 'Expand: 3(2x − 1)',                                     opts: ['6x − 1','6x − 3','5x − 3','6x + 3'], ans: 1 },
+      // Fractions & Percentages
+      { q: 'What is 1/2 + 1/4?',                                   opts: ['1/3','3/4','2/3','3/8'],     ans: 1 },
+      { q: 'Simplify 6/8 to its lowest terms.',                    opts: ['2/3','3/4','4/6','1/2'],     ans: 1 },
+      { q: 'What is 20% of 150?',                                  opts: ['25','30','35','40'],          ans: 1 },
+      { q: 'Convert 0.75 to a fraction.',                          opts: ['3/5','7/10','3/4','7/9'],    ans: 2 },
+      { q: 'What is 3/4 of 48?',                                   opts: ['32','36','40','42'],          ans: 1 },
+      { q: 'What percentage of 80 is 20?',                         opts: ['20%','25%','30%','15%'],      ans: 1 },
+      { q: 'What is 2/3 + 1/6?',                                   opts: ['3/9','5/6','4/9','3/6'],     ans: 1 },
+      { q: 'Increase 60 by 15%.',                                  opts: ['66','69','72','75'],          ans: 1 },
+      // Geometry
+      { q: 'Area of a rectangle: length 8 cm, width 5 cm?',       opts: ['30 cm²','40 cm²','45 cm²','26 cm²'], ans: 1 },
+      { q: 'What do the angles of a triangle always add up to?',   opts: ['90°','180°','270°','360°'],   ans: 1 },
+      { q: 'Perimeter of a square with sides of 6 cm?',           opts: ['18 cm','24 cm','36 cm','12 cm'], ans: 1 },
+      { q: 'Area of a triangle: base 10 cm, height 6 cm?',        opts: ['30 cm²','60 cm²','16 cm²','45 cm²'], ans: 0 },
+      { q: 'What is the longest side of a right-angled triangle called?', opts: ['Adjacent','Opposite','Hypotenuse','Tangent'], ans: 2 },
+      { q: 'Volume of a cube with sides of 3 cm?',                opts: ['9 cm³','18 cm³','27 cm³','36 cm³'], ans: 2 },
+      { q: 'Two angles of a triangle are 40° and 75°. What is the third?', opts: ['55°','60°','65°','70°'], ans: 2 },
+      { q: 'Circumference of a circle with radius 7 cm? (π ≈ 3.14)', opts: ['22 cm','43.96 cm','49 cm','153.86 cm'], ans: 1 },
+      // Numbers
+      { q: 'Which of these is a prime number?',                    opts: ['9','15','17','21'],           ans: 2 },
+      { q: 'What is 2⁴ (2 to the power of 4)?',                   opts: ['8','12','16','24'],           ans: 2 },
+      { q: 'What is the HCF of 12 and 18?',                       opts: ['3','4','6','9'],              ans: 2 },
+      { q: 'What is −3 × −4?',                                    opts: ['−12','−7','7','12'],          ans: 3 },
+      { q: 'What is the LCM of 4 and 6?',                         opts: ['8','12','18','24'],           ans: 1 },
+      { q: 'What is −8 + 5?',                                     opts: ['−13','−3','3','13'],          ans: 1 },
+      { q: 'What is 3² + 4²?',                                    opts: ['14','24','25','49'],          ans: 2 },
+      { q: 'How many factors does 24 have?',                       opts: ['6','7','8','9'],              ans: 2 },
+      // Statistics
+      { q: 'Find the mean of: 4, 7, 5, 8, 6',                     opts: ['5','6','7','8'],              ans: 1 },
+      { q: 'Find the median of: 3, 7, 5, 1, 9',                   opts: ['3','5','7','9'],              ans: 1 },
+      { q: 'Find the mode of: 2, 4, 4, 7, 3, 4, 2',               opts: ['2','3','4','7'],              ans: 2 },
+      { q: 'Find the range of: 12, 5, 19, 3, 11',                 opts: ['14','15','16','17'],          ans: 2 },
+      { q: 'A bag has 4 red and 6 blue marbles. P(red) = ?',       opts: ['1/4','2/5','3/5','1/2'],     ans: 1 },
+      { q: '18 of 30 students prefer football. What fraction prefer tennis?', opts: ['1/5','2/5','3/5','3/10'], ans: 1 },
+      { q: 'In a bar chart, the tallest bar represents the ___.',  opts: ['mean','median','mode','range'], ans: 2 },
+      { q: 'Find the mean of: 10, 20, 30, 40, 50',                opts: ['25','30','35','40'],          ans: 1 },
     ],
   },
+
   english: {
     label: '📖 English',
     questions: [
-      { q: 'Which word is a synonym for "happy"?',
-        opts: ['Sad', 'Cheerful', 'Angry', 'Tired'], ans: 1 },
-      { q: 'What type of word is "quickly"?',
-        opts: ['Noun', 'Adjective', 'Verb', 'Adverb'], ans: 3 },
-      { q: 'Which sentence uses "they\'re" correctly?',
-        opts: ['Their going to the park', 'There happy today', "They're at the library", 'There playing outside'], ans: 2 },
-      { q: 'Which of these is a metaphor?',
-        opts: ['She ran like the wind', 'Life is a journey', 'The stars twinkled brightly', 'He shouted loudly'], ans: 1 },
-      { q: 'What is the plural of "child"?',
-        opts: ['Childs', 'Childes', 'Children', 'Childrens'], ans: 2 },
+      // Grammar & Punctuation
+      { q: 'Which punctuation mark is used to introduce a list?',  opts: ['Comma','Semi-colon','Colon','Apostrophe'], ans: 2 },
+      { q: 'In "It\'s raining", what does "it\'s" mean?',          opts: ['Belonging to it','It is','It has always been','In that case'], ans: 1 },
+      { q: 'Which sentence is an interrogative (question)?',       opts: ['Close the door.','The door is closed.','Is the door closed?','What a door!'], ans: 2 },
+      { q: 'Where does the apostrophe go in "the dog bone" (one dog)? ', opts: ["dog's bone","dogs' bone","dogs bone'","dog bone's"], ans: 0 },
+      { q: 'Which uses a semicolon correctly?',                    opts: ['I like cats; dogs.','I like cats; and dogs.','I like cats; I also like dogs.','I; like cats.'], ans: 2 },
+      { q: 'What type of sentence usually ends with an exclamation mark?', opts: ['Declarative','Interrogative','Exclamatory','Imperative'], ans: 2 },
+      { q: 'Which word needs a capital letter?',                   opts: ['river','mountain','london','tree'], ans: 2 },
+      { q: 'Which punctuation encloses extra information in a sentence?', opts: ['Colons','Dashes or brackets','Commas only','Speech marks'], ans: 1 },
+      // Literary Devices
+      { q: '"The moon is a silver coin." What device is this?',    opts: ['Simile','Metaphor','Personification','Alliteration'], ans: 1 },
+      { q: '"Her smile was as bright as the sun." What device?',   opts: ['Metaphor','Simile','Alliteration','Oxymoron'], ans: 1 },
+      { q: '"The wind whispered through the trees." What device?', opts: ['Alliteration','Oxymoron','Personification','Simile'], ans: 2 },
+      { q: '"Peter Piper picked a peck of pickled peppers." What device?', opts: ['Alliteration','Onomatopoeia','Metaphor','Personification'], ans: 0 },
+      { q: '"Deafening silence" is an example of:',               opts: ['Simile','Alliteration','Oxymoron','Hyperbole'], ans: 2 },
+      { q: '"I\'ve told you a million times!" What device is this?', opts: ['Metaphor','Oxymoron','Alliteration','Hyperbole'], ans: 3 },
+      { q: 'Buzz, hiss, crackle — words that sound like the noises they name are:', opts: ['Personification','Onomatopoeia','Simile','Alliteration'], ans: 1 },
+      { q: 'Which is an example of alliteration?',                opts: ['The sun rose slowly','Sally sells seashells','Life is a dream','The angry waves'], ans: 1 },
+      // Vocabulary
+      { q: 'What is a synonym for "brave"?',                      opts: ['Cowardly','Fearful','Courageous','Nervous'], ans: 2 },
+      { q: 'What is an antonym (opposite) of "ancient"?',         opts: ['Old','Modern','Historic','Antique'], ans: 1 },
+      { q: 'The prefix "un-" usually means:',                     opts: ['Again','Not or opposite','Before','After'], ans: 1 },
+      { q: 'What does the suffix "-ful" add to a word?',          opts: ['Without','Having a quality','Someone who does','Related to'], ans: 1 },
+      { q: 'Which word means to speak quietly and privately?',    opts: ['Shout','Whisper','Lecture','Announce'], ans: 1 },
+      { q: 'What is a synonym for "enormous"?',                   opts: ['Tiny','Huge','Narrow','Bright'], ans: 1 },
+      { q: 'The prefix "mis-" means:',                            opts: ['Again','Before','Wrongly or badly','Under'], ans: 2 },
+      { q: 'What does "benevolent" mean?',                        opts: ['Cruel and harsh','Kind and generous','Shy and quiet','Loud and confident'], ans: 1 },
+      // Parts of Speech
+      { q: 'In "The quick fox jumped", what type of word is "jumped"?', opts: ['Noun','Adjective','Verb','Adverb'], ans: 2 },
+      { q: 'Which word is a proper noun?',                        opts: ['cat','city','Paris','building'], ans: 2 },
+      { q: 'In "She ran quickly", what type of word is "quickly"?', opts: ['Adjective','Adverb','Verb','Noun'], ans: 1 },
+      { q: 'Which word is a conjunction?',                        opts: ['Quickly','Blue','Because','Run'], ans: 2 },
+      { q: 'In "The happy children played", what is the adjective?', opts: ['children','played','happy','The'], ans: 2 },
+      { q: 'Which of these is a pronoun?',                        opts: ['Tree','Run','She','Quickly'], ans: 2 },
+      { q: 'What type of noun is "happiness"?',                   opts: ['Proper noun','Common noun','Abstract noun','Collective noun'], ans: 2 },
+      { q: 'Which word is a preposition?',                        opts: ['Run','Happy','Under','And'], ans: 2 },
+      // Literature
+      { q: 'Who wrote Romeo and Juliet?',                         opts: ['Charles Dickens','William Shakespeare','Jane Austen','Homer'], ans: 1 },
+      { q: 'Who wrote the Harry Potter series?',                  opts: ['Roald Dahl','J.R.R. Tolkien','J.K. Rowling','C.S. Lewis'], ans: 2 },
+      { q: 'A haiku is a poem with how many lines?',              opts: ['2','3','4','5'], ans: 1 },
+      { q: 'Who wrote The Lion, the Witch and the Wardrobe?',     opts: ['J.K. Rowling','Roald Dahl','J.R.R. Tolkien','C.S. Lewis'], ans: 3 },
+      { q: 'What is the literary term for the main character?',   opts: ['Antagonist','Narrator','Protagonist','Villain'], ans: 2 },
+      { q: 'How many lines does a sonnet have?',                  opts: ['8','10','12','14'], ans: 3 },
+      { q: 'Who wrote Charlie and the Chocolate Factory?',        opts: ['Dr. Seuss','Roald Dahl','C.S. Lewis','J.K. Rowling'], ans: 1 },
+      { q: 'When a character speaks alone on stage, it is called a:', opts: ['Monologue','Dialogue','Soliloquy','Aside'], ans: 2 },
     ],
   },
+
   science: {
     label: '🔬 Science',
     questions: [
-      { q: 'What gas do plants absorb during photosynthesis?',
-        opts: ['Oxygen', 'Nitrogen', 'Carbon dioxide', 'Hydrogen'], ans: 2 },
-      { q: 'What is the chemical symbol for water?',
-        opts: ['WA', 'H₂O', 'HO₂', 'W₂O'], ans: 1 },
-      { q: 'How many bones does an adult human body have?',
-        opts: ['196', '206', '216', '226'], ans: 1 },
-      { q: 'Which planet is closest to the Sun?',
-        opts: ['Venus', 'Earth', 'Mars', 'Mercury'], ans: 3 },
-      { q: 'What force keeps us on the ground?',
-        opts: ['Magnetism', 'Friction', 'Gravity', 'Tension'], ans: 2 },
+      // Biology
+      { q: 'What is the "powerhouse of the cell"?',               opts: ['Nucleus','Mitochondria','Cell wall','Vacuole'], ans: 1 },
+      { q: 'What do plants need for photosynthesis?',             opts: ['Water and oxygen','CO₂, water and light','Soil, air and rain','Nitrogen, water and sunlight'], ans: 1 },
+      { q: 'How many chambers does a human heart have?',          opts: ['2','3','4','5'], ans: 2 },
+      { q: 'Which organ filters waste products from the blood?',  opts: ['Liver','Lungs','Kidneys','Stomach'], ans: 2 },
+      { q: 'Who is known as the father of evolution?',            opts: ['Isaac Newton','Albert Einstein','Charles Darwin','Gregor Mendel'], ans: 2 },
+      { q: 'What is the process by which plants make food using sunlight?', opts: ['Respiration','Transpiration','Photosynthesis','Osmosis'], ans: 2 },
+      { q: 'What part of a cell controls what enters and leaves it?', opts: ['Cell wall','Nucleus','Cell membrane','Cytoplasm'], ans: 2 },
+      { q: 'Organisms passing traits to offspring is called:',    opts: ['Evolution','Heredity','Mutation','Adaptation'], ans: 1 },
+      // Chemistry
+      { q: 'What is the symbol for the element Gold?',            opts: ['Go','Gd','Au','Ag'], ans: 2 },
+      { q: 'What is the chemical symbol for Iron?',               opts: ['Ir','In','Fe','Fo'], ans: 2 },
+      { q: 'What is the most abundant gas in Earth\'s atmosphere?', opts: ['Oxygen','Carbon dioxide','Nitrogen','Hydrogen'], ans: 2 },
+      { q: 'Which state of matter has a definite shape and volume?', opts: ['Gas','Liquid','Solid','Plasma'], ans: 2 },
+      { q: 'At what temperature does water boil?',                opts: ['90°C','95°C','100°C','110°C'], ans: 2 },
+      { q: 'What is the atomic number of Carbon?',                opts: ['4','6','8','12'], ans: 1 },
+      { q: 'Which type of reaction releases heat energy?',        opts: ['Endothermic','Exothermic','Neutralisation','Decomposition'], ans: 1 },
+      { q: 'How many elements are in the periodic table (approx)?', opts: ['78','98','118','138'], ans: 2 },
+      // Physics
+      { q: 'What is the unit of electric current?',               opts: ['Volt','Watt','Ampere','Ohm'], ans: 2 },
+      { q: 'What force opposes motion between surfaces?',         opts: ['Gravity','Friction','Tension','Magnetism'], ans: 1 },
+      { q: 'What is the approximate speed of light?',             opts: ['300,000 km/s','30,000 km/s','3,000 km/s','3,000,000 km/s'], ans: 0 },
+      { q: 'What unit measures force?',                           opts: ['Joule','Watt','Newton','Pascal'], ans: 2 },
+      { q: 'What energy is stored in a stretched elastic band?',  opts: ['Kinetic','Chemical','Elastic potential','Thermal'], ans: 2 },
+      { q: 'When frequency increases, the pitch of a sound gets:', opts: ['Quieter','Lower','Higher','Disappears'], ans: 2 },
+      { q: 'Every action has an equal and opposite reaction. Whose law?', opts: ["Newton's First","Newton's Second","Newton's Third","Ohm's Law"], ans: 2 },
+      { q: 'What is the unit of electrical resistance?',          opts: ['Volt','Ampere','Watt','Ohm'], ans: 3 },
+      // Space
+      { q: 'How many planets are in our solar system?',           opts: ['7','8','9','10'], ans: 1 },
+      { q: 'What is the closest star to Earth?',                  opts: ['Sirius','Betelgeuse','The Sun','Alpha Centauri'], ans: 2 },
+      { q: 'Which planet is known as the Red Planet?',            opts: ['Venus','Jupiter','Mars','Saturn'], ans: 2 },
+      { q: 'What causes day and night on Earth?',                 opts: ['Earth orbiting the Sun','The Moon\'s shadow','Earth\'s rotation on its axis','The Sun moving'], ans: 2 },
+      { q: 'What is a light-year?',                              opts: ['Time for light to travel a year','Speed of light','Distance light travels in a year','Brightness unit'], ans: 2 },
+      { q: 'Which is the largest planet in our solar system?',    opts: ['Saturn','Uranus','Neptune','Jupiter'], ans: 3 },
+      { q: 'What keeps planets in orbit around the Sun?',         opts: ['Magnetism','Friction','Gravity','Wind'], ans: 2 },
+      { q: 'How long does Earth take to orbit the Sun?',          opts: ['1 month','6 months','1 year','24 hours'], ans: 2 },
+      // Environment
+      { q: 'In a food chain, organisms that make their own food are:', opts: ['Consumers','Decomposers','Producers','Predators'], ans: 2 },
+      { q: 'What is the main greenhouse gas from burning fossil fuels?', opts: ['Oxygen','Nitrogen','Carbon dioxide','Hydrogen'], ans: 2 },
+      { q: 'Animals that eat only plants are called:',            opts: ['Carnivores','Omnivores','Herbivores','Decomposers'], ans: 2 },
+      { q: 'Biodiversity means:',                                 opts: ['A type of plant','The variety of life in an area','A food chain','Climate change'], ans: 1 },
+      { q: 'Which is the world\'s largest ecosystem?',            opts: ['Amazon rainforest','Arctic tundra','The ocean','African savannah'], ans: 2 },
+      { q: 'What is the process of forests being cleared by humans?', opts: ['Erosion','Deforestation','Pollution','Desertification'], ans: 1 },
+      { q: 'An apex predator is one that:',                       opts: ['Is a producer','Is prey','Has no natural predators','Is a decomposer'], ans: 2 },
+      { q: 'Rising global temperatures due to human activity is called:', opts: ['Global cooling','Global warming','The ozone effect','Acid rain'], ans: 1 },
     ],
   },
+
   geography: {
     label: '🌍 Geography',
     questions: [
-      { q: 'What is the largest continent by area?',
-        opts: ['Africa', 'North America', 'Asia', 'Europe'], ans: 2 },
-      { q: 'What is the capital city of Australia?',
-        opts: ['Sydney', 'Melbourne', 'Canberra', 'Brisbane'], ans: 2 },
-      { q: 'Which river is the longest in the world?',
-        opts: ['Amazon', 'Mississippi', 'Nile', 'Congo'], ans: 2 },
-      { q: 'What divides Earth into Northern and Southern hemispheres?',
-        opts: ['Tropic of Cancer', 'Prime Meridian', 'Equator', 'Date Line'], ans: 2 },
-      { q: 'Which ocean is the largest?',
-        opts: ['Atlantic', 'Indian', 'Arctic', 'Pacific'], ans: 3 },
+      // World Knowledge
+      { q: 'What is the capital of France?',                      opts: ['Lyon','Marseille','Paris','Nice'], ans: 2 },
+      { q: 'Which is the largest continent by area?',             opts: ['Africa','North America','Europe','Asia'], ans: 3 },
+      { q: 'How many continents are there on Earth?',             opts: ['5','6','7','8'], ans: 2 },
+      { q: 'Which ocean lies between Europe and North America?',  opts: ['Pacific','Indian','Atlantic','Arctic'], ans: 2 },
+      { q: 'What is the capital of Japan?',                       opts: ['Shanghai','Seoul','Beijing','Tokyo'], ans: 3 },
+      { q: 'What is the capital of Brazil?',                      opts: ['Rio de Janeiro','São Paulo','Brasília','Buenos Aires'], ans: 2 },
+      { q: 'Which is the largest ocean?',                         opts: ['Atlantic','Indian','Arctic','Pacific'], ans: 3 },
+      { q: 'What is the longest river in the world?',             opts: ['Amazon','Yangtze','Nile','Mississippi'], ans: 2 },
+      // Physical Geography
+      { q: 'What is molten rock called when it reaches Earth\'s surface?', opts: ['Magma','Lava','Pumice','Granite'], ans: 1 },
+      { q: 'What is the highest mountain in the world?',          opts: ['K2','Mont Blanc','Mount Everest','Kilimanjaro'], ans: 2 },
+      { q: 'The Amazon River flows through which continent?',     opts: ['Africa','Asia','North America','South America'], ans: 3 },
+      { q: 'Which type of rock is formed from cooled volcanic lava?', opts: ['Sedimentary','Metamorphic','Igneous','Limestone'], ans: 2 },
+      { q: 'What was the name of the ancient supercontinent?',    opts: ['Atlantis','Pangaea','Gondwana','Laurasia'], ans: 1 },
+      { q: 'Where do most earthquakes occur?',                    opts: ['In the ocean','Far from tectonic plates','At plate boundaries','At the poles'], ans: 2 },
+      { q: 'A river delta is where a river:',                     opts: ['Starts its journey','Gets widest','Fans out as it meets the sea','Goes underground'], ans: 2 },
+      { q: 'Which is the deepest point on Earth?',                opts: ['Java Trench','Puerto Rico Trench','Mariana Trench','Tonga Trench'], ans: 2 },
+      // Climate
+      { q: 'What climate type is found near the equator?',        opts: ['Polar','Temperate','Tropical','Desert'], ans: 2 },
+      { q: 'What causes the seasons on Earth?',                   opts: ['Distance from the Sun','Earth\'s tilt on its axis','The Moon\'s gravity','Solar flares'], ans: 1 },
+      { q: 'Which climate zone has very little rainfall?',        opts: ['Tropical','Desert','Temperate','Mediterranean'], ans: 1 },
+      { q: 'El Niño is:',                                         opts: ['A type of hurricane','Unusual warming of the Pacific Ocean','A monsoon season','A drought in Africa'], ans: 1 },
+      { q: 'Seasons are reversed compared to the UK in which hemisphere?', opts: ['Northern','Southern','Eastern','Western'], ans: 1 },
+      { q: 'What is a rapidly rotating column of air called?',    opts: ['Tsunami','Earthquake','Tornado','Blizzard'], ans: 2 },
+      { q: 'A huge wave caused by an undersea earthquake is called a:', opts: ['Hurricane','Tornado','Tsunami','Monsoon'], ans: 2 },
+      { q: 'Which country experiences the most hurricanes?',      opts: ['UK','Australia','USA','Russia'], ans: 2 },
+      // Human Geography
+      { q: 'Urbanisation means:',                                 opts: ['Moving to rural areas','Growth of cities','Decline of industry','Building new farms'], ans: 1 },
+      { q: 'Which is a "push factor" causing migration?',         opts: ['Better jobs','Family connections','War or conflict','Better climate'], ans: 2 },
+      { q: 'Countries with high incomes and strong economies are called:', opts: ['LEDCs','MEDCs','Developing countries','Third World'], ans: 1 },
+      { q: 'What is the world\'s largest city by population?',    opts: ['New York','London','Tokyo','Shanghai'], ans: 2 },
+      { q: 'Moving from one country to another permanently is called:', opts: ['Tourism','Commuting','Migration','Urbanisation'], ans: 2 },
+      { q: 'Which of these is a renewable energy source?',        opts: ['Coal','Oil','Wind power','Natural gas'], ans: 2 },
+      { q: 'GDP stands for:',                                     opts: ['Gross Development Plan','Gross Domestic Product','Global Development Progress','Government Delivery Programme'], ans: 1 },
+      { q: 'Which continent has the highest proportion of people in poverty?', opts: ['Asia','South America','Africa','Oceania'], ans: 2 },
+      // Landmarks
+      { q: 'In which country is the Eiffel Tower?',               opts: ['Italy','Spain','Germany','France'], ans: 3 },
+      { q: 'In which country is the Taj Mahal?',                  opts: ['Pakistan','Bangladesh','India','Sri Lanka'], ans: 2 },
+      { q: 'The Great Barrier Reef is off the coast of:',         opts: ['New Zealand','Australia','South Africa','Indonesia'], ans: 1 },
+      { q: 'In which city is the Statue of Liberty?',             opts: ['Washington D.C.','Los Angeles','Chicago','New York City'], ans: 3 },
+      { q: 'The pyramids of Giza are in which country?',          opts: ['Morocco','Sudan','Egypt','Libya'], ans: 2 },
+      { q: 'Machu Picchu is an ancient site in:',                 opts: ['Brazil','Colombia','Peru','Bolivia'], ans: 2 },
+      { q: 'The Great Wall of China was primarily built to:',     opts: ['Control trade routes','Protect against northern invasions','Mark territory','Act as a road'], ans: 1 },
+      { q: 'In which country is the Colosseum?',                  opts: ['Greece','Spain','France','Italy'], ans: 3 },
     ],
   },
+
   art: {
     label: '🎨 Art',
     questions: [
-      { q: 'Who painted the Mona Lisa?',
-        opts: ['Vincent van Gogh', 'Leonardo da Vinci', 'Pablo Picasso', 'Michelangelo'], ans: 1 },
-      { q: 'What are the three primary colours?',
-        opts: ['Red, green, blue', 'Red, yellow, blue', 'Green, yellow, orange', 'Pink, purple, blue'], ans: 1 },
-      { q: 'What is it called when a sculpture is made by cutting away material?',
-        opts: ['Casting', 'Modelling', 'Carving', 'Welding'], ans: 2 },
-      { q: 'Which art movement is most associated with Pablo Picasso?',
-        opts: ['Impressionism', 'Surrealism', 'Cubism', 'Realism'], ans: 2 },
-      { q: 'What do you mix with watercolour paint to thin it?',
-        opts: ['Oil', 'Vinegar', 'Milk', 'Water'], ans: 3 },
+      // Famous Artists
+      { q: 'Who painted the Mona Lisa?',                          opts: ['Michelangelo','Raphael','Leonardo da Vinci','Donatello'], ans: 2 },
+      { q: 'Which artist famously cut off part of his own ear?',  opts: ['Pablo Picasso','Vincent van Gogh','Salvador Dalí','Claude Monet'], ans: 1 },
+      { q: 'Frida Kahlo was a famous artist from:',               opts: ['Spain','Brazil','Mexico','Argentina'], ans: 2 },
+      { q: 'Which street artist is known for anonymous satirical work?', opts: ['Andy Warhol','Banksy','Keith Haring','Jean-Michel Basquiat'], ans: 1 },
+      { q: 'Claude Monet was the leading figure in which movement?', opts: ['Cubism','Surrealism','Impressionism','Expressionism'], ans: 2 },
+      { q: 'Salvador Dalí was known for which style?',            opts: ['Cubism','Impressionism','Realism','Surrealism'], ans: 3 },
+      { q: 'Who painted the Sistine Chapel ceiling?',             opts: ['Leonardo da Vinci','Raphael','Michelangelo','Botticelli'], ans: 2 },
+      { q: 'Andy Warhol was famous for which art movement?',      opts: ['Abstract Expressionism','Pop Art','Surrealism','Minimalism'], ans: 1 },
+      // Art Movements
+      { q: 'Which movement began in 14th-century Italy celebrating classical learning?', opts: ['Baroque','Renaissance','Romanticism','Impressionism'], ans: 1 },
+      { q: 'Impressionists were known for painting:',             opts: ['Perfect geometry','Dark scenes','Light and everyday life with loose brushstrokes','Dreamlike images'], ans: 2 },
+      { q: 'Which movement broke objects into geometric shapes?',  opts: ['Surrealism','Pop Art','Impressionism','Cubism'], ans: 3 },
+      { q: 'Surrealism explored:',                                opts: ['Political protest','Dreams and the unconscious mind','Consumer culture','Ancient religious themes'], ans: 1 },
+      { q: 'Pop Art celebrated:',                                 opts: ['Ancient myth','Mass media and popular culture','Natural landscapes','Personal suffering'], ans: 1 },
+      { q: 'Baroque art (17th century) is known for being:',      opts: ['Simple and minimal','Dramatic, detailed and emotional','Abstract and unclear','Flat and colourless'], ans: 1 },
+      { q: 'Which movement rejected tradition to express raw emotions?', opts: ['Realism','Classicism','Expressionism','Minimalism'], ans: 2 },
+      { q: 'Abstract art is art that:',                           opts: ['Looks exactly like real life','Tells a clear story','Does not represent real objects','Uses only black and white'], ans: 2 },
+      // Colour Theory
+      { q: 'What are the three primary colours (traditional pigment)?', opts: ['Red, green, blue','Red, yellow, blue','Orange, purple, green','Cyan, magenta, yellow'], ans: 1 },
+      { q: 'What do you get when you mix red and blue?',          opts: ['Orange','Green','Purple','Brown'], ans: 2 },
+      { q: 'Which colours are called "warm" colours?',            opts: ['Blue, green, purple','Red, orange, yellow','Grey, white, black','Teal, cyan, indigo'], ans: 1 },
+      { q: 'Complementary colours are:',                          opts: ['Similar colours','Opposite colours on the colour wheel','Shades of the same colour','Skin-tone colours'], ans: 1 },
+      { q: 'What is the complementary colour of blue?',           opts: ['Purple','Green','Orange','Red'], ans: 2 },
+      { q: 'Mixing all colours of light (RGB) together gives:',   opts: ['Black','Brown','Grey','White'], ans: 3 },
+      { q: 'Secondary colours are:',                              opts: ['Red, yellow, blue','Made by mixing two primary colours','Very dark colours','Shades of grey'], ans: 1 },
+      { q: 'Adding white to a colour creates a:',                 opts: ['Shade','Tint','Tone','Hue'], ans: 1 },
+      // Techniques
+      { q: 'In art, perspective is used to:',                     opts: ['Make colours brighter','Show depth and distance on a flat surface','Mix paints','Show texture'], ans: 1 },
+      { q: 'Which technique shows where light and shadow fall?',  opts: ['Perspective','Composition','Shading','Stippling'], ans: 2 },
+      { q: '"Composition" in art means:',                         opts: ['The colours used','The arrangement of elements','The type of paint','The size of the artwork'], ans: 1 },
+      { q: 'Stippling is a technique using:',                     opts: ['Thick strokes','Small dots to build tone and texture','Cross-hatching lines','Smooth gradients'], ans: 1 },
+      { q: 'Cross-hatching involves:',                            opts: ['Layering transparent paint','Lines in opposite directions to create tone','Blending with a finger','Pressing objects into clay'], ans: 1 },
+      { q: 'The "rule of thirds" improves:',                      opts: ['Colour mixing','Composition','Three-point perspective','Print quality'], ans: 1 },
+      { q: 'A vanishing point is used in:',                       opts: ['Colour theory','Linear perspective','Life drawing','Printmaking'], ans: 1 },
+      { q: 'Proportion in art means:',                            opts: ['The speed of painting','The amount of paint','The correct size relationship between parts','The depth of shadow'], ans: 2 },
+      // Famous Works
+      { q: 'Who painted The Starry Night?',                       opts: ['Claude Monet','Vincent van Gogh','Pablo Picasso','Salvador Dalí'], ans: 1 },
+      { q: 'The Persistence of Memory (melting clocks) was painted by:', opts: ['René Magritte','Pablo Picasso','Salvador Dalí','Max Ernst'], ans: 2 },
+      { q: 'Girl with a Pearl Earring was painted by:',           opts: ['Rembrandt','Jan Vermeer','Rubens','Leonardo da Vinci'], ans: 1 },
+      { q: 'Guernica, depicting the horrors of war, was created by:', opts: ['Henri Matisse','Salvador Dalí','Pablo Picasso','Claude Monet'], ans: 2 },
+      { q: 'The Birth of Venus was painted by:',                  opts: ['Leonardo da Vinci','Michelangelo','Raphael','Sandro Botticelli'], ans: 3 },
+      { q: 'The Last Supper depicts:',                            opts: ["Jesus's baptism","Jesus's final meal with his disciples","The crucifixion","The resurrection"], ans: 1 },
+      { q: 'Monet\'s water lily paintings belong to which movement?', opts: ['Cubism','Surrealism','Impressionism','Expressionism'], ans: 2 },
+      { q: 'The Scream was painted by which Expressionist artist?', opts: ['Vincent van Gogh','Edvard Munch','Emil Nolde','Ernst Kirchner'], ans: 1 },
     ],
   },
 };
 
-let quizSubject  = 'math';
-let quizQIndex   = 0;
-let quizScore    = 0;
-let quizAnswered = false;
-let quizDone     = false;
+// Fisher-Yates shuffle — returns a new shuffled copy of the array
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const QUIZ_QUESTIONS_PER_ROUND = 5;
+
+let quizSubject   = 'math';
+let quizQuestions = [];    // the 5 randomly selected questions for this attempt
+let quizQIndex    = 0;
+let quizScore     = 0;
+let quizAnswered  = false;
+let quizDone      = false;
 
 function initQuiz(subject) {
-  quizSubject  = subject;
-  quizQIndex   = 0;
-  quizScore    = 0;
-  quizAnswered = false;
-  quizDone     = false;
+  quizSubject   = subject;
+  quizQIndex    = 0;
+  quizScore     = 0;
+  quizAnswered  = false;
+  quizDone      = false;
+  // Pick QUIZ_QUESTIONS_PER_ROUND random questions from the full 40-question pool
+  quizQuestions = shuffleArray(QUIZ_DATA[subject].questions).slice(0, QUIZ_QUESTIONS_PER_ROUND);
   renderQuiz();
 }
 
@@ -1549,30 +1744,32 @@ function renderQuiz() {
   if (!body) return;
 
   if (quizDone) {
-    const total = QUIZ_DATA[quizSubject].questions.length;
-    const pct = quizScore / total;
-    const msg = pct === 1 ? '🌟 Perfect score!' : pct >= .8 ? '🔥 Excellent!' :
-                pct >= .6 ? '👍 Well done!'     : pct >= .4 ? '📚 Keep practising!' : '💪 Study harder!';
+    const total = quizQuestions.length;
+    const pct   = quizScore / total;
+    const msg   = pct === 1   ? '🌟 Perfect score!'     :
+                  pct >= .8   ? '🔥 Excellent!'          :
+                  pct >= .6   ? '👍 Well done!'          :
+                  pct >= .4   ? '📚 Keep practising!'    : '💪 Study harder!';
     body.innerHTML = `
       <div class="quiz-result">
         <div class="quiz-result-score">${quizScore}/${total}</div>
         <div class="quiz-result-label">correct answers</div>
         <div class="quiz-result-msg">${msg}</div>
         <div class="quiz-xp-earned">🌟 +10 XP earned!</div><br>
-        <button class="btn btn-study btn-sm" id="quiz-retry-btn">🔄 Try Again</button>
+        <button class="btn btn-study btn-sm" id="quiz-retry-btn">🔄 New Questions</button>
       </div>`;
     document.getElementById('quiz-retry-btn').addEventListener('click', () => initQuiz(quizSubject));
     return;
   }
 
-  const q     = QUIZ_DATA[quizSubject].questions[quizQIndex];
-  const total = QUIZ_DATA[quizSubject].questions.length;
-  const pct   = (quizQIndex / total) * 100;
+  const q   = quizQuestions[quizQIndex];
+  const tot = quizQuestions.length;
+  const pct = (quizQIndex / tot) * 100;
 
   body.innerHTML = `
     <div class="quiz-question-wrap">
       <div class="quiz-progress-row">
-        <span class="quiz-progress-text">Q${quizQIndex + 1} of ${total}</span>
+        <span class="quiz-progress-text">Q${quizQIndex + 1} of ${tot}</span>
         <div class="quiz-progress-track">
           <div class="quiz-progress-fill" style="width:${pct}%"></div>
         </div>
@@ -1594,14 +1791,14 @@ function answerQuiz(idx) {
   if (quizAnswered) return;
   quizAnswered = true;
 
-  const q       = QUIZ_DATA[quizSubject].questions[quizQIndex];
+  const q       = quizQuestions[quizQIndex];
   const correct = q.ans === idx;
   if (correct) quizScore++;
 
   // Colour correct green, chosen-wrong red; disable all
   document.querySelectorAll('#quiz-body .quiz-option-btn').forEach((btn, i) => {
     btn.disabled = true;
-    if (i === q.ans) btn.classList.add('correct');
+    if (i === q.ans)             btn.classList.add('correct');
     else if (i === idx && !correct) btn.classList.add('wrong');
   });
 
@@ -1609,7 +1806,7 @@ function answerQuiz(idx) {
   setTimeout(() => {
     quizQIndex++;
     quizAnswered = false;
-    if (quizQIndex >= QUIZ_DATA[quizSubject].questions.length) {
+    if (quizQIndex >= quizQuestions.length) {
       quizDone = true;
       updateSubjectProgress(quizSubject, quizScore);
       addXP(10);
