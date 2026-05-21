@@ -78,12 +78,23 @@ async function addXP(amount) {
   }
 }
 
+/* ── Avatar helper ────────────────────────────────────────────────── */
+// Sets a circular avatar <div>: Google photo when available, initial letter otherwise.
+function setAvatarEl(el) {
+  const url = sbUser?.user_metadata?.avatar_url;
+  if (url) {
+    el.innerHTML = `<img src="${escHtml(url)}" alt="${escHtml(sbProfile.username[0].toUpperCase())}" class="avatar-img">`;
+  } else {
+    el.textContent = sbProfile.username[0].toUpperCase();
+  }
+}
+
 /* ── Top Bar ──────────────────────────────────────────────────────── */
 function updateTopBar() {
   const el = document.getElementById('top-user');
   if (sbProfile) {
     el.classList.remove('hidden');
-    document.getElementById('top-avatar').textContent   = sbProfile.username[0].toUpperCase();
+    setAvatarEl(document.getElementById('top-avatar'));
     document.getElementById('top-username').textContent = sbProfile.username;
     document.getElementById('top-xp').textContent       = `${sbProfile.xp} XP`;
   } else {
@@ -108,7 +119,7 @@ function updateDashboard() {
   const h = new Date().getHours();
   const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
   document.getElementById('dash-hello').textContent = `${g}, ${sbProfile.username}! 👋`;
-  document.getElementById('dash-avatar').textContent = sbProfile.username[0].toUpperCase();
+  setAvatarEl(document.getElementById('dash-avatar'));
   updateDashXP();
   updateDashStats();
 }

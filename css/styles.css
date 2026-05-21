@@ -93,6 +93,8 @@ body {
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
+/* Avatar photo (Google profile picture) fills any circular avatar div */
+.avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
 .top-user-text { display: flex; flex-direction: column; line-height: 1.2; }
 .top-username { font-size: .82rem; font-weight: 700; color: var(--forest-dark); }
 .top-xp       { font-size: .72rem; font-weight: 700; color: var(--forest-mid); }
