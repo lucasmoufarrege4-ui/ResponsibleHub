@@ -4,61 +4,127 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ResponsibleHub 🌍📚</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="icon" type="image/png" sizes="512x512" href="icon.png" />
+  <link rel="apple-touch-icon" href="icon.png" />
   <link rel="stylesheet" href="css/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+<div class="app">
 
-  <!-- NAVBAR -->
-  <header>
-    <nav class="navbar">
-      <div class="logo">🌱 ResponsibleHub</div>
-      <ul class="nav-links">
-        <li><a href="#hero">Home</a></li>
-        <li><a href="#study">📚 Study</a></li>
-        <li><a href="#eco">🌍 Eco</a></li>
-        <li><a href="#tutor" class="nav-ai">🎓 AI Tutor</a></li>
-      </ul>
-      <button class="nav-toggle" aria-label="Toggle menu">☰</button>
-    </nav>
+  <!-- TOP BAR -->
+  <header class="top-bar">
+    <div class="top-bar-logo">🌱 <span>ResponsibleHub</span></div>
+    <div class="top-user hidden" id="top-user">
+      <div class="top-avatar" id="top-avatar">?</div>
+      <div class="top-user-text">
+        <span class="top-username" id="top-username"></span>
+        <span class="top-xp" id="top-xp">0 XP</span>
+      </div>
+    </div>
   </header>
 
-  <main>
+  <!-- PAGES -->
+  <main class="pages">
 
-    <!-- HERO -->
-    <section id="hero" class="hero">
-      <div class="hero-deco hero-deco-1"></div>
-      <div class="hero-deco hero-deco-2"></div>
-      <div class="symbols-bg">
-        <span>∑</span><span>π</span><span>√</span><span>∞</span>
-        <span>×</span><span>!</span><span>?</span><span>"</span>
-        <span>.</span><span>,</span><span>;</span><span>÷</span>
-        <span>∫</span><span>Δ</span><span>≈</span><span>θ</span>
-      </div>
-      <div class="hero-content">
-        <div class="hero-badge">🌿 For Students, By Students</div>
-        <h1>Be the Change<br><span class="gradient-text">You Want to See!</span></h1>
-        <p>Level up your study game AND help save the planet.<br>Small actions = Big impact!</p>
-        <div class="hero-btns">
-          <a href="#study" class="btn btn-hero-primary">📚 Start Studying</a>
-          <a href="#eco" class="btn btn-hero-ghost">🌍 Go Green</a>
+    <!-- ══ HOME PAGE ══════════════════════════════════════════════════ -->
+    <div class="page active" id="page-home">
+
+      <!-- Logged-out: welcome + inline login -->
+      <div id="home-welcome">
+        <div class="welcome-hero">
+          <div class="welcome-logo-big">🌱</div>
+          <h1 class="welcome-title">ResponsibleHub</h1>
+          <p class="welcome-tagline">Study smarter. Go greener.<br>Earn XP. Climb the leaderboard.</p>
+          <div class="welcome-chips">
+            <span class="feat-chip">📚 Study</span>
+            <span class="feat-chip">🌍 Eco</span>
+            <span class="feat-chip">📅 Planner</span>
+            <span class="feat-chip">🤖 AI Coach</span>
+            <span class="feat-chip">🏆 Leaderboard</span>
+          </div>
         </div>
-        <div class="hero-stats">
-          <div class="stat"><span id="challenges-done">0</span><label>Challenges Done</label></div>
-          <div class="stat"><span id="tasks-done">0</span><label>Tasks Complete</label></div>
-          <div class="stat"><span id="co2-saved">0</span><label>kg CO₂ Tracked</label></div>
+
+        <div class="welcome-auth" id="home-auth-form">
+          <h2 class="welcome-auth-title">Sign in to get started</h2>
+          <p class="auth-hint">Your XP and progress are saved to your account.</p>
+          <button class="btn-google" id="home-signin-btn">
+            <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            Sign in with Google
+          </button>
+          <p class="auth-error hidden" id="home-auth-error"></p>
         </div>
       </div>
-    </section>
 
-    <!-- ===== STUDY HABITS SECTION ===== -->
-    <section id="study" class="section study-section">
-      <div class="section-header study-header">
-        <div class="section-leaf"><span>🍃</span><span>🌿</span></div>
-        <div class="section-icon">📚</div>
-        <h2>Study Habits</h2>
-        <p>Build awesome study skills one day at a time!</p>
+      <!-- Logged-in: dashboard -->
+      <div class="hidden" id="home-dashboard">
+        <div class="dash-greeting">
+          <div class="dash-avatar" id="dash-avatar">?</div>
+          <div>
+            <h1 class="dash-hello" id="dash-hello">Hello! 👋</h1>
+            <p class="dash-sub">Keep up the great work 🌱</p>
+          </div>
+        </div>
+
+        <div class="dash-xp-card">
+          <div class="dash-xp-top">
+            <div>
+              <div class="dash-xp-label">Total XP</div>
+              <div class="dash-xp-value" id="dash-xp-value">0</div>
+            </div>
+            <div class="dash-trophy">🏆</div>
+          </div>
+          <div class="dash-xp-bar-wrap">
+            <div class="dash-xp-bar" id="dash-xp-bar" style="width:0%"></div>
+          </div>
+          <div class="dash-rank" id="dash-rank">Calculating rank…</div>
+        </div>
+
+        <div class="dash-stats">
+          <div class="dash-stat">
+            <span class="dash-stat-val" id="dash-challenges">0</span>
+            <span class="dash-stat-label">Challenges</span>
+          </div>
+          <div class="dash-stat">
+            <span class="dash-stat-val" id="dash-tasks">0</span>
+            <span class="dash-stat-label">Tasks Done</span>
+          </div>
+          <div class="dash-stat">
+            <span class="dash-stat-val" id="dash-co2">0</span>
+            <span class="dash-stat-label">CO₂ Tracked</span>
+          </div>
+        </div>
+
+        <div class="dash-quick">
+          <h3 class="dash-section-title">Quick Access</h3>
+          <div class="dash-quick-grid">
+            <button class="dash-quick-btn" data-page="study"><span class="dq-icon">📚</span><span class="dq-label">Study</span></button>
+            <button class="dash-quick-btn" data-page="eco"><span class="dq-icon">🌍</span><span class="dq-label">Eco</span></button>
+            <button class="dash-quick-btn" data-page="planner"><span class="dq-icon">📅</span><span class="dq-label">Planner</span></button>
+            <button class="dash-quick-btn" data-page="coach"><span class="dq-icon">🤖</span><span class="dq-label">AI Coach</span></button>
+            <button class="dash-quick-btn" data-page="leaderboard"><span class="dq-icon">🏆</span><span class="dq-label">Leaderboard</span></button>
+          </div>
+        </div>
+
+        <button class="btn btn-outline btn-sm dash-signout" id="dash-signout-btn">↩ Sign out</button>
       </div>
+    </div>
 
+    <!-- ══ STUDY PAGE ═════════════════════════════════════════════════ -->
+    <div class="page" id="page-study">
+      <div class="page-hdr">
+        <div class="page-hdr-icon study-icon-bg">📚</div>
+        <div>
+          <h2>Study Habits</h2>
+          <p>Build awesome study skills one day at a time!</p>
+        </div>
+      </div>
       <div class="container cards-grid">
 
         <!-- Daily Study Challenge -->
@@ -74,8 +140,24 @@
             <span class="diff-badge" id="study-diff">Medium</span>
           </div>
           <div class="challenge-actions">
-            <button class="btn btn-study" id="complete-study-btn">✅ Mark Complete</button>
-            <button class="btn btn-outline" id="new-study-challenge-btn">🔀 New Challenge</button>
+            <button class="btn btn-outline btn-sm" id="new-study-challenge-btn">🔀 Browse</button>
+            <button class="btn btn-outline btn-sm hidden" id="study-daily-btn">← Today's</button>
+          </div>
+          <div class="text-proof-form" id="study-proof-form">
+            <label class="proof-label">✍️ What did you do to complete this?</label>
+            <textarea class="proof-textarea" id="study-proof-text"
+              placeholder="E.g. I did a 25-min Pomodoro session without touching my phone…"
+              maxlength="200" rows="2"></textarea>
+            <button class="btn btn-study btn-sm" id="study-submit-btn">✅ Submit & Earn XP</button>
+          </div>
+          <div class="proof-saved hidden" id="study-proof-saved">
+            <div class="proof-saved-content">
+              <span class="proof-saved-icon">🎉</span>
+              <div>
+                <p class="proof-saved-text" id="study-proof-saved-text"></p>
+                <p class="proof-saved-sub">✓ Added to your Daily Planner</p>
+              </div>
+            </div>
           </div>
           <div class="streak-bar">
             <span>🔥 Study Streak:</span>
@@ -100,9 +182,7 @@
             </select>
             <button class="btn btn-study btn-sm" id="hw-add-btn">+ Add</button>
           </div>
-          <ul class="hw-list" id="hw-list">
-            <!-- Tasks injected by JS -->
-          </ul>
+          <ul class="hw-list" id="hw-list"></ul>
           <div class="hw-footer">
             <span id="hw-progress-text">0 of 0 done</span>
             <div class="progress-bar"><div class="progress-fill study-fill" id="hw-progress-fill"></div></div>
@@ -133,17 +213,17 @@
         </div>
 
       </div>
-    </section>
+    </div>
 
-    <!-- ===== ECO RESPONSIBILITY SECTION ===== -->
-    <section id="eco" class="section eco-section">
-      <div class="section-header eco-header">
-        <div class="section-leaf"><span>🌱</span><span>🍀</span></div>
-        <div class="section-icon">🌍</div>
-        <h2>Eco Responsibility</h2>
-        <p>Every small action you take helps protect our planet!</p>
+    <!-- ══ ECO PAGE ═══════════════════════════════════════════════════ -->
+    <div class="page" id="page-eco">
+      <div class="page-hdr">
+        <div class="page-hdr-icon eco-icon-bg">🌍</div>
+        <div>
+          <h2>Eco Responsibility</h2>
+          <p>Every small action you take helps protect our planet!</p>
+        </div>
       </div>
-
       <div class="container cards-grid">
 
         <!-- Eco Daily Challenge -->
@@ -159,8 +239,24 @@
             <span class="diff-badge eco-diff" id="eco-diff">Easy</span>
           </div>
           <div class="challenge-actions">
-            <button class="btn btn-eco" id="complete-eco-btn">✅ Mission Complete!</button>
-            <button class="btn btn-outline" id="new-eco-challenge-btn">🔀 New Mission</button>
+            <button class="btn btn-outline btn-sm" id="new-eco-challenge-btn">🔀 Browse</button>
+            <button class="btn btn-outline btn-sm hidden" id="eco-daily-btn">← Today's</button>
+          </div>
+          <div class="text-proof-form" id="eco-proof-form">
+            <label class="proof-label">✍️ What eco action did you take?</label>
+            <textarea class="proof-textarea" id="eco-proof-text"
+              placeholder="E.g. I cycled to school and skipped the car entirely…"
+              maxlength="200" rows="2"></textarea>
+            <button class="btn btn-eco btn-sm" id="eco-submit-btn">✅ Submit & Earn XP</button>
+          </div>
+          <div class="proof-saved hidden" id="eco-proof-saved">
+            <div class="proof-saved-content">
+              <span class="proof-saved-icon">🌱</span>
+              <div>
+                <p class="proof-saved-text" id="eco-proof-saved-text"></p>
+                <p class="proof-saved-sub">✓ Added to your Daily Planner</p>
+              </div>
+            </div>
           </div>
           <div class="streak-bar">
             <span>🌱 Eco Streak:</span>
@@ -240,113 +336,221 @@
         </div>
 
       </div>
-    </section>
+    </div>
 
-    <!-- ===== AI TUTOR SECTION ===== -->
-    <section id="tutor" class="section tutor-section">
-      <div class="section-header tutor-header">
-        <div class="section-leaf"><span>✏️</span><span>📖</span></div>
-        <div class="section-icon">🎓</div>
-        <h2>AI Tutor</h2>
-        <p>Pick a subject, choose a topic, and get quizzed by your personal AI tutor!</p>
+    <!-- ══ PLANNER PAGE ═══════════════════════════════════════════════ -->
+    <div class="page" id="page-planner">
+      <div class="page-hdr">
+        <div class="page-hdr-icon planner-icon-bg">📅</div>
+        <div>
+          <h2>Weekly Planner</h2>
+          <p>Plan your week, set goals, track your progress!</p>
+        </div>
       </div>
+      <div class="container">
 
-      <div class="container tutor-container">
-
-        <!-- Screen 1: Setup -->
-        <div class="tutor-screen" id="tutor-setup">
-          <h3 class="tutor-screen-title">Choose Your Subject 🎯</h3>
-          <div class="subject-grid" id="subject-grid">
-            <button class="subject-btn" data-subject="Math">📐 Math</button>
-            <button class="subject-btn" data-subject="English">📖 English</button>
-            <button class="subject-btn" data-subject="Science">🔬 Science</button>
-            <button class="subject-btn" data-subject="Geography">🌍 Geography</button>
-            <button class="subject-btn" data-subject="History">🏛️ History</button>
-            <button class="subject-btn" data-subject="Biology">🧬 Biology</button>
-            <button class="subject-btn" data-subject="Chemistry">⚗️ Chemistry</button>
-            <button class="subject-btn" data-subject="Physics">⚡ Physics</button>
-            <button class="subject-btn" data-subject="Computer Science">💻 CS</button>
-            <button class="subject-btn" data-subject="Art">🎨 Art</button>
-          </div>
-          <div class="topic-row">
-            <label class="topic-label">What topic do you want to practise?</label>
-            <input type="text" id="tutor-topic-input" placeholder='e.g. "fractions" or "World War 2"' maxlength="80" autocomplete="off" />
-            <button class="btn btn-tutor" id="tutor-start-btn" disabled>🚀 Start Quiz!</button>
-          </div>
+        <div class="planner-locked" id="planner-locked">
+          <div class="planner-lock-icon">🔐</div>
+          <h3>Sign in to use your Daily Planner</h3>
+          <p>Save your schedule, set goals, and watch your XP grow.</p>
+          <button class="btn btn-green" id="planner-go-home-btn">🏠 Go to Home to Sign In</button>
         </div>
 
-        <!-- Screen 2: Loading -->
-        <div class="tutor-screen hidden" id="tutor-loading">
-          <div class="loading-anim">
-            <div class="loading-ring"></div>
-            <div class="loading-emoji" id="loading-emoji">🧠</div>
-          </div>
-          <p class="loading-msg" id="loading-msg">Generating your quiz…</p>
-          <p class="loading-sub">Hang tight! Your AI tutor is crafting the perfect questions ✨</p>
-        </div>
+        <div class="planner-app hidden" id="planner-app">
 
-        <!-- Screen 3: Question -->
-        <div class="tutor-screen hidden" id="tutor-question">
-          <div class="quiz-header">
-            <div class="quiz-meta">
-              <span class="quiz-subject-badge" id="quiz-subject-badge">📐 Math</span>
-              <span class="quiz-topic-badge" id="quiz-topic-badge">Topic</span>
+          <!-- Tab bar -->
+          <div class="planner-tabs">
+            <button class="planner-tab active" id="tab-planner-btn" data-tab="planner">📅 Planner</button>
+            <button class="planner-tab" id="tab-reminders-btn" data-tab="reminders">
+              🔔 Reminders
+              <span class="reminder-tab-badge hidden" id="reminder-tab-badge">8</span>
+            </button>
+          </div>
+
+          <!-- ─ Panel: Planner ─ -->
+          <div id="tab-planner-panel">
+
+            <!-- Week day selector -->
+            <div class="week-strip" id="week-strip"></div>
+
+            <div class="planner-date-header">
+              <span class="planner-date-label" id="planner-date-label">Today</span>
+              <span class="planner-user-badge" id="planner-user-badge"></span>
             </div>
-            <div class="progress-dots" id="progress-dots"></div>
-          </div>
-          <div class="question-card" id="question-card">
-            <div class="q-number" id="q-number">Question 1 of 5</div>
-            <p class="q-text" id="q-text">Loading question…</p>
-          </div>
-          <div class="answer-row">
-            <input type="text" id="tutor-answer-input" placeholder="Type your answer here…" maxlength="200" autocomplete="off" />
-            <button class="btn btn-tutor" id="tutor-submit-btn">✅ Submit</button>
-          </div>
-          <button class="hint-btn" id="hint-btn">💡 Show Hint</button>
-          <div class="hint-box hidden" id="hint-box"></div>
-        </div>
-
-        <!-- Screen 4: Feedback -->
-        <div class="tutor-screen hidden" id="tutor-feedback">
-          <div class="feedback-icon" id="feedback-icon">⭐</div>
-          <div class="feedback-text" id="feedback-text"></div>
-          <button class="btn btn-tutor" id="tutor-next-btn">Next Question →</button>
-        </div>
-
-        <!-- Screen 5: Summary -->
-        <div class="tutor-screen hidden" id="tutor-summary">
-          <h3 class="tutor-screen-title">Quiz Complete! 🎉</h3>
-          <div class="score-ring-wrap">
-            <svg class="score-ring" viewBox="0 0 120 120">
-              <circle class="ring-bg"   cx="60" cy="60" r="50"/>
-              <circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="50"/>
-            </svg>
-            <div class="score-text">
-              <span class="score-num" id="score-num">0</span>
-              <span class="score-denom">/5</span>
+            <div class="planner-grid">
+              <div class="card card-study planner-card">
+                <div class="card-tag">🗓️ Schedule</div>
+                <h3>My Schedule</h3>
+                <textarea id="planner-schedule" class="planner-textarea"
+                  placeholder="E.g.&#10;8:00am — Wake up &amp; breakfast&#10;9:00am — Math revision (1 hr)&#10;10:30am — English essay draft&#10;12:00pm — Lunch break&#10;1:30pm — Science notes…"
+                  rows="9"></textarea>
+              </div>
+              <div class="card card-study planner-card">
+                <div class="card-tag">🎯 Goals</div>
+                <h3>My Goals</h3>
+                <div class="goal-add-row">
+                  <input type="text" id="goal-input" placeholder="Add a goal for today…" maxlength="80" />
+                  <button class="btn btn-study btn-sm" id="goal-add-btn">+ Add</button>
+                </div>
+                <ul class="goal-list" id="goal-list"></ul>
+                <div class="goal-footer">
+                  <span class="goal-progress-text" id="goal-progress-text">0 of 0 goals done</span>
+                  <div class="progress-bar">
+                    <div class="progress-fill study-fill" id="goal-progress-fill"></div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="result-dots" id="result-dots"></div>
-          <div class="summary-text" id="summary-text"></div>
-          <button class="btn btn-tutor" id="tutor-restart-btn">🔄 Try Another Quiz</button>
+            <div class="planner-actions">
+              <button class="btn btn-green" id="planner-save-btn">💾 Save Plan</button>
+              <span class="planner-save-status" id="planner-save-status"></span>
+            </div>
+
+          </div><!-- /tab-planner-panel -->
+
+          <!-- ─ Panel: Reminders ─ -->
+          <div id="tab-reminders-panel" class="hidden">
+
+            <div class="reminders-header">
+              <div class="reminders-header-left">
+                <div class="reminders-title">Daily Habits 🌟</div>
+                <div class="reminders-sub" id="reminders-progress-text">0 of 8 done today</div>
+              </div>
+              <div class="reminders-streak hidden" id="reminders-streak">
+                🔥 <span id="reminders-streak-count">0</span> days
+              </div>
+            </div>
+
+            <div class="reminders-prog-wrap">
+              <div class="reminders-prog-fill" id="reminders-progress-fill" style="width:0%"></div>
+            </div>
+
+            <div class="reminders-list" id="reminders-list">
+              <p class="reminders-loading">Loading habits…</p>
+            </div>
+
+          </div><!-- /tab-reminders-panel -->
+
         </div>
 
       </div>
-    </section>
+    </div>
+
+    <!-- ══ AI COACH PAGE ════════════════════════════════════════════════ -->
+    <div class="page" id="page-coach">
+      <div class="page-hdr">
+        <div class="page-hdr-icon coach-icon-bg">🤖</div>
+        <div>
+          <h2>AI Coach</h2>
+          <p>Honest feedback and a personalised weekly plan, just for you.</p>
+        </div>
+      </div>
+      <div class="container">
+
+        <!-- Goals input -->
+        <div class="card">
+          <div class="card-tag">🎯 Your Goals</div>
+          <h3>What do you want to improve?</h3>
+          <textarea class="proof-textarea coach-goal-textarea" id="coach-goal-text"
+            placeholder="E.g. I want to get better at maths, sleep earlier, and stop wasting time on my phone…"
+            rows="3" maxlength="400"></textarea>
+          <p class="coach-or-label">Or pick from these:</p>
+          <div class="coach-preset-grid" id="coach-preset-grid"></div>
+        </div>
+
+        <button class="btn btn-green coach-generate-btn" id="coach-generate-btn">🚀 Generate My Plan</button>
+
+        <p class="coach-open-hint">Opens Claude AI in a new tab — your coach will ask questions and build your plan with you.</p>
+
+        <!-- ── Response AI Chat ── -->
+        <div class="rai-wrap">
+
+          <div class="rai-header">
+            <div class="rai-hdr-avatar">🤖</div>
+            <div class="rai-hdr-info">
+              <div class="rai-hdr-name">Response AI</div>
+              <div class="rai-hdr-status" id="rai-status">● Online</div>
+            </div>
+          </div>
+
+          <div class="rai-messages" id="rai-messages"></div>
+
+          <div class="rai-input-row hidden" id="rai-input-row">
+            <input type="text" class="rai-input" id="rai-input"
+                   placeholder="Ask a follow-up question…" maxlength="500" />
+            <button class="rai-send-btn" id="rai-send-btn" aria-label="Send">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              </svg>
+            </button>
+          </div>
+
+          <p class="rai-hint">Sends your full conversation to Claude AI — check the new tab for each response.</p>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ LEADERBOARD PAGE ════════════════════════════════════════════ -->
+    <div class="page" id="page-leaderboard">
+      <div class="page-hdr">
+        <div class="page-hdr-icon lb-icon-bg">🏆</div>
+        <div>
+          <h2>Leaderboard</h2>
+          <p>Top students ranked by XP — compete and climb!</p>
+        </div>
+      </div>
+      <div class="container">
+        <div class="lb-wrap">
+          <div class="lb-list" id="lb-list">
+            <div class="lb-loading">Loading rankings…</div>
+          </div>
+          <button class="btn btn-outline btn-sm lb-refresh-btn" id="lb-refresh-btn">🔄 Refresh</button>
+        </div>
+      </div>
+    </div>
 
   </main>
 
-  <!-- FOOTER -->
-  <footer>
-    <div class="footer-inner">
-      <div class="footer-logo">🌱 ResponsibleHub</div>
-      <p>Made with 💚 for students who want to change the world.</p>
-      <p class="footer-small">Be kind. Study hard. Stay green. 🌍</p>
-    </div>
-  </footer>
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="bnav-btn active" data-page="home">
+      <span class="bnav-icon">🏠</span>
+      <span class="bnav-label">Home</span>
+    </button>
+    <button class="bnav-btn" data-page="study">
+      <span class="bnav-icon">📚</span>
+      <span class="bnav-label">Study</span>
+    </button>
+    <button class="bnav-btn" data-page="eco">
+      <span class="bnav-icon">🌍</span>
+      <span class="bnav-label">Eco</span>
+    </button>
+    <button class="bnav-btn" data-page="planner">
+      <span class="bnav-icon">📅</span>
+      <span class="bnav-label">Plan</span>
+    </button>
+    <button class="bnav-btn" data-page="coach">
+      <span class="bnav-icon">🤖</span>
+      <span class="bnav-label">Coach</span>
+    </button>
+    <button class="bnav-btn" data-page="leaderboard">
+      <span class="bnav-icon">🏆</span>
+      <span class="bnav-label">Board</span>
+    </button>
+  </nav>
 
-  <div class="toast" id="toast"></div>
+</div>
 
-  <script src="js/main.js"></script>
+<div class="toast" id="toast"></div>
+
+<!-- Floating AI Tutor Button -->
+<button class="fab-tutor" id="fab-tutor" title="Ask AI Tutor">
+  <span class="fab-icon">✨</span>
+  <span class="fab-label">Ask AI Tutor</span>
+</button>
+
+<script src="js/main.js"></script>
 </body>
 </html>
