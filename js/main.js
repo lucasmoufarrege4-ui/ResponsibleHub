@@ -25,6 +25,7 @@ function navigateTo(page) {
   }
   if (page === 'home')  updateHomeView();
   if (page === 'coach') initCoachPage();
+  if (page === 'study') initStudyPage();
 }
 
 document.querySelectorAll('.bnav-btn').forEach(btn =>
@@ -43,6 +44,7 @@ sb.auth.onAuthStateChange(async (_event, session) => {
     updateHomeView();
     if (currentPage === 'planner') showPlannerApp();
     loadChallengeState(); // fire-and-forget — restores done/streak state after login
+    loadNotes();          // fire-and-forget — loads study notes into cache
   } else {
     sbProfile = null;
     updateTopBar();
@@ -1446,3 +1448,444 @@ document.getElementById('rai-send-btn').addEventListener('click', raiSendFollowu
 document.getElementById('rai-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') raiSendFollowup();
 });
+
+/* ─── QUIZ INTERATIVO ────────────────────────────────────────────────── */
+
+const QUIZ_DATA = {
+  math: {
+    label: '📐 Math',
+    questions: [
+      { q: 'What is 7 × 8?',
+        opts: ['54', '56', '48', '62'], ans: 1 },
+      { q: 'What is 15% of 200?',
+        opts: ['20', '25', '30', '35'], ans: 2 },
+      { q: 'A triangle has angles of 45° and 60°. What is the third angle?',
+        opts: ['70°', '75°', '80°', '85°'], ans: 1 },
+      { q: 'What is the square root of 144?',
+        opts: ['11', '12', '13', '14'], ans: 1 },
+      { q: 'If x + 9 = 24, what is x?',
+        opts: ['13', '14', '15', '16'], ans: 2 },
+    ],
+  },
+  english: {
+    label: '📖 English',
+    questions: [
+      { q: 'Which word is a synonym for "happy"?',
+        opts: ['Sad', 'Cheerful', 'Angry', 'Tired'], ans: 1 },
+      { q: 'What type of word is "quickly"?',
+        opts: ['Noun', 'Adjective', 'Verb', 'Adverb'], ans: 3 },
+      { q: 'Which sentence uses "they\'re" correctly?',
+        opts: ['Their going to the park', 'There happy today', "They're at the library", 'There playing outside'], ans: 2 },
+      { q: 'Which of these is a metaphor?',
+        opts: ['She ran like the wind', 'Life is a journey', 'The stars twinkled brightly', 'He shouted loudly'], ans: 1 },
+      { q: 'What is the plural of "child"?',
+        opts: ['Childs', 'Childes', 'Children', 'Childrens'], ans: 2 },
+    ],
+  },
+  science: {
+    label: '🔬 Science',
+    questions: [
+      { q: 'What gas do plants absorb during photosynthesis?',
+        opts: ['Oxygen', 'Nitrogen', 'Carbon dioxide', 'Hydrogen'], ans: 2 },
+      { q: 'What is the chemical symbol for water?',
+        opts: ['WA', 'H₂O', 'HO₂', 'W₂O'], ans: 1 },
+      { q: 'How many bones does an adult human body have?',
+        opts: ['196', '206', '216', '226'], ans: 1 },
+      { q: 'Which planet is closest to the Sun?',
+        opts: ['Venus', 'Earth', 'Mars', 'Mercury'], ans: 3 },
+      { q: 'What force keeps us on the ground?',
+        opts: ['Magnetism', 'Friction', 'Gravity', 'Tension'], ans: 2 },
+    ],
+  },
+  geography: {
+    label: '🌍 Geography',
+    questions: [
+      { q: 'What is the largest continent by area?',
+        opts: ['Africa', 'North America', 'Asia', 'Europe'], ans: 2 },
+      { q: 'What is the capital city of Australia?',
+        opts: ['Sydney', 'Melbourne', 'Canberra', 'Brisbane'], ans: 2 },
+      { q: 'Which river is the longest in the world?',
+        opts: ['Amazon', 'Mississippi', 'Nile', 'Congo'], ans: 2 },
+      { q: 'What divides Earth into Northern and Southern hemispheres?',
+        opts: ['Tropic of Cancer', 'Prime Meridian', 'Equator', 'Date Line'], ans: 2 },
+      { q: 'Which ocean is the largest?',
+        opts: ['Atlantic', 'Indian', 'Arctic', 'Pacific'], ans: 3 },
+    ],
+  },
+  art: {
+    label: '🎨 Art',
+    questions: [
+      { q: 'Who painted the Mona Lisa?',
+        opts: ['Vincent van Gogh', 'Leonardo da Vinci', 'Pablo Picasso', 'Michelangelo'], ans: 1 },
+      { q: 'What are the three primary colours?',
+        opts: ['Red, green, blue', 'Red, yellow, blue', 'Green, yellow, orange', 'Pink, purple, blue'], ans: 1 },
+      { q: 'What is it called when a sculpture is made by cutting away material?',
+        opts: ['Casting', 'Modelling', 'Carving', 'Welding'], ans: 2 },
+      { q: 'Which art movement is most associated with Pablo Picasso?',
+        opts: ['Impressionism', 'Surrealism', 'Cubism', 'Realism'], ans: 2 },
+      { q: 'What do you mix with watercolour paint to thin it?',
+        opts: ['Oil', 'Vinegar', 'Milk', 'Water'], ans: 3 },
+    ],
+  },
+};
+
+let quizSubject  = 'math';
+let quizQIndex   = 0;
+let quizScore    = 0;
+let quizAnswered = false;
+let quizDone     = false;
+
+function initQuiz(subject) {
+  quizSubject  = subject;
+  quizQIndex   = 0;
+  quizScore    = 0;
+  quizAnswered = false;
+  quizDone     = false;
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const body = document.getElementById('quiz-body');
+  if (!body) return;
+
+  if (quizDone) {
+    const total = QUIZ_DATA[quizSubject].questions.length;
+    const pct = quizScore / total;
+    const msg = pct === 1 ? '🌟 Perfect score!' : pct >= .8 ? '🔥 Excellent!' :
+                pct >= .6 ? '👍 Well done!'     : pct >= .4 ? '📚 Keep practising!' : '💪 Study harder!';
+    body.innerHTML = `
+      <div class="quiz-result">
+        <div class="quiz-result-score">${quizScore}/${total}</div>
+        <div class="quiz-result-label">correct answers</div>
+        <div class="quiz-result-msg">${msg}</div>
+        <div class="quiz-xp-earned">🌟 +10 XP earned!</div><br>
+        <button class="btn btn-study btn-sm" id="quiz-retry-btn">🔄 Try Again</button>
+      </div>`;
+    document.getElementById('quiz-retry-btn').addEventListener('click', () => initQuiz(quizSubject));
+    return;
+  }
+
+  const q     = QUIZ_DATA[quizSubject].questions[quizQIndex];
+  const total = QUIZ_DATA[quizSubject].questions.length;
+  const pct   = (quizQIndex / total) * 100;
+
+  body.innerHTML = `
+    <div class="quiz-question-wrap">
+      <div class="quiz-progress-row">
+        <span class="quiz-progress-text">Q${quizQIndex + 1} of ${total}</span>
+        <div class="quiz-progress-track">
+          <div class="quiz-progress-fill" style="width:${pct}%"></div>
+        </div>
+      </div>
+      <div class="quiz-q-text">${escHtml(q.q)}</div>
+    </div>
+    <div class="quiz-options">
+      ${q.opts.map((opt, i) => `
+        <button class="quiz-option-btn" data-idx="${i}">${escHtml(opt)}</button>
+      `).join('')}
+    </div>`;
+
+  body.querySelectorAll('.quiz-option-btn').forEach(btn =>
+    btn.addEventListener('click', () => answerQuiz(+btn.dataset.idx))
+  );
+}
+
+function answerQuiz(idx) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+
+  const q       = QUIZ_DATA[quizSubject].questions[quizQIndex];
+  const correct = q.ans === idx;
+  if (correct) quizScore++;
+
+  // Colour correct green, chosen-wrong red; disable all
+  document.querySelectorAll('#quiz-body .quiz-option-btn').forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.ans) btn.classList.add('correct');
+    else if (i === idx && !correct) btn.classList.add('wrong');
+  });
+
+  // Auto-advance after 1 second
+  setTimeout(() => {
+    quizQIndex++;
+    quizAnswered = false;
+    if (quizQIndex >= QUIZ_DATA[quizSubject].questions.length) {
+      quizDone = true;
+      updateSubjectProgress(quizSubject, quizScore);
+      addXP(10);
+    }
+    renderQuiz();
+  }, 1000);
+}
+
+document.getElementById('quiz-tabs').addEventListener('click', e => {
+  const btn = e.target.closest('.quiz-tab');
+  if (!btn) return;
+  document.querySelectorAll('.quiz-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  initQuiz(btn.dataset.subject);
+});
+
+/* ─── POMODORO TIMER ─────────────────────────────────────────────────── */
+
+const POMO_STUDY_SECS    = 25 * 60;
+const POMO_BREAK_SECS    = 5  * 60;
+const POMO_CIRCUMFERENCE = 2 * Math.PI * 52; // ≈ 326.73 for r=52
+
+let pomoMode     = 'study';
+let pomoTimeLeft = POMO_STUDY_SECS;
+let pomoRunning  = false;
+let pomoSessions = 0;
+let pomoTimer    = null;
+let pomoXPGiven  = false;
+
+function renderPomodoro() {
+  const total    = pomoMode === 'study' ? POMO_STUDY_SECS : POMO_BREAK_SECS;
+  const progress = pomoTimeLeft / total; // 1 at start → 0 at end
+  const offset   = POMO_CIRCUMFERENCE * (1 - progress);
+
+  const mm = String(Math.floor(pomoTimeLeft / 60)).padStart(2, '0');
+  const ss = String(pomoTimeLeft % 60).padStart(2, '0');
+
+  document.getElementById('pomo-time').textContent        = `${mm}:${ss}`;
+  document.getElementById('pomo-ring-fill').style.strokeDashoffset = offset;
+  document.getElementById('pomo-ring-fill').classList.toggle('break-mode', pomoMode === 'break');
+  document.getElementById('pomo-mode-label').textContent  = pomoMode === 'study' ? '📚 Study Time' : '☕ Break Time';
+  document.getElementById('pomo-mode-label').classList.toggle('break-mode', pomoMode === 'break');
+  document.getElementById('pomo-sessions').textContent    = pomoSessions;
+  document.getElementById('pomo-start-btn').disabled      = pomoRunning;
+  document.getElementById('pomo-pause-btn').disabled      = !pomoRunning;
+}
+
+function tickPomodoro() {
+  if (!pomoRunning) return;
+  pomoTimeLeft--;
+  renderPomodoro();
+
+  if (pomoTimeLeft > 0) return;
+
+  // Session finished
+  clearInterval(pomoTimer);
+  pomoRunning = false;
+
+  if (pomoMode === 'study') {
+    // Complete study session — award XP once
+    pomoSessions++;
+    if (!pomoXPGiven) { addXP(20); pomoXPGiven = true; }
+    document.getElementById('pomo-status').textContent = '🎉 Study session complete!';
+    showToast('⏰ Time for a break! Well done! 🎉', 'study-toast');
+    renderPomodoro();
+    // Auto-start 5-min break after 1.5 s
+    setTimeout(() => {
+      pomoMode     = 'break';
+      pomoTimeLeft = POMO_BREAK_SECS;
+      pomoRunning  = true;
+      pomoXPGiven  = false;
+      document.getElementById('pomo-status').textContent = '';
+      clearInterval(pomoTimer);
+      pomoTimer = setInterval(tickPomodoro, 1000);
+      renderPomodoro();
+    }, 1500);
+
+  } else {
+    // Break finished
+    pomoMode     = 'study';
+    pomoTimeLeft = POMO_STUDY_SECS;
+    document.getElementById('pomo-status').textContent = '💪 Ready for the next session!';
+    showToast('☕ Break over — back to work! 💪', 'eco-toast');
+    renderPomodoro();
+  }
+}
+
+document.getElementById('pomo-start-btn').addEventListener('click', () => {
+  if (pomoRunning) return;
+  pomoRunning = true;
+  pomoXPGiven = false;
+  clearInterval(pomoTimer);
+  pomoTimer = setInterval(tickPomodoro, 1000);
+  renderPomodoro();
+});
+
+document.getElementById('pomo-pause-btn').addEventListener('click', () => {
+  pomoRunning = false;
+  clearInterval(pomoTimer);
+  renderPomodoro();
+});
+
+document.getElementById('pomo-reset-btn').addEventListener('click', () => {
+  clearInterval(pomoTimer);
+  pomoRunning  = false;
+  pomoMode     = 'study';
+  pomoTimeLeft = POMO_STUDY_SECS;
+  pomoXPGiven  = false;
+  document.getElementById('pomo-status').textContent = '';
+  renderPomodoro();
+});
+
+/* ─── NOTAS E RESUMOS ────────────────────────────────────────────────── */
+
+let notesCache = [];
+
+function noteSubjectEmoji(subject) {
+  return { Math: '📐', English: '📖', Science: '🔬', Geography: '🌍', Art: '🎨', Other: '📋' }[subject] || '📋';
+}
+
+async function loadNotes() {
+  if (!sbUser) { renderNotes(); return; }
+  const { data, error } = await sb.from('study_notes')
+    .select('*').eq('user_id', sbUser.id)
+    .order('created_at', { ascending: false }).limit(30);
+  if (!error) notesCache = data || [];
+  renderNotes();
+}
+
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  const hint = document.getElementById('notes-login-hint');
+  if (!list) return;
+  if (hint) hint.classList.toggle('hidden', !!sbUser);
+
+  if (!notesCache.length) {
+    list.innerHTML = `<p class="notes-empty">${
+      sbUser
+        ? 'No notes yet — save your first one above! 📝'
+        : 'Sign in to save and sync your notes.'
+    }</p>`;
+    return;
+  }
+
+  list.innerHTML = notesCache.map(n => `
+    <div class="note-card">
+      <div class="note-card-hdr">
+        <div class="note-card-title">${escHtml(n.title || 'Untitled')}</div>
+        <span class="note-card-subject">${noteSubjectEmoji(n.subject)} ${escHtml(n.subject)}</span>
+      </div>
+      <div class="note-card-content">${escHtml(n.content)}</div>
+      <div class="note-card-footer">
+        <span class="note-card-date">${new Date(n.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+        <button class="note-delete-btn" data-id="${n.id}">🗑 Delete</button>
+      </div>
+    </div>`).join('');
+
+  list.querySelectorAll('.note-delete-btn').forEach(btn =>
+    btn.addEventListener('click', () => deleteNote(btn.dataset.id))
+  );
+}
+
+async function saveNote() {
+  if (!sbUser) { showToast('Sign in to save notes! 🔑', ''); return; }
+  const subject = document.getElementById('notes-subject').value;
+  const title   = document.getElementById('notes-title').value.trim();
+  const content = document.getElementById('notes-content').value.trim();
+  if (!content) { showToast('Write something in your note first! ✍️', ''); return; }
+
+  const btn = document.getElementById('notes-save-btn');
+  btn.disabled    = true;
+  btn.textContent = 'Saving…';
+
+  const { data, error } = await sb.from('study_notes').insert({
+    user_id: sbUser.id, subject, title: title || 'Untitled', content,
+  }).select().single();
+
+  if (!error && data) {
+    notesCache.unshift(data);
+    document.getElementById('notes-title').value   = '';
+    document.getElementById('notes-content').value = '';
+    renderNotes();
+    showToast('📝 Note saved!', 'study-toast');
+  } else {
+    showToast('Couldn\'t save note — check the console.', '');
+    console.error('[Notes] save error:', error);
+  }
+  btn.disabled    = false;
+  btn.textContent = '💾 Save Note';
+}
+
+async function deleteNote(id) {
+  if (!sbUser) return;
+  const { error } = await sb.from('study_notes').delete().eq('id', id).eq('user_id', sbUser.id);
+  if (!error) {
+    notesCache = notesCache.filter(n => n.id !== id);
+    renderNotes();
+    showToast('🗑 Note deleted', '');
+  }
+}
+
+document.getElementById('notes-save-btn').addEventListener('click', saveNote);
+document.getElementById('notes-content').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) saveNote();
+});
+
+/* ─── PROGRESSO POR DISCIPLINA ──────────────────────────────────────── */
+
+const SUBJECT_META = [
+  { key: 'math',      label: 'Math',      emoji: '📐' },
+  { key: 'english',   label: 'English',   emoji: '📖' },
+  { key: 'science',   label: 'Science',   emoji: '🔬' },
+  { key: 'geography', label: 'Geography', emoji: '🌍' },
+  { key: 'art',       label: 'Art',       emoji: '🎨' },
+];
+
+let subjectProgress = {};
+
+function loadSubjectProgress() {
+  try {
+    const stored = localStorage.getItem('rh_subject_progress');
+    if (stored) subjectProgress = JSON.parse(stored);
+  } catch { /* ignore */ }
+  // Ensure all subjects exist
+  SUBJECT_META.forEach(s => {
+    if (!subjectProgress[s.key])
+      subjectProgress[s.key] = { quizzes: 0, totalScore: 0, bestScore: 0 };
+  });
+}
+
+function saveSubjectProgressLocal() {
+  try { localStorage.setItem('rh_subject_progress', JSON.stringify(subjectProgress)); } catch { /* ignore */ }
+}
+
+function updateSubjectProgress(subjectKey, score) {
+  const p = subjectProgress[subjectKey];
+  p.quizzes++;
+  p.totalScore += score;
+  if (score > p.bestScore) p.bestScore = score;
+  saveSubjectProgressLocal();
+  renderSubjectProgress();
+}
+
+function renderSubjectProgress() {
+  const grid = document.getElementById('subject-progress-grid');
+  if (!grid) return;
+  const totalQ = 5; // questions per quiz
+  grid.innerHTML = SUBJECT_META.map(s => {
+    const p   = subjectProgress[s.key] || { quizzes: 0, bestScore: 0 };
+    const pct = p.quizzes > 0 ? Math.round((p.bestScore / totalQ) * 100) : 0;
+    return `
+      <div class="subject-prog-item">
+        <div class="subject-prog-emoji">${s.emoji}</div>
+        <div class="subject-prog-name">${s.label}</div>
+        <div class="subject-prog-bar-wrap">
+          <div class="subject-prog-bar-fill" style="width:${pct}%"></div>
+        </div>
+        <div class="subject-prog-stats">
+          ${p.quizzes} quiz${p.quizzes !== 1 ? 'zes' : ''}<br>
+          Best: ${p.bestScore}/${totalQ}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ─── STUDY PAGE INIT ────────────────────────────────────────────────── */
+
+// Called by navigateTo('study') — only loads notes if not already in cache
+function initStudyPage() {
+  if (sbUser && notesCache.length === 0) loadNotes();
+  else renderNotes();
+  renderSubjectProgress();
+}
+
+// ── Boot new study components (runs once on page load) ───────────────
+loadSubjectProgress();
+renderSubjectProgress();
+renderPomodoro();
+initQuiz('math');

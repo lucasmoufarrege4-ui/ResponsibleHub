@@ -213,6 +213,85 @@
         </div>
 
       </div>
+
+      <!-- ── Study Extras ─────────────────────────────────────────────── -->
+      <div class="container study-extras">
+
+        <!-- 1. Quiz Interativo -->
+        <div class="card card-study" id="quiz-card">
+          <div class="card-tag">🧠 Quiz Interativo</div>
+          <h3>Test Your Knowledge!</h3>
+          <div class="quiz-tabs" id="quiz-tabs">
+            <button class="quiz-tab active" data-subject="math">📐 Math</button>
+            <button class="quiz-tab" data-subject="english">📖 English</button>
+            <button class="quiz-tab" data-subject="science">🔬 Science</button>
+            <button class="quiz-tab" data-subject="geography">🌍 Geography</button>
+            <button class="quiz-tab" data-subject="art">🎨 Art</button>
+          </div>
+          <div class="quiz-body" id="quiz-body"></div>
+        </div>
+
+        <!-- Row: Pomodoro + Notes -->
+        <div class="study-two-col">
+
+          <!-- 2. Pomodoro Timer -->
+          <div class="card card-study" id="pomodoro-card">
+            <div class="card-tag">🍅 Pomodoro Timer</div>
+            <h3>Focus Sessions</h3>
+            <div class="pomo-mode-label" id="pomo-mode-label">📚 Study Time</div>
+            <div class="pomo-ring-wrap">
+              <svg class="pomo-ring" viewBox="0 0 120 120" width="160" height="160" aria-hidden="true">
+                <circle class="pomo-ring-bg"   cx="60" cy="60" r="52"/>
+                <circle class="pomo-ring-fill" id="pomo-ring-fill" cx="60" cy="60" r="52"
+                        stroke-dasharray="326.73" stroke-dashoffset="0"/>
+              </svg>
+              <div class="pomo-time" id="pomo-time">25:00</div>
+            </div>
+            <div class="pomo-session-count">🍅 <span id="pomo-sessions">0</span> pomodoros today</div>
+            <div class="pomo-status" id="pomo-status"></div>
+            <div class="pomo-controls">
+              <button class="btn btn-study btn-sm" id="pomo-start-btn">▶ Start</button>
+              <button class="btn btn-outline btn-sm" id="pomo-pause-btn">⏸ Pause</button>
+              <button class="btn btn-outline btn-sm" id="pomo-reset-btn">↺ Reset</button>
+            </div>
+          </div>
+
+          <!-- 3. Notas e Resumos -->
+          <div class="card card-study" id="notes-card">
+            <div class="card-tag">📝 Notas e Resumos</div>
+            <h3>My Study Notes</h3>
+            <div class="notes-form">
+              <select class="notes-subject-select" id="notes-subject">
+                <option value="Math">📐 Math</option>
+                <option value="English">📖 English</option>
+                <option value="Science">🔬 Science</option>
+                <option value="Geography">🌍 Geography</option>
+                <option value="Art">🎨 Art</option>
+                <option value="Other">📋 Other</option>
+              </select>
+              <input type="text" class="notes-title-input" id="notes-title"
+                     placeholder="Note title…" maxlength="60"/>
+              <textarea class="notes-content-textarea" id="notes-content"
+                        placeholder="Write your notes here…" rows="3" maxlength="1000"></textarea>
+              <div class="notes-form-footer">
+                <button class="btn btn-study btn-sm" id="notes-save-btn">💾 Save Note</button>
+                <span class="notes-login-hint hidden" id="notes-login-hint">Sign in to save!</span>
+              </div>
+            </div>
+            <div class="notes-list" id="notes-list"></div>
+          </div>
+
+        </div><!-- /study-two-col -->
+
+        <!-- 4. Progresso por Disciplina -->
+        <div class="card card-study" id="subject-progress-card">
+          <div class="card-tag">📊 Progresso por Disciplina</div>
+          <h3>My Subject Progress</h3>
+          <div class="subject-progress-grid" id="subject-progress-grid"></div>
+        </div>
+
+      </div><!-- /study-extras -->
+
     </div>
 
     <!-- ══ ECO PAGE ═══════════════════════════════════════════════════ -->

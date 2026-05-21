@@ -1,4 +1,22 @@
 -- ============================================================
+-- 7. STUDY NOTES — run this in Supabase SQL Editor to enable notes saving
+-- ============================================================
+-- create table if not exists public.study_notes (
+--   id         uuid        not null default gen_random_uuid() primary key,
+--   user_id    uuid        not null references public.profiles(id) on delete cascade,
+--   subject    text        not null default 'Other',
+--   title      text        not null default '',
+--   content    text        not null default '',
+--   created_at timestamptz not null default now()
+-- );
+-- alter table public.study_notes enable row level security;
+-- create policy "study_notes_all"
+--   on public.study_notes for all
+--   using  (auth.uid() = user_id)
+--   with check (auth.uid() = user_id);
+-- ============================================================
+
+-- ============================================================
 -- ResponsibleHub — Supabase Setup
 -- Run this entire file in your Supabase SQL Editor:
 --   https://app.supabase.com → your project → SQL Editor → New query
