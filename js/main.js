@@ -1462,8 +1462,19 @@ document.getElementById('rai-input').addEventListener('keydown', e => {
 
 /* ─── QUIZ INTERATIVO ────────────────────────────────────────────────── */
 
-// ── 200-question bank: 40 per subject, 5 picked randomly each attempt ──
-const QUIZ_DATA = {
+// Your Anthropic API key — required for AI-generated quizzes.
+// Get one at https://console.anthropic.com → API Keys
+const ANTHROPIC_KEY = '';  // ← paste your key here
+
+const QUIZ_SUBJECTS = {
+  math:      '📐 Math',
+  english:   '📖 English',
+  science:   '🔬 Science',
+  geography: '🌍 Geography',
+  art:       '🎨 Art',
+};
+
+const UNUSED_QUIZ_DATA = {
   math: {
     label: '📐 Math',
     questions: [
@@ -1720,69 +1731,154 @@ const QUIZ_DATA = {
   },
 };
 
-// Fisher-Yates shuffle — returns a new shuffled copy of the array
-function shuffleArray(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-const QUIZ_QUESTIONS_PER_ROUND = 5;
-
 let quizSubject   = 'math';
-let quizQuestions = [];    // the 5 randomly selected questions for this attempt
+let quizTopic     = '';
+let quizQuestions = [];
 let quizQIndex    = 0;
 let quizScore     = 0;
 let quizAnswered  = false;
 let quizDone      = false;
+let quizLoading   = false;
 
 function initQuiz(subject) {
   quizSubject   = subject;
+  quizTopic     = '';
+  quizQuestions = [];
   quizQIndex    = 0;
   quizScore     = 0;
   quizAnswered  = false;
   quizDone      = false;
-  // Pick QUIZ_QUESTIONS_PER_ROUND random questions from the full 40-question pool
-  quizQuestions = shuffleArray(QUIZ_DATA[subject].questions).slice(0, QUIZ_QUESTIONS_PER_ROUND);
+  quizLoading   = false;
   renderQuiz();
+}
+
+async function generateQuiz() {
+  const topicInput = document.getElementById('quiz-topic-input');
+  const topic = topicInput ? topicInput.value.trim() : '';
+  if (!topic) { showToast('Please enter a topic first!', ''); return; }
+  if (!ANTHROPIC_KEY) {
+    showToast('Add your Anthropic API key in main.js to enable AI quizzes.', '');
+    return;
+  }
+
+  quizTopic     = topic;
+  quizLoading   = true;
+  quizDone      = false;
+  quizQuestions = [];
+  renderQuiz();
+
+  try {
+    const subjectLabel = QUIZ_SUBJECTS[quizSubject] || quizSubject;
+    const prompt =
+      `Generate exactly 5 multiple-choice quiz questions about "${topic}" relevant to ${subjectLabel}. ` +
+      `Each question must have exactly 4 answer options with one correct answer.\n\n` +
+      `Return ONLY a valid JSON array — no prose, no markdown fences — with this exact structure:\n` +
+      `[{"q":"Question?","opts":["A","B","C","D"],"ans":0}]\n\n` +
+      `"ans" is the 0-based index of the correct option.`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-allow-browser': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    const data  = await res.json();
+    const text  = data.content?.[0]?.text || '';
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('No JSON in response');
+    const questions = JSON.parse(match[0]);
+    if (!Array.isArray(questions) || !questions.length) throw new Error('Empty quiz returned');
+
+    quizQuestions = questions;
+    quizQIndex    = 0;
+    quizScore     = 0;
+    quizAnswered  = false;
+    quizDone      = false;
+    quizLoading   = false;
+    renderQuiz();
+
+  } catch (err) {
+    quizLoading   = false;
+    quizQuestions = [];
+    renderQuiz();
+    showToast(`Could not generate quiz: ${err.message}`, '');
+  }
 }
 
 function renderQuiz() {
   const body = document.getElementById('quiz-body');
   if (!body) return;
 
+  /* ── Loading ── */
+  if (quizLoading) {
+    body.innerHTML = `
+      <div class="quiz-loading">
+        <div class="quiz-spinner"></div>
+        <p class="quiz-loading-text">Generating your <strong>${escHtml(quizTopic)}</strong> quiz…</p>
+      </div>`;
+    return;
+  }
+
+  /* ── Topic input ── */
+  if (!quizQuestions.length && !quizDone) {
+    body.innerHTML = `
+      <div class="quiz-topic-form">
+        <label class="quiz-topic-label">What topic do you want to study?</label>
+        <div class="quiz-topic-row">
+          <input id="quiz-topic-input" class="quiz-topic-input" type="text"
+            placeholder="e.g. Fractions, World War 2, Photosynthesis…" maxlength="80" autocomplete="off">
+          <button class="btn btn-study btn-sm" id="quiz-generate-btn">✨ Generate Quiz</button>
+        </div>
+      </div>`;
+    const inp = document.getElementById('quiz-topic-input');
+    document.getElementById('quiz-generate-btn').addEventListener('click', generateQuiz);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') generateQuiz(); });
+    return;
+  }
+
+  /* ── Result ── */
   if (quizDone) {
     const total = quizQuestions.length;
     const pct   = quizScore / total;
-    const msg   = pct === 1   ? '🌟 Perfect score!'     :
-                  pct >= .8   ? '🔥 Excellent!'          :
-                  pct >= .6   ? '👍 Well done!'          :
-                  pct >= .4   ? '📚 Keep practising!'    : '💪 Study harder!';
+    const msg   = pct === 1 ? '🌟 Perfect score!'  :
+                  pct >= .8 ? '🔥 Excellent!'       :
+                  pct >= .6 ? '👍 Well done!'       :
+                  pct >= .4 ? '📚 Keep practising!' : '💪 Study harder!';
     body.innerHTML = `
       <div class="quiz-result">
+        <div class="quiz-result-topic">📖 ${escHtml(quizTopic)}</div>
         <div class="quiz-result-score">${quizScore}/${total}</div>
         <div class="quiz-result-label">correct answers</div>
         <div class="quiz-result-msg">${msg}</div>
         <div class="quiz-xp-earned">🌟 +10 XP earned!</div><br>
-        <button class="btn btn-study btn-sm" id="quiz-retry-btn">🔄 New Questions</button>
+        <button class="btn btn-study btn-sm" id="quiz-retry-btn">🔄 Try Another Topic</button>
       </div>`;
     document.getElementById('quiz-retry-btn').addEventListener('click', () => initQuiz(quizSubject));
     return;
   }
 
+  /* ── Active question ── */
   const q   = quizQuestions[quizQIndex];
   const tot = quizQuestions.length;
-  const pct = (quizQIndex / tot) * 100;
+  const bar = (quizQIndex / tot) * 100;
 
   body.innerHTML = `
     <div class="quiz-question-wrap">
+      <div class="quiz-topic-chip">📖 ${escHtml(quizTopic)}</div>
       <div class="quiz-progress-row">
         <span class="quiz-progress-text">Q${quizQIndex + 1} of ${tot}</span>
         <div class="quiz-progress-track">
-          <div class="quiz-progress-fill" style="width:${pct}%"></div>
+          <div class="quiz-progress-fill" style="width:${bar}%"></div>
         </div>
       </div>
       <div class="quiz-q-text">${escHtml(q.q)}</div>
@@ -1806,20 +1902,18 @@ function answerQuiz(idx) {
   const correct = q.ans === idx;
   if (correct) quizScore++;
 
-  // Colour correct green, chosen-wrong red; disable all
   document.querySelectorAll('#quiz-body .quiz-option-btn').forEach((btn, i) => {
     btn.disabled = true;
-    if (i === q.ans)             btn.classList.add('correct');
+    if (i === q.ans)                btn.classList.add('correct');
     else if (i === idx && !correct) btn.classList.add('wrong');
   });
 
-  // Auto-advance after 1 second
   setTimeout(() => {
     quizQIndex++;
     quizAnswered = false;
     if (quizQIndex >= quizQuestions.length) {
       quizDone = true;
-      updateSubjectProgress(quizSubject, quizScore);
+      updateSubjectProgress(quizSubject, quizScore, quizQuestions.length);
       addXP(10);
     }
     renderQuiz();
@@ -2052,11 +2146,14 @@ function saveSubjectProgressLocal() {
   try { localStorage.setItem('rh_subject_progress', JSON.stringify(subjectProgress)); } catch { /* ignore */ }
 }
 
-function updateSubjectProgress(subjectKey, score) {
+function updateSubjectProgress(subjectKey, score, total) {
   const p = subjectProgress[subjectKey];
   p.quizzes++;
   p.totalScore += score;
-  if (score > p.bestScore) p.bestScore = score;
+  if (score > p.bestScore) {
+    p.bestScore = score;
+    p.bestTotal = total;
+  }
   saveSubjectProgressLocal();
   renderSubjectProgress();
 }
@@ -2064,10 +2161,10 @@ function updateSubjectProgress(subjectKey, score) {
 function renderSubjectProgress() {
   const grid = document.getElementById('subject-progress-grid');
   if (!grid) return;
-  const totalQ = 5; // questions per quiz
   grid.innerHTML = SUBJECT_META.map(s => {
-    const p   = subjectProgress[s.key] || { quizzes: 0, bestScore: 0 };
-    const pct = p.quizzes > 0 ? Math.round((p.bestScore / totalQ) * 100) : 0;
+    const p   = subjectProgress[s.key] || { quizzes: 0, bestScore: 0, bestTotal: 5 };
+    const tot = p.bestTotal || 5;
+    const pct = p.quizzes > 0 ? Math.round((p.bestScore / tot) * 100) : 0;
     return `
       <div class="subject-prog-item">
         <div class="subject-prog-emoji">${s.emoji}</div>
@@ -2077,7 +2174,7 @@ function renderSubjectProgress() {
         </div>
         <div class="subject-prog-stats">
           ${p.quizzes} quiz${p.quizzes !== 1 ? 'zes' : ''}<br>
-          Best: ${p.bestScore}/${totalQ}
+          Best: ${p.bestScore}/${tot}
         </div>
       </div>`;
   }).join('');

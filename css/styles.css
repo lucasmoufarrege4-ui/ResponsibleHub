@@ -1709,6 +1709,56 @@ body {
   line-height: 1.4;
 }
 
+/* ── QUIZ TOPIC INPUT ────────────────────────────────────────────── */
+.quiz-topic-form  { padding: .4rem 0 .2rem; }
+.quiz-topic-label {
+  display: block;
+  font-size: .88rem; font-weight: 700;
+  color: var(--forest-dark); margin-bottom: .65rem;
+}
+.quiz-topic-row {
+  display: flex; gap: .55rem; align-items: center;
+}
+.quiz-topic-input {
+  flex: 1;
+  padding: .55rem .85rem;
+  border: 2px solid #d1fae5; border-radius: .65rem;
+  font-size: .9rem; font-family: inherit;
+  outline: none; transition: border-color .2s;
+  background: #fff;
+}
+.quiz-topic-input:focus { border-color: var(--forest-mid); }
+
+/* ── QUIZ LOADING STATE ──────────────────────────────────────────── */
+.quiz-loading {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 1rem; padding: 2.2rem 1rem;
+}
+.quiz-spinner {
+  width: 38px; height: 38px;
+  border: 4px solid #d1fae5;
+  border-top-color: var(--forest-mid);
+  border-radius: 50%;
+  animation: quiz-spin .75s linear infinite;
+}
+@keyframes quiz-spin { to { transform: rotate(360deg); } }
+.quiz-loading-text { font-size: .9rem; color: var(--muted); text-align: center; }
+
+/* ── QUIZ TOPIC CHIP (shown during active quiz) ──────────────────── */
+.quiz-topic-chip {
+  display: inline-block;
+  background: #d1fae5; color: var(--forest-dark);
+  font-size: .74rem; font-weight: 700;
+  padding: .18rem .65rem; border-radius: 99px;
+  margin-bottom: .45rem;
+}
+
+/* ── QUIZ RESULT TOPIC LABEL ─────────────────────────────────────── */
+.quiz-result-topic {
+  font-size: .85rem; font-weight: 700;
+  color: var(--forest-mid); margin-bottom: .35rem;
+}
+
 /* ── RESPONSIVE (new sections) ───────────────────────────────────── */
 @media (max-width: 900px) {
   .subject-progress-grid { grid-template-columns: repeat(3, 1fr); }
@@ -1718,4 +1768,5 @@ body {
   .subject-progress-grid  { grid-template-columns: repeat(3, 1fr); }
   .quiz-tabs              { gap: .28rem; }
   .quiz-tab               { padding: .3rem .6rem; font-size: .72rem; }
+  .quiz-topic-row         { flex-direction: column; align-items: stretch; }
 }
