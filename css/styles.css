@@ -1789,8 +1789,7 @@ body {
 }
 
 /* ================================================================
-   ECO EXTRAS — Carbon Calculator, Progress Calendar, Impact Map,
-                Personalised Tips
+   ECO EXTRAS — Carbon Calculator, Progress Calendar, Personalised Tips
    ================================================================ */
 
 /* ── Eco Tips Banner ─────────────────────────────────────────────── */
@@ -1801,9 +1800,6 @@ body {
   padding: .55rem .9rem;
   font-size: .8rem; color: var(--forest-dark); font-weight: 600;
   margin-bottom: .6rem; text-align: center;
-}
-.impact-map-hint {
-  font-size: .78rem; color: var(--muted); margin-bottom: .7rem; text-align: center;
 }
 
 /* ── Eco Extras container ────────────────────────────────────────── */
@@ -1853,46 +1849,6 @@ body {
   border-radius: 3px; flex-shrink: 0;
 }
 
-/* ── World Impact Map ────────────────────────────────────────────── */
-.world-map-svg {
-  width: 100%; border-radius: var(--radius-sm);
-  display: block; cursor: default;
-}
-.hotspot { cursor: pointer; outline: none; }
-.hotspot:focus .hotspot-pulse,
-.hotspot:hover .hotspot-pulse { r: 18; opacity: .35; }
-@keyframes pulse-ring {
-  0%   { r: 12; opacity: .25; }
-  70%  { r: 22; opacity: 0; }
-  100% { r: 12; opacity: 0; }
-}
-.hotspot-pulse {
-  animation: pulse-ring 2.2s ease-out infinite;
-  transform-box: fill-box; transform-origin: center;
-}
-.hotspot-panel {
-  margin-top: .8rem;
-}
-.hotspot-panel.hidden { display: none; }
-.hotspot-info-card {
-  background: var(--card-bg);
-  border-radius: var(--radius-sm);
-  padding: .9rem 1rem;
-  box-shadow: var(--shadow);
-  display: flex; flex-direction: column; gap: .45rem;
-}
-.hotspot-info-label {
-  font-size: 1rem; font-weight: 800; color: var(--forest-dark);
-}
-.hotspot-info-fact   { font-size: .83rem; color: var(--text-mid); line-height: 1.55; }
-.hotspot-info-action { font-size: .83rem; color: var(--text-mid); line-height: 1.55; }
-.hotspot-close-btn {
-  align-self: flex-end;
-  background: var(--mint-pale); border: none; border-radius: 20px;
-  padding: .3rem .8rem; font-size: .75rem; font-weight: 700;
-  color: var(--forest); cursor: pointer; margin-top: .2rem;
-}
-.hotspot-close-btn:hover { background: var(--mint); }
 
 /* ── Responsive eco extras ───────────────────────────────────────── */
 @media (min-width: 600px) {

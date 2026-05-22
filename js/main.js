@@ -540,33 +540,6 @@ const ECO_TIPS = [
   { emoji: '🍽️', text: 'Plan your meals to cut food waste — 30% of all food is thrown away globally.', impact: '🗑️ Food waste = 8% of global greenhouse emissions', trigger: 'general' },
 ];
 
-/* ─── IMPACT MAP HOTSPOTS ────────────────────────────────────────────── */
-const IMPACT_HOTSPOTS = [
-  {
-    id: 'amazon', label: '🌲 Amazon', cx: 195, cy: 245,
-    fact: 'The Amazon rainforest has lost 17% of its area in 50 years — an area bigger than France.',
-    action: 'Reduce beef consumption (80% of deforestation is for cattle ranching) and support reforestation charities.',
-    color: '#16a34a',
-  },
-  {
-    id: 'arctic', label: '🧊 Arctic', cx: 390, cy: 45,
-    fact: 'Arctic sea ice is shrinking 13% per decade. Summer ice could vanish entirely before 2050.',
-    action: 'Cut fossil fuel use at home: switch to a green energy tariff and reduce flying.',
-    color: '#3b82f6',
-  },
-  {
-    id: 'reef', label: '🐠 Great Barrier Reef', cx: 680, cy: 290,
-    fact: 'The Great Barrier Reef has lost 50% of its coral since 1995 due to marine heatwaves.',
-    action: 'Use reef-safe sunscreen, choose sustainable seafood, and support coral restoration projects.',
-    color: '#f59e0b',
-  },
-  {
-    id: 'sahara', label: '🏜️ Sahel', cx: 395, cy: 210,
-    fact: 'The Sahara Desert is expanding southward at 48 km/year, displacing millions of people.',
-    action: 'Support the Great Green Wall initiative — a 8,000 km African reforestation project.',
-    color: '#ef4444',
-  },
-];
 
 /* ─── STATE ──────────────────────────────────────────────────────────── */
 
@@ -1210,68 +1183,6 @@ function renderEcoCalendar(completedSet, days = 35) {
   grid.innerHTML = html;
 }
 
-/* ─── IMPACT MAP ─────────────────────────────────────────────────────── */
-
-function renderImpactMap() {
-  const container = document.getElementById('impact-map-container');
-  if (!container) return;
-
-  // Simplified SVG world map with continent outlines (equirectangular 800×400)
-  const continentPaths = `
-    <!-- North America -->
-    <path d="M60,60 L180,55 L200,75 L220,120 L195,160 L170,190 L140,200 L120,230 L95,220 L80,190 L65,170 L55,140 L50,100 Z" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
-    <!-- South America -->
-    <path d="M145,215 L190,210 L210,235 L215,270 L205,310 L185,340 L160,355 L140,340 L130,305 L125,270 L130,240 Z" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
-    <!-- Europe -->
-    <path d="M355,55 L410,50 L425,70 L415,95 L395,105 L370,100 L350,85 Z" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
-    <!-- Africa -->
-    <path d="M355,110 L415,105 L440,130 L445,175 L435,220 L415,255 L385,275 L360,265 L340,230 L330,185 L335,145 L345,120 Z" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
-    <!-- Asia -->
-    <path d="M420,45 L560,40 L620,60 L650,90 L660,130 L630,160 L590,170 L550,160 L510,175 L480,160 L450,140 L425,115 L415,85 Z" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
-    <!-- Oceania -->
-    <path d="M620,240 L680,235 L710,255 L710,285 L680,300 L640,290 L620,270 Z" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
-    <!-- Greenland -->
-    <path d="M260,30 L310,28 L320,50 L305,65 L270,60 L255,45 Z" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
-  `;
-
-  // Pulsing hotspot circles
-  const hotspotsHTML = IMPACT_HOTSPOTS.map(h => `
-    <g class="hotspot" data-id="${h.id}" tabindex="0" role="button" aria-label="${h.label}">
-      <circle cx="${h.cx}" cy="${h.cy}" r="12" fill="${h.color}" opacity="0.25" class="hotspot-pulse"/>
-      <circle cx="${h.cx}" cy="${h.cy}" r="7"  fill="${h.color}" opacity="0.85"/>
-      <circle cx="${h.cx}" cy="${h.cy}" r="3"  fill="white"/>
-    </g>
-  `).join('');
-
-  container.innerHTML = `
-    <svg class="world-map-svg" viewBox="0 0 760 380" xmlns="http://www.w3.org/2000/svg" aria-label="World impact map">
-      <rect width="760" height="380" fill="#e0f2fe" rx="12"/>
-      ${continentPaths}
-      ${hotspotsHTML}
-    </svg>
-  `;
-
-  // Hotspot click/keyboard handlers
-  container.querySelectorAll('.hotspot').forEach(el => {
-    const h = IMPACT_HOTSPOTS.find(x => x.id === el.dataset.id);
-    el.addEventListener('click', () => showHotspotInfo(h));
-    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') showHotspotInfo(h); });
-  });
-}
-
-function showHotspotInfo(h) {
-  const panel = document.getElementById('hotspot-panel');
-  if (!panel) return;
-  panel.innerHTML = `
-    <div class="hotspot-info-card" style="border-left:4px solid ${h.color}">
-      <div class="hotspot-info-label">${h.label}</div>
-      <p class="hotspot-info-fact">📖 ${h.fact}</p>
-      <p class="hotspot-info-action">✅ <strong>What you can do:</strong> ${h.action}</p>
-      <button class="hotspot-close-btn" onclick="document.getElementById('hotspot-panel').classList.add('hidden')">✕ Close</button>
-    </div>
-  `;
-  panel.classList.remove('hidden');
-}
 
 /* ─── ECO BADGE SYSTEM ───────────────────────────────────────────────── */
 
@@ -1547,7 +1458,6 @@ function renderRealImpact(totalKg, streak) {
 async function initEcoPage() {
   // Render static/sync parts immediately
   refreshEcoTips();
-  renderImpactMap();
   renderVirtualTree(co2Tracked);    // quick render with in-memory count
   renderBadgeGallery();             // quick render with cached badge set
   // Async: load from Supabase
