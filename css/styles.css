@@ -1709,6 +1709,28 @@ body {
   line-height: 1.4;
 }
 
+/* ── QUIZ TOPIC CHIPS (available-topics list) ────────────────────── */
+.quiz-chips-label {
+  font-size: .78rem; font-weight: 700; color: var(--muted);
+  margin: .8rem 0 .4rem; text-transform: uppercase; letter-spacing: .04em;
+}
+.quiz-chips { display: flex; flex-wrap: wrap; gap: .35rem; }
+.quiz-chip-btn {
+  background: #f0faf5; color: var(--forest-dark);
+  border: 1.5px solid #c8e6d8; border-radius: 99px;
+  padding: .28rem .75rem; font-size: .8rem; font-weight: 600;
+  cursor: pointer; transition: background .15s, border-color .15s;
+  font-family: inherit;
+}
+.quiz-chip-btn:hover { background: #d1fae5; border-color: var(--forest-mid); }
+
+/* ── QUIZ NOT FOUND ──────────────────────────────────────────────── */
+.quiz-not-found { padding: .6rem 0; }
+.quiz-not-found-icon { font-size: 2rem; margin-bottom: .5rem; }
+.quiz-not-found-msg {
+  font-size: .92rem; color: var(--dark); margin-bottom: .2rem;
+}
+
 /* ── QUIZ TOPIC INPUT ────────────────────────────────────────────── */
 .quiz-topic-form  { padding: .4rem 0 .2rem; }
 .quiz-topic-label {
@@ -1729,20 +1751,6 @@ body {
 }
 .quiz-topic-input:focus { border-color: var(--forest-mid); }
 
-/* ── QUIZ LOADING STATE ──────────────────────────────────────────── */
-.quiz-loading {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 1rem; padding: 2.2rem 1rem;
-}
-.quiz-spinner {
-  width: 38px; height: 38px;
-  border: 4px solid #d1fae5;
-  border-top-color: var(--forest-mid);
-  border-radius: 50%;
-  animation: quiz-spin .75s linear infinite;
-}
-@keyframes quiz-spin { to { transform: rotate(360deg); } }
-.quiz-loading-text { font-size: .9rem; color: var(--muted); text-align: center; }
 
 /* ── QUIZ TOPIC CHIP (shown during active quiz) ──────────────────── */
 .quiz-topic-chip {

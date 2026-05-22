@@ -1462,271 +1462,300 @@ document.getElementById('rai-input').addEventListener('keydown', e => {
 
 /* ─── QUIZ INTERATIVO ────────────────────────────────────────────────── */
 
-// Your Anthropic API key — required for AI-generated quizzes.
-// Get one at https://console.anthropic.com → API Keys
-const ANTHROPIC_KEY = '';  // ← paste your key here
-
-const QUIZ_SUBJECTS = {
-  math:      '📐 Math',
-  english:   '📖 English',
-  science:   '🔬 Science',
-  geography: '🌍 Geography',
-  art:       '🎨 Art',
-};
-
-const UNUSED_QUIZ_DATA = {
+// ── Question bank: 8 topics per subject × 5 Qs each = 200 questions ──
+const QUIZ_BANK = {
   math: {
-    label: '📐 Math',
-    questions: [
-      // Algebra
-      { q: 'Solve: x + 7 = 15. What is x?',                       opts: ['6','7','8','9'],              ans: 2 },
-      { q: 'Simplify: 3x + 2x',                                    opts: ['5x²','5x','6x','x⁵'],        ans: 1 },
-      { q: 'What is 2a + 3 when a = 4?',                           opts: ['9','10','11','14'],           ans: 2 },
-      { q: 'Expand: 2(x + 5)',                                      opts: ['2x + 5','2x + 10','x + 10','2x + 7'], ans: 1 },
-      { q: 'Solve: 3x = 21. What is x?',                           opts: ['5','6','7','8'],              ans: 2 },
-      { q: 'Simplify: 4y − y',                                     opts: ['3y','4y','5y','3'],           ans: 0 },
-      { q: 'If n = 3, what is 4n − 2?',                            opts: ['8','10','12','14'],           ans: 1 },
-      { q: 'Expand: 3(2x − 1)',                                     opts: ['6x − 1','6x − 3','5x − 3','6x + 3'], ans: 1 },
-      // Fractions & Percentages
-      { q: 'What is 1/2 + 1/4?',                                   opts: ['1/3','3/4','2/3','3/8'],     ans: 1 },
-      { q: 'Simplify 6/8 to its lowest terms.',                    opts: ['2/3','3/4','4/6','1/2'],     ans: 1 },
-      { q: 'What is 20% of 150?',                                  opts: ['25','30','35','40'],          ans: 1 },
-      { q: 'Convert 0.75 to a fraction.',                          opts: ['3/5','7/10','3/4','7/9'],    ans: 2 },
-      { q: 'What is 3/4 of 48?',                                   opts: ['32','36','40','42'],          ans: 1 },
-      { q: 'What percentage of 80 is 20?',                         opts: ['20%','25%','30%','15%'],      ans: 1 },
-      { q: 'What is 2/3 + 1/6?',                                   opts: ['3/9','5/6','4/9','3/6'],     ans: 1 },
-      { q: 'Increase 60 by 15%.',                                  opts: ['66','69','72','75'],          ans: 1 },
-      // Geometry
-      { q: 'Area of a rectangle: length 8 cm, width 5 cm?',       opts: ['30 cm²','40 cm²','45 cm²','26 cm²'], ans: 1 },
-      { q: 'What do the angles of a triangle always add up to?',   opts: ['90°','180°','270°','360°'],   ans: 1 },
-      { q: 'Perimeter of a square with sides of 6 cm?',           opts: ['18 cm','24 cm','36 cm','12 cm'], ans: 1 },
-      { q: 'Area of a triangle: base 10 cm, height 6 cm?',        opts: ['30 cm²','60 cm²','16 cm²','45 cm²'], ans: 0 },
-      { q: 'What is the longest side of a right-angled triangle called?', opts: ['Adjacent','Opposite','Hypotenuse','Tangent'], ans: 2 },
-      { q: 'Volume of a cube with sides of 3 cm?',                opts: ['9 cm³','18 cm³','27 cm³','36 cm³'], ans: 2 },
-      { q: 'Two angles of a triangle are 40° and 75°. What is the third?', opts: ['55°','60°','65°','70°'], ans: 2 },
-      { q: 'Circumference of a circle with radius 7 cm? (π ≈ 3.14)', opts: ['22 cm','43.96 cm','49 cm','153.86 cm'], ans: 1 },
-      // Numbers
-      { q: 'Which of these is a prime number?',                    opts: ['9','15','17','21'],           ans: 2 },
-      { q: 'What is 2⁴ (2 to the power of 4)?',                   opts: ['8','12','16','24'],           ans: 2 },
-      { q: 'What is the HCF of 12 and 18?',                       opts: ['3','4','6','9'],              ans: 2 },
-      { q: 'What is −3 × −4?',                                    opts: ['−12','−7','7','12'],          ans: 3 },
-      { q: 'What is the LCM of 4 and 6?',                         opts: ['8','12','18','24'],           ans: 1 },
-      { q: 'What is −8 + 5?',                                     opts: ['−13','−3','3','13'],          ans: 1 },
-      { q: 'What is 3² + 4²?',                                    opts: ['14','24','25','49'],          ans: 2 },
-      { q: 'How many factors does 24 have?',                       opts: ['6','7','8','9'],              ans: 2 },
-      // Statistics
-      { q: 'Find the mean of: 4, 7, 5, 8, 6',                     opts: ['5','6','7','8'],              ans: 1 },
-      { q: 'Find the median of: 3, 7, 5, 1, 9',                   opts: ['3','5','7','9'],              ans: 1 },
-      { q: 'Find the mode of: 2, 4, 4, 7, 3, 4, 2',               opts: ['2','3','4','7'],              ans: 2 },
-      { q: 'Find the range of: 12, 5, 19, 3, 11',                 opts: ['14','15','16','17'],          ans: 2 },
-      { q: 'A bag has 4 red and 6 blue marbles. P(red) = ?',       opts: ['1/4','2/5','3/5','1/2'],     ans: 1 },
-      { q: '18 of 30 students prefer football. What fraction prefer tennis?', opts: ['1/5','2/5','3/5','3/10'], ans: 1 },
-      { q: 'In a bar chart, the tallest bar represents the ___.',  opts: ['mean','median','mode','range'], ans: 2 },
-      { q: 'Find the mean of: 10, 20, 30, 40, 50',                opts: ['25','30','35','40'],          ans: 1 },
+    'Algebra': [
+      { q: 'Solve: 2x + 5 = 13. What is x?',                   opts: ['3','4','5','6'],                         ans: 1 },
+      { q: 'Expand: 3(x + 4)',                                  opts: ['3x + 4','3x + 7','3x + 12','x + 12'],   ans: 2 },
+      { q: 'Simplify: 5x − 2x + 3',                            opts: ['3x + 3','7x + 3','3x − 3','10x'],       ans: 0 },
+      { q: 'Solve: x / 3 = 7. What is x?',                     opts: ['10','21','4','3'],                       ans: 1 },
+      { q: 'Factorise: x² + 5x + 6',                           opts: ['(x+1)(x+6)','(x+2)(x+3)','(x+3)(x+2)','(x+5)(x+1)'], ans: 1 },
+    ],
+    'Fractions': [
+      { q: 'What is 1/3 + 1/4?',                               opts: ['2/7','7/12','5/12','1/6'],              ans: 1 },
+      { q: 'Simplify 12/18 to its lowest terms.',              opts: ['6/9','3/4','2/3','4/6'],                 ans: 2 },
+      { q: 'What is 3/4 × 8?',                                 opts: ['5','6','7','8'],                         ans: 1 },
+      { q: 'What is 2/5 ÷ 1/2?',                               opts: ['1/5','2/10','4/5','5/2'],                ans: 2 },
+      { q: 'What is 1/2 − 1/6?',                               opts: ['1/3','2/6','1/4','3/8'],                 ans: 0 },
+    ],
+    'Decimals': [
+      { q: 'What is 0.4 + 0.75?',                              opts: ['1.05','1.10','1.15','1.25'],             ans: 2 },
+      { q: 'What is 3.6 × 4?',                                 opts: ['12.4','14.4','16.4','13.6'],             ans: 1 },
+      { q: 'What is 7.5 ÷ 0.5?',                               opts: ['1.5','3.75','15','75'],                  ans: 2 },
+      { q: 'What is 0.3²?',                                    opts: ['0.6','0.9','0.09','0.009'],              ans: 2 },
+      { q: 'Convert 3/8 to a decimal.',                        opts: ['0.25','0.35','0.375','0.38'],            ans: 2 },
+    ],
+    'Percentages': [
+      { q: 'What is 20% of 85?',                               opts: ['14','15','16','17'],                     ans: 3 },
+      { q: 'Increase 50 by 30%.',                              opts: ['55','60','65','70'],                     ans: 2 },
+      { q: '45 is what percentage of 180?',                    opts: ['20%','25%','30%','35%'],                 ans: 1 },
+      { q: 'Decrease £120 by 15%.',                            opts: ['£96','£99','£102','£105'],               ans: 2 },
+      { q: 'A price rises from £40 to £50. What is the % increase?', opts: ['10%','15%','20%','25%'],           ans: 3 },
+    ],
+    'Geometry': [
+      { q: 'Area of a circle with radius 7 cm (π ≈ 3.14)?',   opts: ['43.96 cm²','153.86 cm²','21.98 cm²','78 cm²'], ans: 1 },
+      { q: 'Sum of interior angles of a hexagon?',             opts: ['540°','600°','720°','900°'],             ans: 2 },
+      { q: 'Volume of a cuboid 5 × 4 × 3 cm?',                opts: ['47 cm³','55 cm³','60 cm³','72 cm³'],     ans: 2 },
+      { q: 'A right triangle has legs 6 cm and 8 cm. Hypotenuse?', opts: ['9 cm','10 cm','11 cm','12 cm'],      ans: 1 },
+      { q: 'Area of a trapezium with parallel sides 8 & 12, height 5?', opts: ['40 cm²','45 cm²','50 cm²','60 cm²'], ans: 2 },
+    ],
+    'Statistics': [
+      { q: 'Mean of 3, 7, 5, 9, 6?',                          opts: ['5','6','7','8'],                         ans: 1 },
+      { q: 'Median of 2, 5, 7, 9, 12?',                       opts: ['5','6','7','9'],                         ans: 2 },
+      { q: 'Mode of 3, 3, 5, 7, 5, 3, 8?',                    opts: ['3','5','7','8'],                         ans: 0 },
+      { q: 'Range of 14, 7, 23, 5, 18?',                      opts: ['14','16','18','20'],                     ans: 2 },
+      { q: 'P(even number) when rolling a fair die?',          opts: ['1/3','1/2','2/3','1/6'],                 ans: 1 },
+    ],
+    'Probability': [
+      { q: 'Probability of a fair coin landing heads?',        opts: ['1/4','1/3','1/2','2/3'],                 ans: 2 },
+      { q: 'P(7) when rolling a standard die?',                opts: ['0','1/7','1/6','1/12'],                  ans: 0 },
+      { q: 'Bag has 3 red, 2 blue, 5 green. P(not red)?',      opts: ['3/10','7/10','1/2','3/5'],               ans: 1 },
+      { q: 'Two fair coins tossed. P(two heads)?',             opts: ['1/2','1/3','1/4','3/4'],                 ans: 2 },
+      { q: 'P(vowel) chosen from letters A, B, C, D, E?',      opts: ['1/5','2/5','3/5','4/5'],                 ans: 1 },
+    ],
+    'Ratio & Proportion': [
+      { q: 'Simplify the ratio 15 : 25.',                      opts: ['3:4','3:5','5:3','5:8'],                 ans: 1 },
+      { q: 'Share £60 in ratio 2 : 3. What is the larger share?', opts: ['£24','£30','£36','£40'],              ans: 2 },
+      { q: '5 books cost £15. Cost of 8 books?',               opts: ['£20','£22','£24','£25'],                 ans: 2 },
+      { q: 'Map scale 1 : 50 000. Distance of 4 cm on map = ?', opts: ['1 km','2 km','4 km','5 km'],            ans: 1 },
+      { q: 'Ratio 3 : 4. If the first quantity is 21, what is the second?', opts: ['24','26','28','30'],         ans: 2 },
     ],
   },
 
   english: {
-    label: '📖 English',
-    questions: [
-      // Grammar & Punctuation
-      { q: 'Which punctuation mark is used to introduce a list?',  opts: ['Comma','Semi-colon','Colon','Apostrophe'], ans: 2 },
-      { q: 'In "It\'s raining", what does "it\'s" mean?',          opts: ['Belonging to it','It is','It has always been','In that case'], ans: 1 },
-      { q: 'Which sentence is an interrogative (question)?',       opts: ['Close the door.','The door is closed.','Is the door closed?','What a door!'], ans: 2 },
-      { q: 'Where does the apostrophe go in "the dog bone" (one dog)? ', opts: ["dog's bone","dogs' bone","dogs bone'","dog bone's"], ans: 0 },
-      { q: 'Which uses a semicolon correctly?',                    opts: ['I like cats; dogs.','I like cats; and dogs.','I like cats; I also like dogs.','I; like cats.'], ans: 2 },
-      { q: 'What type of sentence usually ends with an exclamation mark?', opts: ['Declarative','Interrogative','Exclamatory','Imperative'], ans: 2 },
-      { q: 'Which word needs a capital letter?',                   opts: ['river','mountain','london','tree'], ans: 2 },
-      { q: 'Which punctuation encloses extra information in a sentence?', opts: ['Colons','Dashes or brackets','Commas only','Speech marks'], ans: 1 },
-      // Literary Devices
-      { q: '"The moon is a silver coin." What device is this?',    opts: ['Simile','Metaphor','Personification','Alliteration'], ans: 1 },
-      { q: '"Her smile was as bright as the sun." What device?',   opts: ['Metaphor','Simile','Alliteration','Oxymoron'], ans: 1 },
-      { q: '"The wind whispered through the trees." What device?', opts: ['Alliteration','Oxymoron','Personification','Simile'], ans: 2 },
-      { q: '"Peter Piper picked a peck of pickled peppers." What device?', opts: ['Alliteration','Onomatopoeia','Metaphor','Personification'], ans: 0 },
-      { q: '"Deafening silence" is an example of:',               opts: ['Simile','Alliteration','Oxymoron','Hyperbole'], ans: 2 },
-      { q: '"I\'ve told you a million times!" What device is this?', opts: ['Metaphor','Oxymoron','Alliteration','Hyperbole'], ans: 3 },
-      { q: 'Buzz, hiss, crackle — words that sound like the noises they name are:', opts: ['Personification','Onomatopoeia','Simile','Alliteration'], ans: 1 },
-      { q: 'Which is an example of alliteration?',                opts: ['The sun rose slowly','Sally sells seashells','Life is a dream','The angry waves'], ans: 1 },
-      // Vocabulary
-      { q: 'What is a synonym for "brave"?',                      opts: ['Cowardly','Fearful','Courageous','Nervous'], ans: 2 },
-      { q: 'What is an antonym (opposite) of "ancient"?',         opts: ['Old','Modern','Historic','Antique'], ans: 1 },
-      { q: 'The prefix "un-" usually means:',                     opts: ['Again','Not or opposite','Before','After'], ans: 1 },
-      { q: 'What does the suffix "-ful" add to a word?',          opts: ['Without','Having a quality','Someone who does','Related to'], ans: 1 },
-      { q: 'Which word means to speak quietly and privately?',    opts: ['Shout','Whisper','Lecture','Announce'], ans: 1 },
-      { q: 'What is a synonym for "enormous"?',                   opts: ['Tiny','Huge','Narrow','Bright'], ans: 1 },
-      { q: 'The prefix "mis-" means:',                            opts: ['Again','Before','Wrongly or badly','Under'], ans: 2 },
-      { q: 'What does "benevolent" mean?',                        opts: ['Cruel and harsh','Kind and generous','Shy and quiet','Loud and confident'], ans: 1 },
-      // Parts of Speech
-      { q: 'In "The quick fox jumped", what type of word is "jumped"?', opts: ['Noun','Adjective','Verb','Adverb'], ans: 2 },
-      { q: 'Which word is a proper noun?',                        opts: ['cat','city','Paris','building'], ans: 2 },
-      { q: 'In "She ran quickly", what type of word is "quickly"?', opts: ['Adjective','Adverb','Verb','Noun'], ans: 1 },
-      { q: 'Which word is a conjunction?',                        opts: ['Quickly','Blue','Because','Run'], ans: 2 },
-      { q: 'In "The happy children played", what is the adjective?', opts: ['children','played','happy','The'], ans: 2 },
-      { q: 'Which of these is a pronoun?',                        opts: ['Tree','Run','She','Quickly'], ans: 2 },
-      { q: 'What type of noun is "happiness"?',                   opts: ['Proper noun','Common noun','Abstract noun','Collective noun'], ans: 2 },
-      { q: 'Which word is a preposition?',                        opts: ['Run','Happy','Under','And'], ans: 2 },
-      // Literature
-      { q: 'Who wrote Romeo and Juliet?',                         opts: ['Charles Dickens','William Shakespeare','Jane Austen','Homer'], ans: 1 },
-      { q: 'Who wrote the Harry Potter series?',                  opts: ['Roald Dahl','J.R.R. Tolkien','J.K. Rowling','C.S. Lewis'], ans: 2 },
-      { q: 'A haiku is a poem with how many lines?',              opts: ['2','3','4','5'], ans: 1 },
-      { q: 'Who wrote The Lion, the Witch and the Wardrobe?',     opts: ['J.K. Rowling','Roald Dahl','J.R.R. Tolkien','C.S. Lewis'], ans: 3 },
-      { q: 'What is the literary term for the main character?',   opts: ['Antagonist','Narrator','Protagonist','Villain'], ans: 2 },
-      { q: 'How many lines does a sonnet have?',                  opts: ['8','10','12','14'], ans: 3 },
-      { q: 'Who wrote Charlie and the Chocolate Factory?',        opts: ['Dr. Seuss','Roald Dahl','C.S. Lewis','J.K. Rowling'], ans: 1 },
-      { q: 'When a character speaks alone on stage, it is called a:', opts: ['Monologue','Dialogue','Soliloquy','Aside'], ans: 2 },
+    'Shakespeare': [
+      { q: 'How many plays did Shakespeare write?',             opts: ['27','32','37','42'],                     ans: 2 },
+      { q: 'What type of play is A Midsummer Night\'s Dream?',  opts: ['Tragedy','History','Comedy','Romance'],  ans: 2 },
+      { q: 'Which play features Iago as the villain?',          opts: ['Hamlet','Macbeth','Othello','King Lear'], ans: 2 },
+      { q: 'In which city is Romeo and Juliet set?',            opts: ['Florence','Venice','Milan','Verona'],    ans: 3 },
+      { q: 'Which Shakespeare play features a ghost of a murdered king?', opts: ['Macbeth','Hamlet','Othello','The Tempest'], ans: 1 },
+    ],
+    'Grammar': [
+      { q: 'Which is grammatically correct?',                  opts: ['She don\'t like it','She doesn\'t like it','Her doesn\'t like it','She not like it'], ans: 1 },
+      { q: '"Although it was raining" is what type of clause?', opts: ['Main clause','Relative clause','Subordinate clause','Noun clause'], ans: 2 },
+      { q: 'In "The children played happily", what word class is "happily"?', opts: ['Adjective','Adverb','Verb','Noun'], ans: 1 },
+      { q: 'Which sentence uses the passive voice?',            opts: ['She ate the cake','The cake was eaten','They bake cakes','He eats quickly'], ans: 1 },
+      { q: '"Neither of them ___ ready." Which verb is correct?', opts: ['were','are','was','have been'],        ans: 2 },
+    ],
+    'Punctuation': [
+      { q: 'Where does the apostrophe go in "the shoes of the boys"?', opts: ["boy's shoes","boys' shoes","boys shoes'","boys shoes"], ans: 1 },
+      { q: 'Which punctuation mark is used to introduce a list?', opts: ['Semicolon','Comma','Colon','Dash'],   ans: 2 },
+      { q: 'Which sentence uses a semicolon correctly?',        opts: ['I like coffee; and tea.','I like coffee; she prefers tea.','I; like coffee.','Coffee; is nice.'], ans: 1 },
+      { q: 'An ellipsis (…) is used to indicate:',              opts: ['A new paragraph','A pause or omission','A list','A question'], ans: 1 },
+      { q: 'Which is more formal for adding extra information — dashes or parentheses?', opts: ['Dashes','Parentheses','Both equal','Neither'], ans: 1 },
+    ],
+    'Poetry': [
+      { q: 'A haiku has how many syllables in total?',          opts: ['14','15','17','21'],                     ans: 2 },
+      { q: 'What is iambic pentameter?',                       opts: ['5 rhyming lines','10 syllables per line with 5 iambs','A type of sonnet','14 lines of verse'], ans: 1 },
+      { q: 'What is a "volta" in a sonnet?',                    opts: ['The rhyme scheme','A turn or shift in argument','The first quatrain','A refrain'], ans: 1 },
+      { q: '"I wandered lonely as a cloud" is an example of:', opts: ['Metaphor','Personification','Simile','Alliteration'], ans: 2 },
+      { q: 'Which rhyme scheme is used in a Shakespearean sonnet?', opts: ['ABBA ABBA','AABB CCDD','ABAB CDCD EFEF GG','ABCABC'], ans: 2 },
+    ],
+    'Literary Devices': [
+      { q: '"The classroom was a zoo" is an example of:',       opts: ['Simile','Metaphor','Personification','Hyperbole'], ans: 1 },
+      { q: '"Crash, bang, wallop" illustrates:',                opts: ['Alliteration','Simile','Onomatopoeia','Assonance'], ans: 2 },
+      { q: 'Repetition of initial consonant sounds is called:', opts: ['Assonance','Onomatopoeia','Alliteration','Sibilance'], ans: 2 },
+      { q: 'Dramatic irony occurs when:',                       opts: ['A character lies','The audience knows something characters don\'t','Two characters argue','The plot twists'], ans: 1 },
+      { q: 'A story within a story is called:',                opts: ['A subplot','A frame narrative','An epilogue','A soliloquy'], ans: 1 },
+    ],
+    'Vocabulary': [
+      { q: 'What does "ephemeral" mean?',                       opts: ['Everlasting','Lasting only a short time','Very important','Deeply emotional'], ans: 1 },
+      { q: 'What does "ambiguous" mean?',                       opts: ['Clearly wrong','Having more than one meaning','Very determined','Completely certain'], ans: 1 },
+      { q: 'A synonym for "melancholy" is:',                    opts: ['Joyful','Angry','Sad','Anxious'],        ans: 2 },
+      { q: 'What does "loquacious" mean?',                      opts: ['Silent','Very talkative','Extremely clever','Deeply loyal'], ans: 1 },
+      { q: 'What does "ubiquitous" mean?',                      opts: ['Rare and precious','Present everywhere','Unknown and hidden','Surprisingly large'], ans: 1 },
+    ],
+    'Macbeth': [
+      { q: 'What are the Three Witches also called?',           opts: ['The Fates','The Furies','The Weird Sisters','The Dark Trio'], ans: 2 },
+      { q: 'What does Lady Macbeth urge Macbeth to do?',        opts: ['Flee Scotland','Kill King Duncan','Marry another woman','Betray Banquo'], ans: 1 },
+      { q: '"Out, damned spot!" — which character says this?',  opts: ['Macbeth','Lady Macbeth','The First Witch','Ross'], ans: 1 },
+      { q: 'Who becomes King of Scotland at the end of the play?', opts: ['Macduff','Ross','Banquo\'s son','Malcolm'], ans: 3 },
+      { q: 'What do the witches tell Macbeth about Birnam Wood?', opts: ['It is cursed','He will burn it','He is safe until it moves to Dunsinane','It hides his enemies'], ans: 2 },
+    ],
+    'Romeo and Juliet': [
+      { q: 'Which two families are at war in Romeo and Juliet?', opts: ['Montague and Capulet','Verona and Mantua','Benvolio and Tybalt','Lorenzo and Paris'], ans: 0 },
+      { q: 'Who performs the secret marriage ceremony?',         opts: ['The Prince','Benvolio','Friar Lawrence','The Nurse'], ans: 2 },
+      { q: 'How does Romeo die?',                               opts: ['Stabbed by Tybalt','Drinks poison','Drowns','Shot by an arrow'], ans: 1 },
+      { q: 'What is the role of the Prologue?',                 opts: ['To introduce Juliet','To foreshadow the tragedy and reveal the ending','To explain Verona\'s history','To describe Romeo\'s character'], ans: 1 },
+      { q: 'Who kills Tybalt?',                                 opts: ['Benvolio','Paris','Romeo','Mercutio'], ans: 2 },
     ],
   },
 
   science: {
-    label: '🔬 Science',
-    questions: [
-      // Biology
-      { q: 'What is the "powerhouse of the cell"?',               opts: ['Nucleus','Mitochondria','Cell wall','Vacuole'], ans: 1 },
-      { q: 'What do plants need for photosynthesis?',             opts: ['Water and oxygen','CO₂, water and light','Soil, air and rain','Nitrogen, water and sunlight'], ans: 1 },
-      { q: 'How many chambers does a human heart have?',          opts: ['2','3','4','5'], ans: 2 },
-      { q: 'Which organ filters waste products from the blood?',  opts: ['Liver','Lungs','Kidneys','Stomach'], ans: 2 },
-      { q: 'Who is known as the father of evolution?',            opts: ['Isaac Newton','Albert Einstein','Charles Darwin','Gregor Mendel'], ans: 2 },
-      { q: 'What is the process by which plants make food using sunlight?', opts: ['Respiration','Transpiration','Photosynthesis','Osmosis'], ans: 2 },
-      { q: 'What part of a cell controls what enters and leaves it?', opts: ['Cell wall','Nucleus','Cell membrane','Cytoplasm'], ans: 2 },
-      { q: 'Organisms passing traits to offspring is called:',    opts: ['Evolution','Heredity','Mutation','Adaptation'], ans: 1 },
-      // Chemistry
-      { q: 'What is the symbol for the element Gold?',            opts: ['Go','Gd','Au','Ag'], ans: 2 },
-      { q: 'What is the chemical symbol for Iron?',               opts: ['Ir','In','Fe','Fo'], ans: 2 },
-      { q: 'What is the most abundant gas in Earth\'s atmosphere?', opts: ['Oxygen','Carbon dioxide','Nitrogen','Hydrogen'], ans: 2 },
-      { q: 'Which state of matter has a definite shape and volume?', opts: ['Gas','Liquid','Solid','Plasma'], ans: 2 },
-      { q: 'At what temperature does water boil?',                opts: ['90°C','95°C','100°C','110°C'], ans: 2 },
-      { q: 'What is the atomic number of Carbon?',                opts: ['4','6','8','12'], ans: 1 },
-      { q: 'Which type of reaction releases heat energy?',        opts: ['Endothermic','Exothermic','Neutralisation','Decomposition'], ans: 1 },
-      { q: 'How many elements are in the periodic table (approx)?', opts: ['78','98','118','138'], ans: 2 },
-      // Physics
-      { q: 'What is the unit of electric current?',               opts: ['Volt','Watt','Ampere','Ohm'], ans: 2 },
-      { q: 'What force opposes motion between surfaces?',         opts: ['Gravity','Friction','Tension','Magnetism'], ans: 1 },
-      { q: 'What is the approximate speed of light?',             opts: ['300,000 km/s','30,000 km/s','3,000 km/s','3,000,000 km/s'], ans: 0 },
-      { q: 'What unit measures force?',                           opts: ['Joule','Watt','Newton','Pascal'], ans: 2 },
-      { q: 'What energy is stored in a stretched elastic band?',  opts: ['Kinetic','Chemical','Elastic potential','Thermal'], ans: 2 },
-      { q: 'When frequency increases, the pitch of a sound gets:', opts: ['Quieter','Lower','Higher','Disappears'], ans: 2 },
-      { q: 'Every action has an equal and opposite reaction. Whose law?', opts: ["Newton's First","Newton's Second","Newton's Third","Ohm's Law"], ans: 2 },
-      { q: 'What is the unit of electrical resistance?',          opts: ['Volt','Ampere','Watt','Ohm'], ans: 3 },
-      // Space
-      { q: 'How many planets are in our solar system?',           opts: ['7','8','9','10'], ans: 1 },
-      { q: 'What is the closest star to Earth?',                  opts: ['Sirius','Betelgeuse','The Sun','Alpha Centauri'], ans: 2 },
-      { q: 'Which planet is known as the Red Planet?',            opts: ['Venus','Jupiter','Mars','Saturn'], ans: 2 },
-      { q: 'What causes day and night on Earth?',                 opts: ['Earth orbiting the Sun','The Moon\'s shadow','Earth\'s rotation on its axis','The Sun moving'], ans: 2 },
-      { q: 'What is a light-year?',                              opts: ['Time for light to travel a year','Speed of light','Distance light travels in a year','Brightness unit'], ans: 2 },
-      { q: 'Which is the largest planet in our solar system?',    opts: ['Saturn','Uranus','Neptune','Jupiter'], ans: 3 },
-      { q: 'What keeps planets in orbit around the Sun?',         opts: ['Magnetism','Friction','Gravity','Wind'], ans: 2 },
-      { q: 'How long does Earth take to orbit the Sun?',          opts: ['1 month','6 months','1 year','24 hours'], ans: 2 },
-      // Environment
-      { q: 'In a food chain, organisms that make their own food are:', opts: ['Consumers','Decomposers','Producers','Predators'], ans: 2 },
-      { q: 'What is the main greenhouse gas from burning fossil fuels?', opts: ['Oxygen','Nitrogen','Carbon dioxide','Hydrogen'], ans: 2 },
-      { q: 'Animals that eat only plants are called:',            opts: ['Carnivores','Omnivores','Herbivores','Decomposers'], ans: 2 },
-      { q: 'Biodiversity means:',                                 opts: ['A type of plant','The variety of life in an area','A food chain','Climate change'], ans: 1 },
-      { q: 'Which is the world\'s largest ecosystem?',            opts: ['Amazon rainforest','Arctic tundra','The ocean','African savannah'], ans: 2 },
-      { q: 'What is the process of forests being cleared by humans?', opts: ['Erosion','Deforestation','Pollution','Desertification'], ans: 1 },
-      { q: 'An apex predator is one that:',                       opts: ['Is a producer','Is prey','Has no natural predators','Is a decomposer'], ans: 2 },
-      { q: 'Rising global temperatures due to human activity is called:', opts: ['Global cooling','Global warming','The ozone effect','Acid rain'], ans: 1 },
+    'Photosynthesis': [
+      { q: 'What gas do plants absorb during photosynthesis?',  opts: ['Oxygen','Nitrogen','Carbon dioxide','Hydrogen'], ans: 2 },
+      { q: 'Where does photosynthesis mainly occur?',           opts: ['Roots','Stem','Leaves','Flowers'],       ans: 2 },
+      { q: 'Which pigment absorbs light for photosynthesis?',   opts: ['Haemoglobin','Carotene','Chlorophyll','Melanin'], ans: 2 },
+      { q: 'What sugar is produced during photosynthesis?',     opts: ['Sucrose','Fructose','Galactose','Glucose'], ans: 3 },
+      { q: 'What is the role of stomata?',                      opts: ['Absorb water','Produce glucose','Allow gas exchange','Store sunlight'], ans: 2 },
+    ],
+    'The Human Body': [
+      { q: 'How many bones are in the adult human body?',       opts: ['196','200','206','212'],                 ans: 2 },
+      { q: 'What is the largest organ of the body?',            opts: ['Liver','Lungs','Brain','Skin'],          ans: 3 },
+      { q: 'Which organ produces insulin?',                     opts: ['Liver','Kidney','Pancreas','Spleen'],    ans: 2 },
+      { q: 'What is the main function of white blood cells?',   opts: ['Carry oxygen','Clot blood','Fight infection','Digest food'], ans: 2 },
+      { q: 'How many chambers does the human heart have?',      opts: ['2','3','4','5'],                         ans: 2 },
+    ],
+    'Atoms & Elements': [
+      { q: 'What is the atomic number of carbon?',              opts: ['4','6','8','12'],                        ans: 1 },
+      { q: 'Atoms of the same element with different neutrons are called:', opts: ['Ions','Isotopes','Allotropes','Molecules'], ans: 1 },
+      { q: 'Who organised the first modern periodic table?',    opts: ['John Dalton','Ernest Rutherford','Dmitri Mendeleev','Niels Bohr'], ans: 2 },
+      { q: 'What is the charge of a neutron?',                  opts: ['+1','−1','0','Variable'],                ans: 2 },
+      { q: 'How many electrons can the first electron shell hold?', opts: ['2','4','8','18'],                    ans: 0 },
+    ],
+    'Forces & Motion': [
+      { q: 'Newton\'s second law states: Force =',              opts: ['mass ÷ acceleration','mass + velocity','mass × acceleration','mass × velocity'], ans: 2 },
+      { q: 'What is the unit of force?',                        opts: ['Joule','Watt','Newton','Pascal'],        ans: 2 },
+      { q: 'What force opposes motion between surfaces?',       opts: ['Gravity','Tension','Friction','Magnetism'], ans: 2 },
+      { q: 'If mass doubles but force stays the same, acceleration:', opts: ['Doubles','Halves','Stays the same','Triples'], ans: 1 },
+      { q: 'Which of Newton\'s laws states every action has an equal and opposite reaction?', opts: ['First','Second','Third','Fourth'], ans: 2 },
+    ],
+    'Electricity': [
+      { q: 'What is the unit of electrical resistance?',        opts: ['Volt','Ampere','Watt','Ohm'],            ans: 3 },
+      { q: 'Ohm\'s Law states: Voltage =',                      opts: ['Current + Resistance','Current × Resistance','Current ÷ Resistance','Resistance ÷ Current'], ans: 1 },
+      { q: 'In a series circuit, current:',                     opts: ['Varies at each component','Is the same at every point','Is zero','Splits at junctions'], ans: 1 },
+      { q: 'What does an ammeter measure?',                     opts: ['Voltage','Resistance','Current','Power'], ans: 2 },
+      { q: 'Which material is a good electrical conductor?',    opts: ['Rubber','Plastic','Wood','Copper'],      ans: 3 },
+    ],
+    'Evolution': [
+      { q: 'Who proposed the theory of evolution by natural selection?', opts: ['Gregor Mendel','Isaac Newton','Charles Darwin','Alfred Wallace'], ans: 2 },
+      { q: 'What was the name of Darwin\'s ship?',              opts: ['HMS Victory','HMS Endeavour','HMS Beagle','HMS Discovery'], ans: 2 },
+      { q: 'What are the "units of inheritance" called?',       opts: ['Chromosomes','Cells','Genes','Proteins'], ans: 2 },
+      { q: 'Speciation is the process by which:',               opts: ['Species become extinct','New species form from existing ones','Animals migrate','Organisms reproduce'], ans: 1 },
+      { q: '"Survival of the fittest" means:',                  opts: ['The fastest organisms survive','The strongest always win','Organisms best adapted to their environment reproduce more','The largest species dominate'], ans: 2 },
+    ],
+    'The Solar System': [
+      { q: 'Which is the largest planet in our solar system?',  opts: ['Saturn','Neptune','Uranus','Jupiter'],   ans: 3 },
+      { q: 'How long does light take to travel from the Sun to Earth?', opts: ['3 minutes','8 minutes','15 minutes','1 hour'], ans: 1 },
+      { q: 'What is a light-year?',                             opts: ['How long light lasts','How fast light travels','Distance light travels in one year','Brightness of a star'], ans: 2 },
+      { q: 'Which planet has the most moons?',                  opts: ['Jupiter','Saturn','Uranus','Neptune'],   ans: 1 },
+      { q: 'What is the correct order of the first four planets from the Sun?', opts: ['Venus, Mercury, Earth, Mars','Mercury, Venus, Earth, Mars','Earth, Venus, Mercury, Mars','Mercury, Earth, Venus, Mars'], ans: 1 },
+    ],
+    'Chemical Reactions': [
+      { q: 'A reaction that absorbs heat from surroundings is called:', opts: ['Exothermic','Neutralisation','Endothermic','Combustion'], ans: 2 },
+      { q: 'What is the chemical formula for water?',           opts: ['HO','H₂O','H₂O₂','HO₂'],               ans: 1 },
+      { q: 'When an acid and a base react, the products are:',  opts: ['Two acids','Gas and water','Salt and water','A new element'], ans: 2 },
+      { q: 'A catalyst:',                                       opts: ['Is used up in the reaction','Slows the reaction','Speeds up the reaction without being consumed','Changes the products formed'], ans: 2 },
+      { q: 'Combustion requires fuel, heat, and:',              opts: ['Water','Nitrogen','Oxygen','Carbon dioxide'], ans: 2 },
     ],
   },
 
   geography: {
-    label: '🌍 Geography',
-    questions: [
-      // World Knowledge
-      { q: 'What is the capital of France?',                      opts: ['Lyon','Marseille','Paris','Nice'], ans: 2 },
-      { q: 'Which is the largest continent by area?',             opts: ['Africa','North America','Europe','Asia'], ans: 3 },
-      { q: 'How many continents are there on Earth?',             opts: ['5','6','7','8'], ans: 2 },
-      { q: 'Which ocean lies between Europe and North America?',  opts: ['Pacific','Indian','Atlantic','Arctic'], ans: 2 },
-      { q: 'What is the capital of Japan?',                       opts: ['Shanghai','Seoul','Beijing','Tokyo'], ans: 3 },
-      { q: 'What is the capital of Brazil?',                      opts: ['Rio de Janeiro','São Paulo','Brasília','Buenos Aires'], ans: 2 },
-      { q: 'Which is the largest ocean?',                         opts: ['Atlantic','Indian','Arctic','Pacific'], ans: 3 },
-      { q: 'What is the longest river in the world?',             opts: ['Amazon','Yangtze','Nile','Mississippi'], ans: 2 },
-      // Physical Geography
-      { q: 'What is molten rock called when it reaches Earth\'s surface?', opts: ['Magma','Lava','Pumice','Granite'], ans: 1 },
-      { q: 'What is the highest mountain in the world?',          opts: ['K2','Mont Blanc','Mount Everest','Kilimanjaro'], ans: 2 },
-      { q: 'The Amazon River flows through which continent?',     opts: ['Africa','Asia','North America','South America'], ans: 3 },
-      { q: 'Which type of rock is formed from cooled volcanic lava?', opts: ['Sedimentary','Metamorphic','Igneous','Limestone'], ans: 2 },
-      { q: 'What was the name of the ancient supercontinent?',    opts: ['Atlantis','Pangaea','Gondwana','Laurasia'], ans: 1 },
-      { q: 'Where do most earthquakes occur?',                    opts: ['In the ocean','Far from tectonic plates','At plate boundaries','At the poles'], ans: 2 },
-      { q: 'A river delta is where a river:',                     opts: ['Starts its journey','Gets widest','Fans out as it meets the sea','Goes underground'], ans: 2 },
-      { q: 'Which is the deepest point on Earth?',                opts: ['Java Trench','Puerto Rico Trench','Mariana Trench','Tonga Trench'], ans: 2 },
-      // Climate
-      { q: 'What climate type is found near the equator?',        opts: ['Polar','Temperate','Tropical','Desert'], ans: 2 },
-      { q: 'What causes the seasons on Earth?',                   opts: ['Distance from the Sun','Earth\'s tilt on its axis','The Moon\'s gravity','Solar flares'], ans: 1 },
-      { q: 'Which climate zone has very little rainfall?',        opts: ['Tropical','Desert','Temperate','Mediterranean'], ans: 1 },
-      { q: 'El Niño is:',                                         opts: ['A type of hurricane','Unusual warming of the Pacific Ocean','A monsoon season','A drought in Africa'], ans: 1 },
-      { q: 'Seasons are reversed compared to the UK in which hemisphere?', opts: ['Northern','Southern','Eastern','Western'], ans: 1 },
-      { q: 'What is a rapidly rotating column of air called?',    opts: ['Tsunami','Earthquake','Tornado','Blizzard'], ans: 2 },
-      { q: 'A huge wave caused by an undersea earthquake is called a:', opts: ['Hurricane','Tornado','Tsunami','Monsoon'], ans: 2 },
-      { q: 'Which country experiences the most hurricanes?',      opts: ['UK','Australia','USA','Russia'], ans: 2 },
-      // Human Geography
-      { q: 'Urbanisation means:',                                 opts: ['Moving to rural areas','Growth of cities','Decline of industry','Building new farms'], ans: 1 },
-      { q: 'Which is a "push factor" causing migration?',         opts: ['Better jobs','Family connections','War or conflict','Better climate'], ans: 2 },
-      { q: 'Countries with high incomes and strong economies are called:', opts: ['LEDCs','MEDCs','Developing countries','Third World'], ans: 1 },
-      { q: 'What is the world\'s largest city by population?',    opts: ['New York','London','Tokyo','Shanghai'], ans: 2 },
-      { q: 'Moving from one country to another permanently is called:', opts: ['Tourism','Commuting','Migration','Urbanisation'], ans: 2 },
-      { q: 'Which of these is a renewable energy source?',        opts: ['Coal','Oil','Wind power','Natural gas'], ans: 2 },
-      { q: 'GDP stands for:',                                     opts: ['Gross Development Plan','Gross Domestic Product','Global Development Progress','Government Delivery Programme'], ans: 1 },
-      { q: 'Which continent has the highest proportion of people in poverty?', opts: ['Asia','South America','Africa','Oceania'], ans: 2 },
-      // Landmarks
-      { q: 'In which country is the Eiffel Tower?',               opts: ['Italy','Spain','Germany','France'], ans: 3 },
-      { q: 'In which country is the Taj Mahal?',                  opts: ['Pakistan','Bangladesh','India','Sri Lanka'], ans: 2 },
-      { q: 'The Great Barrier Reef is off the coast of:',         opts: ['New Zealand','Australia','South Africa','Indonesia'], ans: 1 },
-      { q: 'In which city is the Statue of Liberty?',             opts: ['Washington D.C.','Los Angeles','Chicago','New York City'], ans: 3 },
-      { q: 'The pyramids of Giza are in which country?',          opts: ['Morocco','Sudan','Egypt','Libya'], ans: 2 },
-      { q: 'Machu Picchu is an ancient site in:',                 opts: ['Brazil','Colombia','Peru','Bolivia'], ans: 2 },
-      { q: 'The Great Wall of China was primarily built to:',     opts: ['Control trade routes','Protect against northern invasions','Mark territory','Act as a road'], ans: 1 },
-      { q: 'In which country is the Colosseum?',                  opts: ['Greece','Spain','France','Italy'], ans: 3 },
+    'Climate Change': [
+      { q: 'Which gas is the main driver of human-caused climate change?', opts: ['Oxygen','Nitrogen','Carbon dioxide','Methane'], ans: 2 },
+      { q: 'What does "carbon neutral" mean?',                  opts: ['Producing no carbon','Net zero CO₂ emissions','Using no fossil fuels','Planting one tree per tonne'], ans: 1 },
+      { q: 'What was the Paris Agreement (2015)?',              opts: ['A trade deal','A treaty to limit global warming to 1.5–2 °C','A ban on coal','An agreement to stop deforestation'], ans: 1 },
+      { q: 'How does deforestation worsen climate change?',     opts: ['Trees produce CO₂','Removing trees reduces CO₂ absorption','Deforestation cools the planet','Trees block sunlight'], ans: 1 },
+      { q: 'Which of these is a renewable energy source?',      opts: ['Coal','Natural gas','Nuclear (sometimes)','Wind power'], ans: 3 },
+    ],
+    'World Capitals': [
+      { q: 'Capital of Australia?',                             opts: ['Sydney','Melbourne','Canberra','Brisbane'], ans: 2 },
+      { q: 'Capital of Canada?',                                opts: ['Toronto','Vancouver','Montreal','Ottawa'], ans: 3 },
+      { q: 'Capital of Brazil?',                                opts: ['Rio de Janeiro','São Paulo','Brasília','Salvador'], ans: 2 },
+      { q: 'Capital of Japan?',                                 opts: ['Osaka','Kyoto','Hiroshima','Tokyo'],     ans: 3 },
+      { q: 'Capital of South Africa (executive)?',              opts: ['Cape Town','Johannesburg','Pretoria','Durban'], ans: 2 },
+    ],
+    'Natural Disasters': [
+      { q: 'What most commonly causes a tsunami?',              opts: ['Volcanic eruption on land','Undersea earthquake','Hurricane','Landslide'], ans: 1 },
+      { q: 'What does each whole-number increase on the Richter scale represent?', opts: ['10× stronger','100× stronger','5× stronger','2× stronger'], ans: 0 },
+      { q: 'Where do most earthquakes occur?',                  opts: ['In the middle of continents','Near the poles','At tectonic plate boundaries','In deep oceans only'], ans: 2 },
+      { q: 'What is the calm, low-pressure centre of a hurricane called?', opts: ['The edge','The wall','The eye','The base'], ans: 2 },
+      { q: 'A pyroclastic flow is:',                            opts: ['A slow lava stream','A cloud of ash and dust','A fast current of hot gas and volcanic debris','A type of earthquake'], ans: 2 },
+    ],
+    'Plate Tectonics': [
+      { q: 'Approximately how many major tectonic plates are there?', opts: ['4–5','7–8','12–15','20+'],         ans: 1 },
+      { q: 'Which type of boundary forms mountain ranges?',     opts: ['Divergent','Transform','Convergent','Subduction only'], ans: 2 },
+      { q: 'What is the Ring of Fire?',                         opts: ['A volcanic region in Africa','A zone of earthquakes and volcanoes around the Pacific','A ring of coral reefs','A desert zone'], ans: 1 },
+      { q: 'Who first proposed the theory of continental drift?', opts: ['Charles Lyell','Alfred Wegener','Harry Hess','James Hutton'], ans: 1 },
+      { q: 'At a mid-ocean ridge, tectonic plates are:',        opts: ['Colliding','Sliding past each other','Moving apart','Subducting'], ans: 2 },
+    ],
+    'Rivers & Mountains': [
+      { q: 'What is the longest river in the world?',           opts: ['Amazon','Congo','Yangtze','Nile'],       ans: 3 },
+      { q: 'What is the highest mountain in the world?',        opts: ['K2','Kangchenjunga','Mount Everest','Lhotse'], ans: 2 },
+      { q: 'A meander is a feature of which stage of a river?', opts: ['Upper course','Source','Middle/lower course','Estuary only'], ans: 2 },
+      { q: 'What is a watershed?',                              opts: ['A river delta','High land dividing drainage basins','Where a river meets the sea','The deepest part of a river'], ans: 1 },
+      { q: 'Which process involves rock being worn away by water, wind or ice?', opts: ['Deposition','Transportation','Erosion','Weathering'], ans: 2 },
+    ],
+    'Biomes': [
+      { q: 'Which biome has the greatest biodiversity?',        opts: ['Savannah','Temperate forest','Tundra','Tropical rainforest'], ans: 3 },
+      { q: 'What characterises the tundra biome?',              opts: ['Dense forests','Hot and dry conditions','Permafrost and very low temperatures','High rainfall'], ans: 2 },
+      { q: 'What is the boreal forest (taiga) biome also called?', opts: ['Savannah','Chaparral','Coniferous forest','Mangrove'], ans: 2 },
+      { q: 'Which biome receives less than 250 mm of rain per year?', opts: ['Temperate grassland','Desert','Mediterranean','Tropical rainforest'], ans: 1 },
+      { q: 'The Amazon rainforest is located in which biome?',  opts: ['Temperate deciduous forest','Tropical rainforest','Savannah','Mangrove swamp'], ans: 1 },
+    ],
+    'Africa': [
+      { q: 'What is the largest country in Africa by area?',    opts: ['Sudan','Democratic Republic of Congo','Libya','Algeria'], ans: 3 },
+      { q: 'What is the longest river in Africa?',              opts: ['Congo','Niger','Zambezi','Nile'],        ans: 3 },
+      { q: 'How many countries are in Africa?',                 opts: ['48','52','54','57'],                     ans: 2 },
+      { q: 'What is the Sahara?',                               opts: ['The world\'s largest rainforest','The world\'s largest hot desert','A major river system','A mountain range'], ans: 1 },
+      { q: 'The Great Rift Valley runs through which part of Africa?', opts: ['West Africa','North Africa','Central Africa','East Africa'], ans: 3 },
+    ],
+    'World Oceans': [
+      { q: 'Which is the largest ocean?',                       opts: ['Atlantic','Indian','Arctic','Pacific'],  ans: 3 },
+      { q: 'What is the deepest point on Earth?',               opts: ['Java Trench','Puerto Rico Trench','Mariana Trench','Tonga Trench'], ans: 2 },
+      { q: 'Approximately what percentage of Earth\'s surface is ocean?', opts: ['51%','61%','71%','81%'],       ans: 2 },
+      { q: 'What primarily causes ocean tides?',                opts: ['Wind','Earth\'s rotation','Gravitational pull of the Moon','Ocean currents'], ans: 2 },
+      { q: 'What is thermohaline circulation also known as?',   opts: ['The trade winds','The jet stream','The ocean conveyor belt','El Niño'], ans: 2 },
     ],
   },
 
   art: {
-    label: '🎨 Art',
-    questions: [
-      // Famous Artists
-      { q: 'Who painted the Mona Lisa?',                          opts: ['Michelangelo','Raphael','Leonardo da Vinci','Donatello'], ans: 2 },
-      { q: 'Which artist famously cut off part of his own ear?',  opts: ['Pablo Picasso','Vincent van Gogh','Salvador Dalí','Claude Monet'], ans: 1 },
-      { q: 'Frida Kahlo was a famous artist from:',               opts: ['Spain','Brazil','Mexico','Argentina'], ans: 2 },
-      { q: 'Which street artist is known for anonymous satirical work?', opts: ['Andy Warhol','Banksy','Keith Haring','Jean-Michel Basquiat'], ans: 1 },
-      { q: 'Claude Monet was the leading figure in which movement?', opts: ['Cubism','Surrealism','Impressionism','Expressionism'], ans: 2 },
-      { q: 'Salvador Dalí was known for which style?',            opts: ['Cubism','Impressionism','Realism','Surrealism'], ans: 3 },
-      { q: 'Who painted the Sistine Chapel ceiling?',             opts: ['Leonardo da Vinci','Raphael','Michelangelo','Botticelli'], ans: 2 },
-      { q: 'Andy Warhol was famous for which art movement?',      opts: ['Abstract Expressionism','Pop Art','Surrealism','Minimalism'], ans: 1 },
-      // Art Movements
-      { q: 'Which movement began in 14th-century Italy celebrating classical learning?', opts: ['Baroque','Renaissance','Romanticism','Impressionism'], ans: 1 },
-      { q: 'Impressionists were known for painting:',             opts: ['Perfect geometry','Dark scenes','Light and everyday life with loose brushstrokes','Dreamlike images'], ans: 2 },
-      { q: 'Which movement broke objects into geometric shapes?',  opts: ['Surrealism','Pop Art','Impressionism','Cubism'], ans: 3 },
-      { q: 'Surrealism explored:',                                opts: ['Political protest','Dreams and the unconscious mind','Consumer culture','Ancient religious themes'], ans: 1 },
-      { q: 'Pop Art celebrated:',                                 opts: ['Ancient myth','Mass media and popular culture','Natural landscapes','Personal suffering'], ans: 1 },
-      { q: 'Baroque art (17th century) is known for being:',      opts: ['Simple and minimal','Dramatic, detailed and emotional','Abstract and unclear','Flat and colourless'], ans: 1 },
-      { q: 'Which movement rejected tradition to express raw emotions?', opts: ['Realism','Classicism','Expressionism','Minimalism'], ans: 2 },
-      { q: 'Abstract art is art that:',                           opts: ['Looks exactly like real life','Tells a clear story','Does not represent real objects','Uses only black and white'], ans: 2 },
-      // Colour Theory
-      { q: 'What are the three primary colours (traditional pigment)?', opts: ['Red, green, blue','Red, yellow, blue','Orange, purple, green','Cyan, magenta, yellow'], ans: 1 },
-      { q: 'What do you get when you mix red and blue?',          opts: ['Orange','Green','Purple','Brown'], ans: 2 },
-      { q: 'Which colours are called "warm" colours?',            opts: ['Blue, green, purple','Red, orange, yellow','Grey, white, black','Teal, cyan, indigo'], ans: 1 },
-      { q: 'Complementary colours are:',                          opts: ['Similar colours','Opposite colours on the colour wheel','Shades of the same colour','Skin-tone colours'], ans: 1 },
-      { q: 'What is the complementary colour of blue?',           opts: ['Purple','Green','Orange','Red'], ans: 2 },
-      { q: 'Mixing all colours of light (RGB) together gives:',   opts: ['Black','Brown','Grey','White'], ans: 3 },
-      { q: 'Secondary colours are:',                              opts: ['Red, yellow, blue','Made by mixing two primary colours','Very dark colours','Shades of grey'], ans: 1 },
-      { q: 'Adding white to a colour creates a:',                 opts: ['Shade','Tint','Tone','Hue'], ans: 1 },
-      // Techniques
-      { q: 'In art, perspective is used to:',                     opts: ['Make colours brighter','Show depth and distance on a flat surface','Mix paints','Show texture'], ans: 1 },
-      { q: 'Which technique shows where light and shadow fall?',  opts: ['Perspective','Composition','Shading','Stippling'], ans: 2 },
-      { q: '"Composition" in art means:',                         opts: ['The colours used','The arrangement of elements','The type of paint','The size of the artwork'], ans: 1 },
-      { q: 'Stippling is a technique using:',                     opts: ['Thick strokes','Small dots to build tone and texture','Cross-hatching lines','Smooth gradients'], ans: 1 },
-      { q: 'Cross-hatching involves:',                            opts: ['Layering transparent paint','Lines in opposite directions to create tone','Blending with a finger','Pressing objects into clay'], ans: 1 },
-      { q: 'The "rule of thirds" improves:',                      opts: ['Colour mixing','Composition','Three-point perspective','Print quality'], ans: 1 },
-      { q: 'A vanishing point is used in:',                       opts: ['Colour theory','Linear perspective','Life drawing','Printmaking'], ans: 1 },
-      { q: 'Proportion in art means:',                            opts: ['The speed of painting','The amount of paint','The correct size relationship between parts','The depth of shadow'], ans: 2 },
-      // Famous Works
-      { q: 'Who painted The Starry Night?',                       opts: ['Claude Monet','Vincent van Gogh','Pablo Picasso','Salvador Dalí'], ans: 1 },
-      { q: 'The Persistence of Memory (melting clocks) was painted by:', opts: ['René Magritte','Pablo Picasso','Salvador Dalí','Max Ernst'], ans: 2 },
-      { q: 'Girl with a Pearl Earring was painted by:',           opts: ['Rembrandt','Jan Vermeer','Rubens','Leonardo da Vinci'], ans: 1 },
-      { q: 'Guernica, depicting the horrors of war, was created by:', opts: ['Henri Matisse','Salvador Dalí','Pablo Picasso','Claude Monet'], ans: 2 },
-      { q: 'The Birth of Venus was painted by:',                  opts: ['Leonardo da Vinci','Michelangelo','Raphael','Sandro Botticelli'], ans: 3 },
-      { q: 'The Last Supper depicts:',                            opts: ["Jesus's baptism","Jesus's final meal with his disciples","The crucifixion","The resurrection"], ans: 1 },
-      { q: 'Monet\'s water lily paintings belong to which movement?', opts: ['Cubism','Surrealism','Impressionism','Expressionism'], ans: 2 },
-      { q: 'The Scream was painted by which Expressionist artist?', opts: ['Vincent van Gogh','Edvard Munch','Emil Nolde','Ernst Kirchner'], ans: 1 },
+    'Impressionism': [
+      { q: 'Who was the leading figure of Impressionism?',      opts: ['Edgar Degas','Pierre-Auguste Renoir','Claude Monet','Paul Cézanne'], ans: 2 },
+      { q: 'Where did Impressionism originate?',                opts: ['England','Germany','Italy','France'],   ans: 3 },
+      { q: 'What does "en plein air" mean?',                    opts: ['In a studio','At night','Outdoors','With natural light only'], ans: 2 },
+      { q: 'Which painting gave Impressionism its name?',       opts: ['Water Lilies','The Luncheon on the Grass','Impression, Sunrise','Starry Night'], ans: 2 },
+      { q: 'What was innovative about Impressionist brushwork?', opts: ['Perfect smooth blending','Short, visible strokes capturing light','Very dark palette','Highly detailed realism'], ans: 1 },
+    ],
+    'Renaissance': [
+      { q: 'What does "Renaissance" mean?',                     opts: ['Revolution','Reformation','Rebirth','Renewal'], ans: 2 },
+      { q: 'Where did the Renaissance begin?',                  opts: ['France','Spain','England','Italy'],     ans: 3 },
+      { q: 'Who painted the ceiling of the Sistine Chapel?',    opts: ['Leonardo da Vinci','Raphael','Donatello','Michelangelo'], ans: 3 },
+      { q: 'Which technique creates strong contrast between light and dark?', opts: ['Impasto','Sfumato','Chiaroscuro','Fresco'], ans: 2 },
+      { q: 'Who is considered the ultimate "Renaissance man"?', opts: ['Raphael','Michelangelo','Leonardo da Vinci','Botticelli'], ans: 2 },
+    ],
+    'Colour Theory': [
+      { q: 'What are the three traditional primary pigment colours?', opts: ['Red, green, blue','Red, yellow, blue','Cyan, magenta, yellow','Orange, purple, green'], ans: 1 },
+      { q: 'Complementary colours are:',                        opts: ['Similar shades','Adjacent on the wheel','Opposite on the colour wheel','Always warm colours'], ans: 2 },
+      { q: 'What is a "tint"?',                                 opts: ['A colour mixed with black','A colour mixed with white','A dark shade','A muted tone'], ans: 1 },
+      { q: 'Mixing two primary colours creates a:',             opts: ['Tertiary colour','Tint','Secondary colour','Shade'], ans: 2 },
+      { q: 'What is the complementary colour of red?',          opts: ['Blue','Orange','Purple','Green'],       ans: 3 },
+    ],
+    'Cubism': [
+      { q: 'Who co-founded Cubism?',                            opts: ['Dalí and Miró','Monet and Renoir','Picasso and Braque','Matisse and Duchamp'], ans: 2 },
+      { q: 'What is the key feature of Cubist paintings?',      opts: ['Dreamlike imagery','Bright naturalistic colours','Multiple perspectives shown simultaneously','Smooth precise lines'], ans: 2 },
+      { q: 'Which Picasso painting is considered a Cubist landmark?', opts: ['Guernica','The Weeping Woman','Les Demoiselles d\'Avignon','Three Musicians'], ans: 2 },
+      { q: 'In which decade did Cubism emerge?',                opts: ['1880s','1890s','1900s','1920s'],        ans: 2 },
+      { q: 'Analytic Cubism is known for its:',                 opts: ['Bright primary colours','Monochromatic palette and fragmented forms','Use of collage','Dreamlike subjects'], ans: 1 },
+    ],
+    'Surrealism': [
+      { q: 'Who wrote the Surrealist Manifesto?',               opts: ['Salvador Dalí','Max Ernst','René Magritte','André Breton'], ans: 3 },
+      { q: 'Who painted "The Persistence of Memory" (melting clocks)?', opts: ['René Magritte','Max Ernst','Salvador Dalí','Joan Miró'], ans: 2 },
+      { q: 'What did Surrealism seek to explore?',              opts: ['Political protest','Classical beauty','The unconscious mind and dreams','Industrial society'], ans: 2 },
+      { q: 'Which Surrealist technique involved rubbing over textures?', opts: ['Decalcomania','Automatism','Frottage','Collage'], ans: 2 },
+      { q: 'Which artist is known for self-portraits featuring Mexican culture?', opts: ['Georgia O\'Keeffe','Frida Kahlo','Tamara de Lempicka','Lee Krasner'], ans: 1 },
+    ],
+    'Street Art': [
+      { q: 'Which anonymous British artist is globally famous for street art?', opts: ['Shepard Fairey','Invader','Banksy','Os Gemeos'], ans: 2 },
+      { q: 'Where did modern graffiti art originate in the 1970s?', opts: ['Los Angeles','Chicago','New York City','London'], ans: 2 },
+      { q: 'What technique do many street artists use for repeated designs?', opts: ['Fresco','Impasto','Stencilling','Pointillism'], ans: 2 },
+      { q: 'Jean-Michel Basquiat is known for which iconic motif?', opts: ['A smiley face','A peace sign','The radiant child and crown','A barcode'], ans: 2 },
+      { q: 'What is "wheat-pasting"?',                          opts: ['A painting method','Sticking large paper prints to walls using flour paste','A type of spray paint','Painting on food'], ans: 1 },
+    ],
+    'Famous Paintings': [
+      { q: 'Who painted "The Starry Night"?',                   opts: ['Claude Monet','Paul Gauguin','Vincent van Gogh','Paul Cézanne'], ans: 2 },
+      { q: 'Where is the "Mona Lisa" displayed?',               opts: ['The Uffizi, Florence','The Prado, Madrid','The Louvre, Paris','The Met, New York'], ans: 2 },
+      { q: 'Who painted "Girl with a Pearl Earring"?',          opts: ['Rembrandt','Peter Paul Rubens','Johannes Vermeer','Jan Steen'], ans: 2 },
+      { q: 'Who painted "The Scream"?',                         opts: ['Vincent van Gogh','Edvard Munch','Franz Marc','Ernst Kirchner'], ans: 1 },
+      { q: 'Picasso\'s "Guernica" depicts the suffering caused by:', opts: ['World War I','A Spanish bullfight','The bombing of a Basque town','The French Revolution'], ans: 2 },
+    ],
+    'Art Techniques': [
+      { q: 'What is "impasto"?',                                opts: ['Painting on wet plaster','Applying thick paint to canvas','A glazing technique','Scratching through paint'], ans: 1 },
+      { q: 'What is fresco?',                                   opts: ['Painting on dry plaster','Painting on canvas','Painting on wet plaster','A printing technique'], ans: 2 },
+      { q: 'What is the "vanishing point" in linear perspective?', opts: ['Where paint runs out','The focal point of colour','Where parallel lines appear to meet','The centre of the canvas'], ans: 2 },
+      { q: 'Hatching in drawing means:',                        opts: ['Filling with flat colour','Drawing closely spaced parallel lines to create tone','Blending with a finger','Using only three colours'], ans: 1 },
+      { q: 'The "rule of thirds" relates to:',                  opts: ['Using three colours only','Dividing a composition into a 3×3 grid to guide placement','Applying three layers of paint','Using three light sources'], ans: 1 },
     ],
   },
 };
@@ -1752,97 +1781,84 @@ function initQuiz(subject) {
   renderQuiz();
 }
 
-async function generateQuiz() {
+function generateQuiz() {
   const topicInput = document.getElementById('quiz-topic-input');
-  const topic = topicInput ? topicInput.value.trim() : '';
-  if (!topic) { showToast('Please enter a topic first!', ''); return; }
-  if (!ANTHROPIC_KEY) {
-    showToast('Add your Anthropic API key in main.js to enable AI quizzes.', '');
+  const typed = topicInput ? topicInput.value.trim() : '';
+  if (!typed) { showToast('Please enter a topic first!', ''); return; }
+
+  const bank = QUIZ_BANK[quizSubject] || {};
+
+  // 1. Exact case-insensitive match
+  let key = Object.keys(bank).find(k => k.toLowerCase() === typed.toLowerCase());
+  // 2. Partial match fallback
+  if (!key) key = Object.keys(bank).find(
+    k => k.toLowerCase().includes(typed.toLowerCase()) ||
+         typed.toLowerCase().includes(k.toLowerCase())
+  );
+
+  if (!key) {
+    renderQuizNotFound(typed);
     return;
   }
 
-  quizTopic     = topic;
-  quizLoading   = true;
+  quizTopic     = key;
+  quizQuestions = [...bank[key]];
+  quizQIndex    = 0;
+  quizScore     = 0;
+  quizAnswered  = false;
   quizDone      = false;
-  quizQuestions = [];
   renderQuiz();
+}
 
-  try {
-    const subjectLabel = QUIZ_SUBJECTS[quizSubject] || quizSubject;
-    const prompt =
-      `Generate exactly 5 multiple-choice quiz questions about "${topic}" relevant to ${subjectLabel}. ` +
-      `Each question must have exactly 4 answer options with one correct answer.\n\n` +
-      `Return ONLY a valid JSON array — no prose, no markdown fences — with this exact structure:\n` +
-      `[{"q":"Question?","opts":["A","B","C","D"],"ans":0}]\n\n` +
-      `"ans" is the 0-based index of the correct option.`;
-
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-allow-browser': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5',
-        max_tokens: 1024,
-        messages: [{ role: 'user', content: prompt }],
-      }),
+function renderQuizNotFound(typed) {
+  const body = document.getElementById('quiz-body');
+  if (!body) return;
+  const available = Object.keys(QUIZ_BANK[quizSubject] || {}).map(
+    t => `<button class="quiz-chip-btn" data-topic="${escHtml(t)}">${escHtml(t)}</button>`
+  ).join('');
+  body.innerHTML = `
+    <div class="quiz-not-found">
+      <div class="quiz-not-found-icon">🔍</div>
+      <p class="quiz-not-found-msg">
+        <strong>"${escHtml(typed)}"</strong> isn't in the question bank yet.
+      </p>
+      <p class="quiz-chips-label">Available topics for this subject:</p>
+      <div class="quiz-chips">${available}</div>
+    </div>`;
+  body.querySelectorAll('.quiz-chip-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const inp = document.getElementById('quiz-topic-input');
+      if (inp) { inp.value = btn.dataset.topic; generateQuiz(); }
     });
-
-    if (!res.ok) throw new Error(`API ${res.status}`);
-    const data  = await res.json();
-    const text  = data.content?.[0]?.text || '';
-    const match = text.match(/\[[\s\S]*\]/);
-    if (!match) throw new Error('No JSON in response');
-    const questions = JSON.parse(match[0]);
-    if (!Array.isArray(questions) || !questions.length) throw new Error('Empty quiz returned');
-
-    quizQuestions = questions;
-    quizQIndex    = 0;
-    quizScore     = 0;
-    quizAnswered  = false;
-    quizDone      = false;
-    quizLoading   = false;
-    renderQuiz();
-
-  } catch (err) {
-    quizLoading   = false;
-    quizQuestions = [];
-    renderQuiz();
-    showToast(`Could not generate quiz: ${err.message}`, '');
-  }
+  });
 }
 
 function renderQuiz() {
   const body = document.getElementById('quiz-body');
   if (!body) return;
 
-  /* ── Loading ── */
-  if (quizLoading) {
-    body.innerHTML = `
-      <div class="quiz-loading">
-        <div class="quiz-spinner"></div>
-        <p class="quiz-loading-text">Generating your <strong>${escHtml(quizTopic)}</strong> quiz…</p>
-      </div>`;
-    return;
-  }
-
   /* ── Topic input ── */
   if (!quizQuestions.length && !quizDone) {
+    const chips = Object.keys(QUIZ_BANK[quizSubject] || {}).map(
+      t => `<button class="quiz-chip-btn" data-topic="${escHtml(t)}">${escHtml(t)}</button>`
+    ).join('');
     body.innerHTML = `
       <div class="quiz-topic-form">
         <label class="quiz-topic-label">What topic do you want to study?</label>
         <div class="quiz-topic-row">
           <input id="quiz-topic-input" class="quiz-topic-input" type="text"
-            placeholder="e.g. Fractions, World War 2, Photosynthesis…" maxlength="80" autocomplete="off">
-          <button class="btn btn-study btn-sm" id="quiz-generate-btn">✨ Generate Quiz</button>
+            placeholder="e.g. Algebra, Macbeth, Photosynthesis…" maxlength="80" autocomplete="off">
+          <button class="btn btn-study btn-sm" id="quiz-generate-btn">▶ Start Quiz</button>
         </div>
+        <p class="quiz-chips-label">Available topics:</p>
+        <div class="quiz-chips">${chips}</div>
       </div>`;
     const inp = document.getElementById('quiz-topic-input');
     document.getElementById('quiz-generate-btn').addEventListener('click', generateQuiz);
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') generateQuiz(); });
+    body.querySelectorAll('.quiz-chip-btn').forEach(btn => {
+      btn.addEventListener('click', () => { inp.value = btn.dataset.topic; generateQuiz(); });
+    });
     return;
   }
 
