@@ -491,17 +491,6 @@
 
       </div><!-- /cards-grid -->
 
-      <!-- ── Eco Extras ──────────────────────────────────────────────── -->
-      <div class="container eco-extras">
-
-        <!-- Eco Progress Over Time -->
-        <div class="card card-eco" id="eco-progress-card">
-          <div class="card-tag eco-tag">📅 Eco Progress</div>
-          <h3>Challenge History <span class="eco-cal-count" id="eco-cal-count"></span></h3>
-          <div id="eco-calendar-grid"><p class="eco-cal-loading">Loading…</p></div>
-        </div>
-
-      </div><!-- /eco-extras -->
 
       <!-- ── Eco More: Badges + Virtual Tree ────────────────────────── -->
       <div class="container eco-more">
@@ -572,27 +561,65 @@
                 <h3>My Schedule</h3>
                 <textarea id="planner-schedule" class="planner-textarea"
                   placeholder="E.g.&#10;8:00am — Wake up &amp; breakfast&#10;9:00am — Math revision (1 hr)&#10;10:30am — English essay draft&#10;12:00pm — Lunch break&#10;1:30pm — Science notes…"
-                  rows="9"></textarea>
+                  rows="13"></textarea>
               </div>
               <div class="card card-study planner-card">
                 <div class="card-tag">🎯 Goals</div>
                 <h3>My Goals</h3>
+
+                <!-- Circular Progress Ring -->
+                <div class="goals-ring-wrap">
+                  <svg class="goals-ring-svg" viewBox="0 0 120 120" aria-hidden="true">
+                    <defs>
+                      <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%"   stop-color="#40916c"/>
+                        <stop offset="100%" stop-color="#95d5b2"/>
+                      </linearGradient>
+                    </defs>
+                    <circle class="goals-ring-bg" cx="60" cy="60" r="50"/>
+                    <circle class="goals-ring-fg" id="goals-ring-fg" cx="60" cy="60" r="50"/>
+                  </svg>
+                  <div class="goals-ring-center">
+                    <span class="goals-ring-done" id="goals-ring-done">0</span>
+                    <span class="goals-ring-of">of</span>
+                    <span class="goals-ring-total" id="goals-ring-total">0</span>
+                    <span class="goals-ring-label">done</span>
+                  </div>
+                </div>
+
                 <div class="goal-add-row">
                   <input type="text" id="goal-input" placeholder="Add a goal for today…" maxlength="80" />
                   <button class="btn btn-study btn-sm" id="goal-add-btn">+ Add</button>
                 </div>
                 <ul class="goal-list" id="goal-list"></ul>
-                <div class="goal-footer">
-                  <span class="goal-progress-text" id="goal-progress-text">0 of 0 goals done</span>
-                  <div class="progress-bar">
-                    <div class="progress-fill study-fill" id="goal-progress-fill"></div>
-                  </div>
-                </div>
               </div>
             </div>
             <div class="planner-actions">
               <button class="btn btn-green" id="planner-save-btn">💾 Save Plan</button>
               <span class="planner-save-status" id="planner-save-status"></span>
+            </div>
+
+            <!-- Week Summary -->
+            <div class="week-summary-card" id="week-summary">
+              <div class="week-summary-title">📊 Week Summary</div>
+              <div class="week-summary-stats">
+                <div class="ws-stat">
+                  <div class="ws-val" id="ws-goals-total">0</div>
+                  <div class="ws-label">Goals Set</div>
+                </div>
+                <div class="ws-stat ws-stat-highlight">
+                  <div class="ws-val" id="ws-goals-done">0</div>
+                  <div class="ws-label">Completed</div>
+                </div>
+                <div class="ws-stat">
+                  <div class="ws-val" id="ws-days-active">0</div>
+                  <div class="ws-label">Active Days</div>
+                </div>
+              </div>
+              <div class="ws-bar-wrap">
+                <div class="ws-bar-fill" id="ws-bar-fill" style="width:0%"></div>
+              </div>
+              <div class="ws-bar-label" id="ws-bar-label">0% of week goals done</div>
             </div>
 
           </div><!-- /tab-planner-panel -->

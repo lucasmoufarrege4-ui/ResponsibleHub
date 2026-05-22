@@ -438,6 +438,7 @@ async function loadWeekData() {
   renderWeekStrip();
   updatePlannerDateHeader();
   await loadPlannerData();
+  renderWeekSummary();
 }
 
 function showPlannerApp() {
@@ -510,20 +511,59 @@ function renderGoals() {
   const list = document.getElementById('goal-list');
   list.innerHTML = plannerGoals.map((g, i) => `
     <li class="goal-item${g.done ? ' goal-done' : ''}">
-      <input type="checkbox" class="hw-check" ${g.done ? 'checked' : ''} data-idx="${i}" />
-      <span class="goal-text">${g.text}</span>
+      <button class="goal-check-btn${g.done ? ' goal-check-done' : ''}" data-idx="${i}" aria-label="${g.done ? 'Mark incomplete' : 'Mark complete'}">
+        ${g.done ? '✓' : ''}
+      </button>
+      <span class="goal-text">${escHtml(g.text)}</span>
       <button class="hw-delete" data-idx="${i}">×</button>
     </li>`).join('');
-  list.querySelectorAll('input[type=checkbox]').forEach(cb => {
-    cb.addEventListener('change', () => { plannerGoals[+cb.dataset.idx].done = cb.checked; renderGoals(); autoSavePlanner(); });
+  list.querySelectorAll('.goal-check-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      plannerGoals[+btn.dataset.idx].done = !plannerGoals[+btn.dataset.idx].done;
+      renderGoals(); autoSavePlanner();
+    });
   });
   list.querySelectorAll('.hw-delete').forEach(btn => {
     btn.addEventListener('click', () => { plannerGoals.splice(+btn.dataset.idx, 1); renderGoals(); autoSavePlanner(); });
   });
   const done = plannerGoals.filter(g => g.done).length, total = plannerGoals.length;
-  document.getElementById('goal-progress-text').textContent = `${done} of ${total} goals done`;
-  document.getElementById('goal-progress-fill').style.width = total ? `${done / total * 100}%` : '0%';
+  updateGoalsRing(done, total);
+  renderWeekSummary();
   if (total > 0 && done === total) showToast('🎯 All goals complete! Incredible!', 'study-toast');
+}
+
+function updateGoalsRing(done, total) {
+  const r = 50, circum = 2 * Math.PI * r; // ≈ 314.16
+  const fgEl   = document.getElementById('goals-ring-fg');
+  const doneEl = document.getElementById('goals-ring-done');
+  const totEl  = document.getElementById('goals-ring-total');
+  if (fgEl) {
+    const offset = total > 0 ? circum * (1 - done / total) : circum;
+    fgEl.style.strokeDashoffset = offset;
+  }
+  if (doneEl) doneEl.textContent = done;
+  if (totEl)  totEl.textContent  = total;
+}
+
+function renderWeekSummary() {
+  let totalGoals = 0, doneGoals = 0, activeDays = 0;
+  getWeekDates().forEach(d => {
+    const ds     = dateToStr(d);
+    const cached = plannerCache[ds];
+    if (!cached) return;
+    const goals = cached.goals || [];
+    if (cached.schedule?.trim() || goals.length) activeDays++;
+    totalGoals += goals.length;
+    doneGoals  += goals.filter(g => g.done).length;
+  });
+  const pct = totalGoals > 0 ? Math.round(doneGoals / totalGoals * 100) : 0;
+  const set  = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('ws-goals-total', totalGoals);
+  set('ws-goals-done',  doneGoals);
+  set('ws-days-active', activeDays);
+  set('ws-bar-label',   `${pct}% of week goals done`);
+  const bar = document.getElementById('ws-bar-fill');
+  if (bar) bar.style.width = pct + '%';
 }
 
 document.getElementById('goal-add-btn').addEventListener('click', addGoal);
@@ -1198,92 +1238,8 @@ document.getElementById('retake-carbon-btn')?.addEventListener('click', () => {
   document.getElementById('carbon-form').classList.remove('hidden');
 });
 
-/* ─── ECO PROGRESS CALENDAR ──────────────────────────────────────────── */
-
-async function loadEcoProgress() {
-  const grid = document.getElementById('eco-calendar-grid');
-  if (!grid) return;
-
-  if (!sbUser) {
-    grid.innerHTML = '<p class="eco-cal-loading">Sign in to see your eco history 🌿</p>';
-    return;
-  }
-
-  const DAYS = 35;
-
-  const { data, error } = await sb.from('challenge_completions')
-    .select('completed_at')
-    .eq('user_id', sbUser.id)
-    .eq('challenge_id', 'eco')
-    .gte('completed_at', new Date(Date.now() - (DAYS - 1) * 86400000).toISOString());
-
-  if (error) {
-    console.warn('[EcoProgress] load error (showing empty calendar):', error);
-  }
-
-  // Extract YYYY-MM-DD from each timestamp; render empty calendar on error/empty
-  const completedSet = new Set((data || []).map(r => r.completed_at.slice(0, 10)));
-  renderEcoCalendar(completedSet, DAYS);
-
-  const count = completedSet.size;
-  const countEl = document.getElementById('eco-cal-count');
-  if (countEl) countEl.textContent = count ? `${count} days ✅` : '';
-}
-
-function renderEcoCalendar(completedSet, days = 35) {
-  const grid = document.getElementById('eco-calendar-grid');
-  if (!grid) return;
-
-  const today = dateToStr(new Date());
-  const cols = 7, rows = Math.ceil(days / cols);
-
-  // Build day labels header
-  const dayLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-  const todayDow = new Date().getDay(); // 0=Sun
-
-  // We want the grid columns to align so that today falls in the last row's correct DOW column.
-  // Pad empty cells at the start so the first cell in the grid lines up with the right DOW.
-  const totalCells = rows * cols;
-  const startPad = totalCells - days; // cells before our first real day
-
-  let html = `<div class="eco-cal-grid" style="--eco-cal-cols:${cols}">`;
-
-  // Day-of-week labels
-  for (let d = 0; d < cols; d++) {
-    // Rotate labels so first column = DOW of (today - (days-1) days)
-    const firstDayDow = new Date(Date.now() - (days - 1) * 86400000).getDay();
-    const label = dayLabels[(firstDayDow + d) % 7];
-    html += `<div class="eco-cal-label">${label}</div>`;
-  }
-
-  // Padding cells
-  for (let p = 0; p < startPad; p++) {
-    html += `<div class="eco-cal-cell eco-cal-empty"></div>`;
-  }
-
-  // Real day cells
-  for (let i = 0; i < days; i++) {
-    const d = new Date(Date.now() - (days - 1 - i) * 86400000);
-    const ds = dateToStr(d);
-    const done = completedSet.has(ds);
-    const isToday = ds === today;
-    let cls = 'eco-cal-cell';
-    if (done)    cls += ' eco-cal-done';
-    if (isToday) cls += ' eco-cal-today';
-    const title = `${ds}${done ? ' ✅' : ''}`;
-    html += `<div class="${cls}" title="${title}"></div>`;
-  }
-
-  html += '</div>';
-
-  // Legend
-  html += `<div class="eco-cal-legend">
-    <span class="eco-cal-cell eco-cal-done eco-cal-legend-swatch"></span><span>Eco challenge done</span>
-    <span class="eco-cal-cell eco-cal-legend-swatch"></span><span>Not done</span>
-  </div>`;
-
-  grid.innerHTML = html;
-}
+/* ─── ECO PROGRESS CALENDAR — removed ───────────────────────────────── */
+// Calendar removed per user request (4 Dec 2024).
 
 
 /* ─── ECO BADGE SYSTEM ───────────────────────────────────────────────── */
@@ -1568,7 +1524,6 @@ async function initEcoPage() {
   renderBadgeGallery();             // quick render with cached badge set
   // Async: load from Supabase
   await Promise.all([
-    loadEcoProgress(),
     loadBadges(),
     loadVirtualTree(),
   ]);
