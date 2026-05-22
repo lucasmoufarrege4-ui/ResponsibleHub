@@ -1115,11 +1115,10 @@ async function loadEcoProgress() {
     .gte('date', cutoffStr);
 
   if (error) {
-    console.error('[EcoProgress] load error:', error);
-    grid.innerHTML = '<p class="eco-cal-loading">Could not load history.</p>';
-    return;
+    console.warn('[EcoProgress] load error (showing empty calendar):', error);
   }
 
+  // On error or empty result, render a calendar with no completed days rather than an error message
   const completedSet = new Set((data || []).map(r => r.date));
   renderEcoCalendar(completedSet, DAYS);
 
@@ -1395,17 +1394,21 @@ function renderVirtualTree(count) {
 }
 
 async function loadVirtualTree() {
-  // Use co2Tracked (eco completions count) for the tree stage; also fetch total from DB
-  if (!sbUser) { renderVirtualTree(co2Tracked); return; }
+  // Fallback: ecoStreak is already populated from DB by loadChallengeState()
+  const fallback = Math.max(co2Tracked, ecoStreak);
+  if (!sbUser) { renderVirtualTree(fallback); return; }
 
   const cutoff = dateToStr(new Date(Date.now() - 365 * 86400000)); // last year
-  const { data } = await sb.from('challenge_completions')
-    .select('date', { count: 'exact' })
+  const { data, error } = await sb.from('challenge_completions')
+    .select('date')
     .eq('user_id', sbUser.id)
     .eq('challenge_id', 'eco')
     .gte('date', cutoff);
 
-  const total = data ? data.length : co2Tracked;
+  if (error) {
+    console.warn('[VirtualTree] DB load failed, using local fallback:', error);
+  }
+  const total = (data && data.length > 0) ? data.length : fallback;
   renderVirtualTree(total);
 }
 
