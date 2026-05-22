@@ -925,12 +925,17 @@ document.getElementById('eco-submit-btn').addEventListener('click', () => {
   showToast('🌱 Eco mission complete! The planet thanks you!', 'eco-toast');
   addXP(ecoChallenges[currentEcoChal].xp);
 
+  // Update tree immediately with new count
+  renderVirtualTree(co2Tracked);
+
   // ── Save to Supabase in the background — never blocks the UI ────────
   if (sbUser) {
     saveChallengeCompletion('eco');
     addGoalToPlanner(`🌍 ${text}`).catch(err =>
       console.error('eco: background planner save failed', err)
     );
+    // Check for newly earned badges (fire-and-forget)
+    checkAndAwardBadges({ proofText: text });
   } else {
     showToast('Sign in to earn XP & save to Planner! 🌟', '');
   }
@@ -1100,8 +1105,14 @@ document.getElementById('calc-carbon-btn')?.addEventListener('click', () => {
   updateHeroStats();
   showToast(`${grade} — ${totalKg.toLocaleString()} kg CO₂/yr`, 'eco-toast');
 
+  // Show real impact numbers
+  renderRealImpact(totalKg, ecoStreak);
+
   // Refresh tips carousel with personalised content
   refreshEcoTips();
+
+  // Award Carbon Counter badge
+  checkAndAwardBadges();
 });
 
 document.getElementById('retake-carbon-btn')?.addEventListener('click', () => {
@@ -1262,14 +1273,289 @@ function showHotspotInfo(h) {
   panel.classList.remove('hidden');
 }
 
+/* ─── ECO BADGE SYSTEM ───────────────────────────────────────────────── */
+
+const ECO_BADGES = [
+  {
+    id: 'first_step',
+    emoji: '🌱', name: 'First Step',
+    desc: 'Complete your first eco challenge',
+    check: ({ ecoCompletions }) => ecoCompletions >= 1,
+  },
+  {
+    id: 'on_fire',
+    emoji: '🔥', name: 'On Fire',
+    desc: '3-day eco streak',
+    check: ({ streak }) => streak >= 3,
+  },
+  {
+    id: 'earth_guardian',
+    emoji: '🌍', name: 'Earth Guardian',
+    desc: '7-day eco streak',
+    check: ({ streak }) => streak >= 7,
+  },
+  {
+    id: 'recycler',
+    emoji: '♻️', name: 'Recycler',
+    desc: 'Submit proof mentioning recycling',
+    check: ({ recycleProof }) => recycleProof === true,
+  },
+  {
+    id: 'carbon_counter',
+    emoji: '🧮', name: 'Carbon Counter',
+    desc: 'Complete the carbon calculator',
+    check: ({ carbonDone }) => carbonDone === true,
+  },
+  {
+    id: 'tree_hugger',
+    emoji: '🌳', name: 'Tree Hugger',
+    desc: '14-day eco streak',
+    check: ({ streak }) => streak >= 14,
+  },
+];
+
+// In-memory set of earned badge IDs (loaded from Supabase + checked locally)
+let earnedBadgeIds = new Set();
+
+async function loadBadges() {
+  if (!sbUser) { renderBadgeGallery(); return; }
+  const { data, error } = await sb
+    .from('eco_badges')
+    .select('badge_id')
+    .eq('user_id', sbUser.id);
+  if (!error && data) {
+    data.forEach(r => earnedBadgeIds.add(r.badge_id));
+  }
+  renderBadgeGallery();
+}
+
+async function awardBadge(badgeId) {
+  if (earnedBadgeIds.has(badgeId)) return; // already earned
+  earnedBadgeIds.add(badgeId);
+  renderBadgeGallery();
+  const badge = ECO_BADGES.find(b => b.id === badgeId);
+  if (badge) showToast(`${badge.emoji} Badge unlocked: ${badge.name}!`, 'eco-toast');
+  if (!sbUser) return;
+  await sb.from('eco_badges').upsert(
+    { user_id: sbUser.id, badge_id: badgeId, earned_at: new Date().toISOString() },
+    { onConflict: 'user_id,badge_id', ignoreDuplicates: true }
+  );
+}
+
+// Evaluate all badges given current context and award newly earned ones
+async function checkAndAwardBadges({ proofText = '' } = {}) {
+  // Build current context
+  const carbonDone = !!localStorage.getItem('rh_carbon_answers');
+  const recycleProof = /recycl/i.test(proofText);
+  const ctx = {
+    ecoCompletions: co2Tracked,    // co2Tracked counts eco completions
+    streak: ecoStreak,
+    carbonDone,
+    recycleProof,
+  };
+  for (const badge of ECO_BADGES) {
+    if (!earnedBadgeIds.has(badge.id) && badge.check(ctx)) {
+      await awardBadge(badge.id);
+    }
+  }
+}
+
+function renderBadgeGallery() {
+  const gallery = document.getElementById('badge-gallery');
+  if (!gallery) return;
+  if (!sbUser) {
+    gallery.innerHTML = '<p class="eco-cal-loading">Sign in to earn badges 🌿</p>';
+    return;
+  }
+  gallery.innerHTML = ECO_BADGES.map(b => {
+    const earned = earnedBadgeIds.has(b.id);
+    return `<div class="badge-item ${earned ? 'badge-earned' : 'badge-locked'}" title="${b.desc}">
+      <div class="badge-emoji">${b.emoji}</div>
+      <div class="badge-name">${b.name}</div>
+      <div class="badge-desc">${b.desc}</div>
+      ${earned ? '<div class="badge-tick">✓</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+/* ─── VIRTUAL TREE ───────────────────────────────────────────────────── */
+
+// Returns SVG string for the tree at the given stage (0-4)
+function buildTreeSVG(stage) {
+  // stage: 0=seed, 1=sprout, 2=small tree, 3=big tree, 4=forest
+  const svgs = {
+    0: /* seed 🌱 */ `
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="200" height="200" fill="none"/>
+        <!-- soil -->
+        <ellipse cx="100" cy="175" rx="60" ry="12" fill="#92400e" opacity=".35"/>
+        <!-- seed -->
+        <ellipse cx="100" cy="162" rx="14" ry="10" fill="#78350f"/>
+        <!-- tiny sprout -->
+        <line x1="100" y1="162" x2="100" y2="140" stroke="#4ade80" stroke-width="3" stroke-linecap="round"/>
+        <ellipse cx="100" cy="135" rx="10" ry="7" fill="#4ade80" transform="rotate(-20,100,135)"/>
+      </svg>`,
+    1: /* sprout */ `
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="100" cy="180" rx="65" ry="14" fill="#92400e" opacity=".3"/>
+        <!-- stem -->
+        <path d="M100,175 Q95,145 100,115" stroke="#4ade80" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <!-- left leaf -->
+        <path d="M100,145 Q75,130 78,110 Q95,120 100,145Z" fill="#22c55e"/>
+        <!-- right leaf -->
+        <path d="M100,135 Q125,115 128,95 Q110,110 100,135Z" fill="#16a34a"/>
+        <!-- top bud -->
+        <circle cx="100" cy="110" r="10" fill="#4ade80"/>
+      </svg>`,
+    2: /* small tree */ `
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <!-- ground -->
+        <ellipse cx="100" cy="182" rx="55" ry="11" fill="#78350f" opacity=".3"/>
+        <!-- trunk -->
+        <rect x="92" y="130" width="16" height="52" rx="6" fill="#92400e"/>
+        <!-- canopy layers -->
+        <polygon points="100,42 55,115 145,115" fill="#16a34a"/>
+        <polygon points="100,68 60,130 140,130" fill="#22c55e"/>
+        <!-- highlight -->
+        <circle cx="88" cy="72" r="12" fill="#4ade80" opacity=".4"/>
+      </svg>`,
+    3: /* big tree */ `
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <!-- ground -->
+        <ellipse cx="100" cy="185" rx="70" ry="13" fill="#78350f" opacity=".3"/>
+        <!-- trunk with roots -->
+        <path d="M88,185 Q80,170 85,145 L115,145 Q120,170 112,185Z" fill="#92400e"/>
+        <path d="M88,175 Q70,178 65,185" stroke="#92400e" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <path d="M112,175 Q130,178 135,185" stroke="#92400e" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <!-- main canopy -->
+        <circle cx="100" cy="90" r="62" fill="#15803d"/>
+        <!-- mid canopy -->
+        <circle cx="72" cy="110" r="35" fill="#16a34a"/>
+        <circle cx="128" cy="108" r="38" fill="#16a34a"/>
+        <!-- top highlight -->
+        <circle cx="100" cy="62" r="30" fill="#22c55e"/>
+        <circle cx="84" cy="68" r="14" fill="#4ade80" opacity=".45"/>
+      </svg>`,
+    4: /* forest */ `
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <!-- ground -->
+        <rect x="0" y="172" width="200" height="28" rx="8" fill="#78350f" opacity=".2"/>
+        <!-- back left tree -->
+        <rect x="22" y="112" width="10" height="62" rx="4" fill="#92400e" opacity=".7"/>
+        <circle cx="27" cy="95" r="28" fill="#14532d" opacity=".85"/>
+        <!-- back right tree -->
+        <rect x="162" y="108" width="12" height="66" rx="4" fill="#92400e" opacity=".7"/>
+        <circle cx="168" cy="88" r="32" fill="#14532d" opacity=".85"/>
+        <!-- main centre tree trunk -->
+        <path d="M90,185 Q82,165 88,135 L112,135 Q118,165 110,185Z" fill="#92400e"/>
+        <path d="M90,175 Q72,176 68,185" stroke="#92400e" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <path d="M110,175 Q128,176 132,185" stroke="#92400e" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <!-- main canopy layers -->
+        <circle cx="100" cy="88" r="68" fill="#15803d"/>
+        <circle cx="75" cy="108" r="36" fill="#16a34a"/>
+        <circle cx="125" cy="106" r="40" fill="#16a34a"/>
+        <circle cx="100" cy="58" r="35" fill="#22c55e"/>
+        <!-- highlights -->
+        <circle cx="84" cy="65" r="16" fill="#4ade80" opacity=".45"/>
+        <circle cx="110" cy="75" r="10" fill="#4ade80" opacity=".3"/>
+        <!-- birds -->
+        <path d="M40,50 Q44,45 48,50" stroke="#374151" stroke-width="1.5" fill="none"/>
+        <path d="M155,40 Q159,35 163,40" stroke="#374151" stroke-width="1.5" fill="none"/>
+      </svg>`,
+  };
+  return svgs[stage] ?? svgs[0];
+}
+
+function renderVirtualTree(count) {
+  let stage, stageName;
+  if      (count === 0)    { stage = 0; stageName = 'Plant your first seed 🌱'; }
+  else if (count <= 2)     { stage = 0; stageName = 'A seed is sprouting…'; }
+  else if (count <= 5)     { stage = 1; stageName = 'Your sprout is growing!'; }
+  else if (count <= 10)    { stage = 2; stageName = 'A little tree is taking shape!'; }
+  else if (count <= 20)    { stage = 3; stageName = 'Look at your mighty tree!'; }
+  else                     { stage = 4; stageName = 'You\'ve grown a whole forest! 🌳'; }
+
+  const wrap = document.getElementById('virtual-tree-svg');
+  const label = document.getElementById('tree-stage-label');
+  const countEl = document.getElementById('tree-action-count');
+  if (wrap)    wrap.innerHTML = buildTreeSVG(stage);
+  if (label)   label.textContent = stageName;
+  if (countEl) countEl.textContent = `${count} eco action${count !== 1 ? 's' : ''} completed`;
+}
+
+async function loadVirtualTree() {
+  // Use co2Tracked (eco completions count) for the tree stage; also fetch total from DB
+  if (!sbUser) { renderVirtualTree(co2Tracked); return; }
+
+  const cutoff = dateToStr(new Date(Date.now() - 365 * 86400000)); // last year
+  const { data } = await sb.from('challenge_completions')
+    .select('date', { count: 'exact' })
+    .eq('user_id', sbUser.id)
+    .eq('challenge_id', 'eco')
+    .gte('date', cutoff);
+
+  const total = data ? data.length : co2Tracked;
+  renderVirtualTree(total);
+}
+
+/* ─── REAL IMPACT NUMBERS ────────────────────────────────────────────── */
+
+function renderRealImpact(totalKg, streak) {
+  const grid = document.getElementById('real-impact-grid');
+  if (!grid) return;
+
+  // Per-challenge averages: each eco challenge ≈ 2 kg CO₂ avoided (mix of actions)
+  const kgPerAction = 2;
+  const actionsCount = Math.max(co2Tracked, 1);
+  const savedKg = Math.round(actionsCount * kgPerAction + streak * 0.5);
+
+  // 1 average car trip ≈ 0.21 kg CO₂/km → km avoided
+  const kmAvoided = Math.round(savedKg / 0.21);
+
+  // An average tree absorbs ~21 kg CO₂/year → equivalent trees
+  const treesEq = (savedKg / 21).toFixed(1);
+
+  // Energy saved: avg home uses ~4,000 kWh/yr at ~0.233 kg CO₂/kWh
+  const kwhSaved = Math.round(savedKg / 0.233);
+
+  grid.innerHTML = `
+    <div class="impact-stat">
+      <div class="impact-stat-icon">🚗</div>
+      <div class="impact-stat-val">${kmAvoided.toLocaleString()} km</div>
+      <div class="impact-stat-label">of car travel avoided</div>
+    </div>
+    <div class="impact-stat">
+      <div class="impact-stat-icon">💨</div>
+      <div class="impact-stat-val">${savedKg.toLocaleString()} kg</div>
+      <div class="impact-stat-label">CO₂ saved this year</div>
+    </div>
+    <div class="impact-stat">
+      <div class="impact-stat-icon">🌲</div>
+      <div class="impact-stat-val">${treesEq}</div>
+      <div class="impact-stat-label">trees worth of carbon</div>
+    </div>
+    <div class="impact-stat">
+      <div class="impact-stat-icon">⚡</div>
+      <div class="impact-stat-val">${kwhSaved.toLocaleString()} kWh</div>
+      <div class="impact-stat-label">of energy equivalent</div>
+    </div>
+  `;
+}
+
 /* ─── ECO PAGE INIT ──────────────────────────────────────────────────── */
 
 async function initEcoPage() {
   // Render static/sync parts immediately
   refreshEcoTips();
   renderImpactMap();
-  // Async: load eco progress calendar
-  await loadEcoProgress();
+  renderVirtualTree(co2Tracked);    // quick render with in-memory count
+  renderBadgeGallery();             // quick render with cached badge set
+  // Async: load from Supabase
+  await Promise.all([
+    loadEcoProgress(),
+    loadBadges(),
+    loadVirtualTree(),
+  ]);
 }
 
 

@@ -1899,3 +1899,109 @@ body {
   .eco-extras { flex-direction: row; align-items: flex-start; }
   .eco-extras .card { flex: 1; min-width: 0; }
 }
+
+/* ================================================================
+   ECO MORE — Badge Gallery, Virtual Tree, Real Impact
+   ================================================================ */
+
+/* ── Eco More container ──────────────────────────────────────────── */
+.eco-more {
+  display: flex; flex-direction: column; gap: 1.2rem;
+  padding-bottom: 2rem;
+}
+@media (min-width: 600px) {
+  .eco-more { flex-direction: row; align-items: flex-start; }
+  .eco-more .card { flex: 1; min-width: 0; }
+}
+
+/* ── Badge Gallery ───────────────────────────────────────────────── */
+.badge-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .7rem;
+  margin-top: .4rem;
+}
+.badge-item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: .22rem; padding: .7rem .4rem;
+  border-radius: var(--radius-sm);
+  border: 2px solid transparent;
+  text-align: center;
+  position: relative;
+  transition: transform .15s, box-shadow .15s;
+  cursor: default;
+}
+.badge-item:hover { transform: translateY(-2px); }
+.badge-earned {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-color: #6ee7b7;
+  box-shadow: 0 2px 8px rgba(22,163,74,.15);
+}
+.badge-locked {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  opacity: .6;
+  filter: grayscale(1);
+}
+.badge-emoji {
+  font-size: 1.8rem; line-height: 1;
+}
+.badge-name {
+  font-size: .72rem; font-weight: 800;
+  color: var(--forest-dark); line-height: 1.2;
+}
+.badge-desc {
+  font-size: .62rem; color: var(--muted); line-height: 1.3;
+}
+.badge-tick {
+  position: absolute; top: 5px; right: 7px;
+  font-size: .65rem; font-weight: 900;
+  color: #16a34a; background: white;
+  border-radius: 50%; width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,.12);
+}
+
+/* ── Virtual Tree ────────────────────────────────────────────────── */
+.virtual-tree-wrap {
+  width: 100%; max-width: 180px;
+  margin: .4rem auto .2rem;
+  display: block;
+}
+.virtual-tree-wrap svg {
+  width: 100%; height: auto; display: block;
+  filter: drop-shadow(0 6px 12px rgba(22,163,74,.18));
+  transition: opacity .4s;
+}
+.tree-action-count {
+  text-align: center; font-size: .78rem;
+  color: var(--muted); font-weight: 600;
+  margin-top: .4rem;
+}
+
+/* ── Real Impact Numbers ─────────────────────────────────────────── */
+.real-impact {
+  width: 100%; margin: .8rem 0 .4rem;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1.5px solid #6ee7b7;
+  border-radius: var(--radius-sm);
+  padding: .9rem .8rem .75rem;
+}
+.real-impact-title {
+  font-size: .82rem; font-weight: 800;
+  color: var(--forest-dark); text-align: center;
+  margin-bottom: .65rem;
+}
+.real-impact-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: .5rem;
+}
+.impact-stat {
+  display: flex; flex-direction: column; align-items: center;
+  gap: .1rem; background: white;
+  border-radius: var(--radius-sm); padding: .5rem .4rem;
+  box-shadow: 0 1px 4px rgba(22,163,74,.08);
+}
+.impact-stat-icon  { font-size: 1.2rem; }
+.impact-stat-val   { font-size: 1rem; font-weight: 900; color: var(--forest-dark); }
+.impact-stat-label { font-size: .63rem; color: var(--muted); text-align: center; line-height: 1.3; }

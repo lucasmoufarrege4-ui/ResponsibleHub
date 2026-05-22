@@ -125,6 +125,22 @@ create policy "reminders_all"
   with check (auth.uid() = user_id);
 
 
+-- 7. ECO BADGES (one row per user per badge earned)
+create table if not exists public.eco_badges (
+  id         uuid        not null default gen_random_uuid() primary key,
+  user_id    uuid        not null references public.profiles(id) on delete cascade,
+  badge_id   text        not null,
+  earned_at  timestamptz not null default now(),
+  unique (user_id, badge_id)
+);
+alter table public.eco_badges enable row level security;
+
+create policy "eco_badges_all"
+  on public.eco_badges for all
+  using  (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+
 -- 6. CHALLENGE COMPLETIONS (tracks which daily challenges each user has done)
 create table if not exists public.challenge_completions (
   id           uuid        not null default gen_random_uuid() primary key,
