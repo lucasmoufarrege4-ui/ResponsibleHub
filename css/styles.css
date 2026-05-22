@@ -578,22 +578,31 @@ body {
   text-align: center; display: flex; flex-direction: column;
   align-items: center; gap: .8rem;
 }
-.carbon-gauge { position: relative; width: 120px; height: 120px; }
-.gauge-arc {
-  width: 120px; height: 120px; border-radius: 50%;
-  background: conic-gradient(var(--forest) 0%, var(--border) 0%);
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: inset 0 0 0 10px var(--cream-dark);
-  transition: background 1s ease;
+/* SVG semi-circle gauge */
+.carbon-gauge-wrap {
+  position: relative; width: 200px; height: 115px;
+  margin: 0 auto .4rem;
+}
+.carbon-gauge-svg {
+  width: 100%; height: 100%; overflow: visible;
+}
+.gauge-bg-path  { stroke: #e5e7eb; }
+.gauge-fg-path  {
+  stroke: #16a34a;
+  stroke-dasharray: 251.3;
+  stroke-dashoffset: 251.3;
+  transition: stroke-dashoffset 1s ease, stroke .6s ease;
+}
+.gauge-center-text {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 0;
+  pointer-events: none;
 }
 .gauge-score {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 2rem; font-weight: 900; color: var(--forest-dark); top: -4px;
+  font-size: 1.7rem; font-weight: 900; color: var(--forest-dark); line-height: 1;
 }
-.gauge-label {
-  position: absolute; bottom: 12px; left: 0; right: 0;
-  text-align: center; font-size: .72rem; color: var(--muted); font-weight: 700;
+.gauge-unit {
+  font-size: .72rem; color: var(--muted); font-weight: 700; letter-spacing: .03em;
 }
 .carbon-grade { font-size: 1.3rem; font-weight: 800; color: var(--forest-dark); }
 .carbon-msg   { font-size: .86rem; color: var(--text-mid); line-height: 1.6; max-width: 240px; }
@@ -1777,4 +1786,116 @@ body {
   .quiz-tabs              { gap: .28rem; }
   .quiz-tab               { padding: .3rem .6rem; font-size: .72rem; }
   .quiz-topic-row         { flex-direction: column; align-items: stretch; }
+}
+
+/* ================================================================
+   ECO EXTRAS — Carbon Calculator, Progress Calendar, Impact Map,
+                Personalised Tips
+   ================================================================ */
+
+/* ── Eco Tips Banner ─────────────────────────────────────────────── */
+.eco-tips-banner {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border: 1.5px solid #6ee7b7;
+  border-radius: var(--radius-sm);
+  padding: .55rem .9rem;
+  font-size: .8rem; color: var(--forest-dark); font-weight: 600;
+  margin-bottom: .6rem; text-align: center;
+}
+.impact-map-hint {
+  font-size: .78rem; color: var(--muted); margin-bottom: .7rem; text-align: center;
+}
+
+/* ── Eco Extras container ────────────────────────────────────────── */
+.eco-extras {
+  display: flex; flex-direction: column; gap: 1.2rem;
+  padding-bottom: 1.5rem;
+}
+
+/* ── Eco Progress Calendar ───────────────────────────────────────── */
+.eco-cal-count {
+  font-size: .78rem; font-weight: 600; color: var(--forest);
+  background: var(--mint-pale); border-radius: 20px;
+  padding: .15rem .55rem; margin-left: .4rem;
+}
+.eco-cal-loading {
+  font-size: .82rem; color: var(--muted); text-align: center;
+  padding: 1.2rem 0;
+}
+.eco-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--eco-cal-cols, 7), 1fr);
+  gap: 4px;
+  margin-bottom: .7rem;
+}
+.eco-cal-label {
+  font-size: .65rem; font-weight: 700; color: var(--muted);
+  text-align: center; padding-bottom: 2px;
+}
+.eco-cal-cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: #e5e7eb;
+  transition: transform .15s;
+}
+.eco-cal-cell:not(.eco-cal-empty):not(.eco-cal-label):hover {
+  transform: scale(1.15);
+}
+.eco-cal-done    { background: #22c55e; }
+.eco-cal-today   { box-shadow: 0 0 0 2px #16a34a; }
+.eco-cal-empty   { background: transparent; }
+.eco-cal-legend  {
+  display: flex; align-items: center; gap: .5rem;
+  flex-wrap: wrap; font-size: .72rem; color: var(--muted);
+}
+.eco-cal-legend-swatch {
+  display: inline-block; width: 14px; height: 14px;
+  border-radius: 3px; flex-shrink: 0;
+}
+
+/* ── World Impact Map ────────────────────────────────────────────── */
+.world-map-svg {
+  width: 100%; border-radius: var(--radius-sm);
+  display: block; cursor: default;
+}
+.hotspot { cursor: pointer; outline: none; }
+.hotspot:focus .hotspot-pulse,
+.hotspot:hover .hotspot-pulse { r: 18; opacity: .35; }
+@keyframes pulse-ring {
+  0%   { r: 12; opacity: .25; }
+  70%  { r: 22; opacity: 0; }
+  100% { r: 12; opacity: 0; }
+}
+.hotspot-pulse {
+  animation: pulse-ring 2.2s ease-out infinite;
+  transform-box: fill-box; transform-origin: center;
+}
+.hotspot-panel {
+  margin-top: .8rem;
+}
+.hotspot-panel.hidden { display: none; }
+.hotspot-info-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  padding: .9rem 1rem;
+  box-shadow: var(--shadow);
+  display: flex; flex-direction: column; gap: .45rem;
+}
+.hotspot-info-label {
+  font-size: 1rem; font-weight: 800; color: var(--forest-dark);
+}
+.hotspot-info-fact   { font-size: .83rem; color: var(--text-mid); line-height: 1.55; }
+.hotspot-info-action { font-size: .83rem; color: var(--text-mid); line-height: 1.55; }
+.hotspot-close-btn {
+  align-self: flex-end;
+  background: var(--mint-pale); border: none; border-radius: 20px;
+  padding: .3rem .8rem; font-size: .75rem; font-weight: 700;
+  color: var(--forest); cursor: pointer; margin-top: .2rem;
+}
+.hotspot-close-btn:hover { background: var(--mint); }
+
+/* ── Responsive eco extras ───────────────────────────────────────── */
+@media (min-width: 600px) {
+  .eco-extras { flex-direction: row; align-items: flex-start; }
+  .eco-extras .card { flex: 1; min-width: 0; }
 }

@@ -26,6 +26,7 @@ function navigateTo(page) {
   if (page === 'home')  updateHomeView();
   if (page === 'coach') initCoachPage();
   if (page === 'study') initStudyPage();
+  if (page === 'eco')   initEcoPage();
 }
 
 document.querySelectorAll('.bnav-btn').forEach(btn =>
@@ -513,25 +514,59 @@ const studyTips = [
   { emoji: '📋', text: 'Write your to-do list the night before. You\'ll sleep better and start the day with a plan.', cat: 'focus' },
 ];
 
-const climateFacts = [
-  { emoji: '🌊', text: 'Sea levels have risen over 20 cm since 1900 and are still rising due to melting ice caps.', impact: '💧 Threatens 1 billion coastal residents' },
-  { emoji: '🌡️', text: 'The last decade (2011–2020) was the hottest on Earth ever recorded in human history.', impact: '🔥 Each year keeps breaking records' },
-  { emoji: '🌲', text: 'Every second, a football-field-sized area of rainforest is destroyed around the world.', impact: '🐾 Home to 50% of all species on Earth' },
-  { emoji: '🐄', text: 'Animal agriculture produces more greenhouse gases than all transport combined worldwide.', impact: '🥗 Going plant-based 1 day/week helps a lot' },
-  { emoji: '♻️', text: 'Only 9% of all plastic ever produced has actually been recycled. The rest is landfill or ocean.', impact: '🌊 8M tonnes enter oceans every year' },
-  { emoji: '☀️', text: 'Solar and wind are now the cheapest forms of new electricity generation in most of the world.', impact: '⚡ Clean energy is finally winning!' },
-  { emoji: '🌍', text: 'If everyone lived like an average person in a high-income country, we\'d need 3.4 Earths.', impact: '🌱 Small habit changes multiply across billions' },
-  { emoji: '🦋', text: '1 million plant and animal species face extinction — the fastest rate in 10 million years.', impact: '🐝 Biodiversity keeps ecosystems stable' },
-  { emoji: '👦', text: 'Young people aged 15–24 are the largest generation in history — your choices shape the future.', impact: '📢 Collective youth action creates real change' },
-  { emoji: '🌱', text: 'Planting trees, protecting oceans, and switching to clean energy could avoid 90% of predicted warming.', impact: '✅ Solutions already exist — we just need action!' },
+/* ─── ECO TIPS (personalised) ────────────────────────────────────────── */
+// trigger: 'general' shows for everyone; other triggers show when user's
+// carbon calculator answers match (stored in localStorage 'rh_carbon_answers').
+const ECO_TIPS = [
+  { emoji: '🌱', text: 'Plant a seed — even a windowsill herb counts as a step toward a greener world.', impact: '🌍 Small green spaces cool cities and clean air', trigger: 'general' },
+  { emoji: '💧', text: 'Turn off the tap while brushing your teeth — you\'ll save up to 6 litres per minute.', impact: '💧 One habit change saves 4,000+ litres/year', trigger: 'general' },
+  { emoji: '🛍️', text: 'Swap one single-use item this week for a reusable alternative.', impact: '♻️ 8M tonnes of plastic enter oceans every year', trigger: 'general' },
+  { emoji: '🌙', text: 'Unplug chargers and devices at night — idle electronics still drain power.', impact: '⚡ Standby power = 10% of home electricity use', trigger: 'general' },
+  { emoji: '☀️', text: 'Choose products with minimal packaging next time you shop.', impact: '🏭 Packaging is 30% of landfill waste globally', trigger: 'general' },
+  { emoji: '🚶', text: 'Walk or cycle for any trip under 2 km instead of taking a car.', impact: '🌫️ Short car trips produce the most emissions per km', trigger: 'transport-car' },
+  { emoji: '🚌', text: 'One bus trip replaces ~45 solo car journeys in emissions. You\'re already winning!', impact: '✅ Public transit users emit 45% less CO₂', trigger: 'transport-public' },
+  { emoji: '🚴', text: 'If you cycle to school, you\'re avoiding roughly 150 g CO₂ per km — great work!', impact: '🏅 Cycling is truly zero-emission transport', trigger: 'transport-public' },
+  { emoji: '🥦', text: 'Try one fully plant-based meal today — it\'s easier and tastier than you think.', impact: '🌿 A plant-based meal uses 10× less land & water', trigger: 'meat-heavy' },
+  { emoji: '🥗', text: 'Swap your beef burger for chicken or fish — it cuts the carbon footprint by 70%.', impact: '🐄 Beef = 27 kg CO₂/kg vs chicken = 6 kg CO₂/kg', trigger: 'meat-heavy' },
+  { emoji: '🌿', text: 'Add one more meat-free day per week — you\'re already doing better than most!', impact: '💚 Each meat-free day saves ~1.5 kg CO₂', trigger: 'meat-moderate' },
+  { emoji: '✈️', text: 'A single long-haul flight emits more CO₂ than a month of driving. Consider trains!', impact: '🛤️ EU trains emit 6× less than planes per km', trigger: 'flights-many' },
+  { emoji: '🌍', text: 'Offset your flight emissions by donating to a verified reforestation project.', impact: '🌲 Gold Standard projects guarantee real impact', trigger: 'flights-many' },
+  { emoji: '🚿', text: 'Cut your shower by 2 minutes — saves 18 litres and the energy to heat it.', impact: '🔥 Hot water = 20% of home energy use', trigger: 'shower-long' },
+  { emoji: '❄️', text: 'Set your AC 2°C warmer — you\'ll barely notice and cut its energy use by 10%.', impact: '⚡ AC is one of the fastest-growing energy loads', trigger: 'ac-heavy' },
+  { emoji: '🌬️', text: 'Use fans before AC — a ceiling fan cools a room with 75% less energy.', impact: '💨 Fans + open windows work down to ~26°C outdoors', trigger: 'ac-heavy' },
+  { emoji: '🌊', text: 'Sea levels have risen 20 cm since 1900. Every fraction of a degree matters.', impact: '🏠 1 billion people live in low-elevation coastal zones', trigger: 'general' },
+  { emoji: '🐝', text: 'Plant bee-friendly flowers like lavender or sunflowers to support pollinators.', impact: '🍎 Bees pollinate 70% of the food we eat', trigger: 'general' },
+  { emoji: '📵', text: 'Stream less video — video streaming accounts for 1% of global electricity use.', impact: '📺 Reducing 4K to HD saves 86% of streaming energy', trigger: 'general' },
+  { emoji: '🍽️', text: 'Plan your meals to cut food waste — 30% of all food is thrown away globally.', impact: '🗑️ Food waste = 8% of global greenhouse emissions', trigger: 'general' },
 ];
 
-const carbonTips = {
-  transport: { 0: null, 1: '🚴 Great job! Staying active and green with your commute.', 3: '🚗 Try carpooling or hopping on public transit once a week.' },
-  diet: { 0: null, 1: '🥗 Try swapping one meal a week to fully plant-based.', 4: '🥦 Reducing meat by even 1 day/week cuts your food footprint by 15%.' },
-  energy: { 0: null, 1: '💡 Try unplugging chargers and devices when fully charged.', 3: '🔌 Power strips with switches make it easy to cut idle energy use.' },
-  waste: { 0: null, 1: '♻️ Look up your local recycling rules — some items are often missed.', 3: '🛍️ Start with one simple swap: a reusable water bottle or bag.' },
-};
+/* ─── IMPACT MAP HOTSPOTS ────────────────────────────────────────────── */
+const IMPACT_HOTSPOTS = [
+  {
+    id: 'amazon', label: '🌲 Amazon', cx: 195, cy: 245,
+    fact: 'The Amazon rainforest has lost 17% of its area in 50 years — an area bigger than France.',
+    action: 'Reduce beef consumption (80% of deforestation is for cattle ranching) and support reforestation charities.',
+    color: '#16a34a',
+  },
+  {
+    id: 'arctic', label: '🧊 Arctic', cx: 390, cy: 45,
+    fact: 'Arctic sea ice is shrinking 13% per decade. Summer ice could vanish entirely before 2050.',
+    action: 'Cut fossil fuel use at home: switch to a green energy tariff and reduce flying.',
+    color: '#3b82f6',
+  },
+  {
+    id: 'reef', label: '🐠 Great Barrier Reef', cx: 680, cy: 290,
+    fact: 'The Great Barrier Reef has lost 50% of its coral since 1995 due to marine heatwaves.',
+    action: 'Use reef-safe sunscreen, choose sustainable seafood, and support coral restoration projects.',
+    color: '#f59e0b',
+  },
+  {
+    id: 'sahara', label: '🏜️ Sahel', cx: 395, cy: 210,
+    fact: 'The Sahara Desert is expanding southward at 48 km/year, displacing millions of people.',
+    action: 'Support the Great Green Wall initiative — a 8,000 km African reforestation project.',
+    color: '#ef4444',
+  },
+];
 
 /* ─── STATE ──────────────────────────────────────────────────────────── */
 
@@ -540,6 +575,7 @@ let challengesDone = 0, tasksDone = 0, co2Tracked = 0;
 let currentStudyChal = 0, currentEcoChal = 0;
 let currentTipIndex = 0, currentTipCat = 'all';
 let currentFactIndex = 0;
+let ecoPageInited = false;
 let hwTasks = [];
 let filteredTips = [...studyTips];
 
@@ -911,90 +947,330 @@ document.getElementById('eco-daily-btn').addEventListener('click', () => {
   loadEcoChallenge(currentEcoChal, false);
 });
 
-/* ─── CLIMATE FACTS ──────────────────────────────────────────────────── */
+/* ─── PERSONALISED ECO TIPS ──────────────────────────────────────────── */
 
-function buildFactDots() {
+function getPersonalisedTips() {
+  let answers = null;
+  try { answers = JSON.parse(localStorage.getItem('rh_carbon_answers') || 'null'); } catch (_) {}
+
+  // Build a set of active triggers based on saved kg CO₂ values (numeric HTML radio values)
+  const triggers = new Set(['general']);
+  if (answers) {
+    // transport: 0=walk/bike, 250=bus/train, 900=car
+    if (answers.transport >= 800)  triggers.add('transport-car');
+    if (answers.transport > 0 && answers.transport < 800) triggers.add('transport-public');
+    // meat: 200=never, 700=sometimes, 1300=most days, 1900=every day
+    if (answers.meat >= 1500)      triggers.add('meat-heavy');
+    if (answers.meat >= 600 && answers.meat < 1500) triggers.add('meat-moderate');
+    // flights: 0=never, 900=1-2, 2200=3-5, 4500=5+
+    if (answers.flights >= 900)    triggers.add('flights-many');
+    // shower: 50=<5min, 130=5-10min, 300=10-20min, 600=20+min
+    if (answers.shower >= 300)     triggers.add('shower-long');
+    // ac: 100=rarely, 450=sometimes, 1100=most of the time
+    if (answers.ac >= 1000)        triggers.add('ac-heavy');
+  }
+
+  return ECO_TIPS.filter(t => triggers.has(t.trigger));
+}
+
+let activeTips = [...ECO_TIPS]; // default: all tips; updated by refreshEcoTips()
+
+function buildTipDots() {
   const c = document.getElementById('fact-dots');
+  if (!c) return;
   c.innerHTML = '';
-  climateFacts.forEach((_, i) => {
+  activeTips.forEach((_, i) => {
     const d = document.createElement('div');
-    d.className = 'fact-dot' + (i === 0 ? ' active' : '');
-    d.addEventListener('click', () => showFact(i));
+    d.className = 'fact-dot' + (i === currentFactIndex ? ' active' : '');
+    d.addEventListener('click', () => showTip(i));
     c.appendChild(d);
   });
 }
 
-function showFact(idx) {
+function showTip(idx) {
+  if (!activeTips.length) return;
   currentFactIndex = idx;
-  const f = climateFacts[idx];
-  document.getElementById('fact-number').textContent = String(idx + 1).padStart(2, '0');
-  document.getElementById('fact-emoji').textContent  = f.emoji;
-  document.getElementById('fact-text').textContent   = f.text;
-  document.getElementById('fact-impact').textContent = f.impact;
+  const t = activeTips[idx];
+  const numEl = document.getElementById('fact-number');
+  const emojiEl = document.getElementById('fact-emoji');
+  const textEl = document.getElementById('fact-text');
+  const impactEl = document.getElementById('fact-impact');
+  if (numEl)   numEl.textContent   = String(idx + 1).padStart(2, '0');
+  if (emojiEl) emojiEl.textContent = t.emoji;
+  if (textEl)  textEl.textContent  = t.text;
+  if (impactEl) impactEl.textContent = t.impact;
   document.querySelectorAll('.fact-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
 }
 
-document.getElementById('next-fact-btn').addEventListener('click', () =>
-  showFact((currentFactIndex + 1) % climateFacts.length));
+function refreshEcoTips() {
+  activeTips = getPersonalisedTips();
+  // If no personalised tips match, fall back to all general tips
+  if (!activeTips.length) activeTips = ECO_TIPS.filter(t => t.trigger === 'general');
 
-document.getElementById('prev-fact-btn').addEventListener('click', () =>
-  showFact((currentFactIndex - 1 + climateFacts.length) % climateFacts.length));
+  const banner = document.getElementById('eco-tips-banner');
+  const answers = localStorage.getItem('rh_carbon_answers');
+  if (banner) banner.classList.toggle('hidden', !answers);
 
-document.getElementById('share-fact-btn').addEventListener('click', () => {
-  const f = climateFacts[currentFactIndex];
-  const text = `🌍 Did you know? ${f.text} ${f.impact} — via ResponsibleHub`;
+  currentFactIndex = 0;
+  buildTipDots();
+  showTip(0);
+}
+
+document.getElementById('next-fact-btn')?.addEventListener('click', () =>
+  showTip((currentFactIndex + 1) % activeTips.length));
+
+document.getElementById('prev-fact-btn')?.addEventListener('click', () =>
+  showTip((currentFactIndex - 1 + activeTips.length) % activeTips.length));
+
+document.getElementById('share-fact-btn')?.addEventListener('click', () => {
+  if (!activeTips.length) return;
+  const t = activeTips[currentFactIndex];
+  const text = `🌍 Eco tip: ${t.text} ${t.impact} — via ResponsibleHub`;
   if (navigator.share) {
     navigator.share({ text }).catch(() => {});
   } else {
-    navigator.clipboard?.writeText(text).then(() => showToast('📋 Fact copied to clipboard!', 'eco-toast'));
+    navigator.clipboard?.writeText(text).then(() => showToast('📋 Tip copied to clipboard!', 'eco-toast'));
   }
 });
 
-/* ─── CARBON TRACKER ─────────────────────────────────────────────────── */
+/* ─── CARBON CALCULATOR ──────────────────────────────────────────────── */
 
-document.getElementById('calc-carbon-btn').addEventListener('click', () => {
-  const get = name => +document.querySelector(`input[name="${name}"]:checked`)?.value || 0;
-  const scores = { transport: get('transport'), diet: get('diet'), energy: get('energy'), waste: get('waste') };
-  const total = scores.transport + scores.diet + scores.energy + scores.waste;
-  const score = Math.max(0, 10 - total);
+document.getElementById('calc-carbon-btn')?.addEventListener('click', () => {
+  // Radio values in the HTML are already kg CO₂/year for each category
+  const getKg = name => +(document.querySelector(`input[name="${name}"]:checked`)?.value) || 0;
+  const flightsKg   = getKg('c_flights');
+  const showerKg    = getKg('c_shower');
+  const meatKg      = getKg('c_meat');
+  const transportKg = getKg('c_transport');
+  const acKg        = getKg('c_ac');
 
-  let grade, msg, colour;
-  if (score >= 9)       { grade = '🌟 Eco Champion!';   msg = "You're an absolute eco star — keep leading the way!";          colour = '#16a34a'; }
-  else if (score >= 7)  { grade = '🌿 Green Hero';      msg = "Awesome habits! A few tweaks and you could go champion.";       colour = '#22c55e'; }
-  else if (score >= 5)  { grade = '🌱 Getting There';   msg = "Good effort! Small daily changes will stack up fast.";          colour = '#f59e0b'; }
-  else if (score >= 3)  { grade = '🌍 Earth Learner';   msg = "Awareness is step one. Pick one tip below to start!";           colour = '#f97316'; }
-  else                  { grade = '🚀 Room to Grow';    msg = "Every eco journey starts somewhere. Start with one easy swap!"; colour = '#ef4444'; }
+  const totalKg = flightsKg + showerKg + meatKg + transportKg + acKg;
 
-  const tips = Object.entries(scores)
-    .map(([k, v]) => carbonTips[k][v])
-    .filter(Boolean);
+  // Save raw kg values to localStorage for personalised tips
+  const answers = {
+    flights:   flightsKg,
+    shower:    showerKg,
+    meat:      meatKg,
+    transport: transportKg,
+    ac:        acKg,
+  };
+  localStorage.setItem('rh_carbon_answers', JSON.stringify(answers));
 
-  const pct = (score / 10) * 360;
-  const arc = document.getElementById('gauge-arc');
-  arc.style.background = `conic-gradient(${colour} ${pct}deg, var(--border) 0deg)`;
+  // SVG gauge — arc length 251.3, max scale = 8000 kg
+  const pct = Math.min(totalKg / 8000, 1);
+  const dashoffset = Math.round(251.3 * (1 - pct));
+  let arcColour;
+  if      (totalKg < 1500) arcColour = '#16a34a';
+  else if (totalKg < 3000) arcColour = '#84cc16';
+  else if (totalKg < 5000) arcColour = '#f59e0b';
+  else                     arcColour = '#ef4444';
 
-  document.getElementById('gauge-score').textContent = score;
+  const gaugeArc = document.getElementById('gauge-arc');
+  if (gaugeArc) {
+    gaugeArc.style.strokeDashoffset = dashoffset;
+    gaugeArc.style.stroke = arcColour;
+  }
+  const scoreEl = document.getElementById('gauge-score');
+  if (scoreEl) scoreEl.textContent = totalKg.toLocaleString();
+
+  let grade, msg;
+  if      (totalKg < 1000) { grade = '🌟 Eco Champion!';  msg = "Incredible — you\'re among the lowest-impact people on the planet!"; }
+  else if (totalKg < 2000) { grade = '🌿 Green Hero';     msg = "Great work! A couple of tweaks and you could hit champion level."; }
+  else if (totalKg < 3500) { grade = '🌱 Getting There';  msg = "Decent habits! Tackling your biggest category will make a real dent."; }
+  else if (totalKg < 5500) { grade = '🌍 Earth Learner';  msg = "Awareness is step one. Pick the tip below that feels most doable."; }
+  else                     { grade = '🚀 Room to Grow';   msg = "Every eco journey starts somewhere — one small swap changes the story!"; }
+
   document.getElementById('carbon-grade').textContent = grade;
-  document.getElementById('carbon-grade').style.color = colour;
+  document.getElementById('carbon-grade').style.color = arcColour;
   document.getElementById('carbon-msg').textContent = msg;
 
+  // Show personalised tips now that answers are saved
   const tipsList = document.getElementById('carbon-tips');
-  tipsList.innerHTML = tips.length
-    ? tips.map(t => `<li>${t}</li>`).join('')
-    : '<li>🌟 Nothing to improve — you\'re already an eco champion!</li>';
+  const personalisedTips = getPersonalisedTips().slice(0, 3);
+  if (tipsList) {
+    tipsList.innerHTML = personalisedTips.length
+      ? personalisedTips.map(t => `<li>${t.emoji} ${t.text}</li>`).join('')
+      : '<li>🌟 Keep up the great habits — you\'re already an eco champion!</li>';
+  }
 
   document.getElementById('carbon-form').classList.add('hidden');
   document.getElementById('carbon-result').classList.remove('hidden');
 
   co2Tracked = Math.max(co2Tracked, 1);
   updateHeroStats();
-  showToast(`${grade} — carbon score: ${score}/10`, 'eco-toast');
+  showToast(`${grade} — ${totalKg.toLocaleString()} kg CO₂/yr`, 'eco-toast');
+
+  // Refresh tips carousel with personalised content
+  refreshEcoTips();
 });
 
-document.getElementById('retake-carbon-btn').addEventListener('click', () => {
+document.getElementById('retake-carbon-btn')?.addEventListener('click', () => {
   document.getElementById('carbon-result').classList.add('hidden');
   document.getElementById('carbon-form').classList.remove('hidden');
 });
+
+/* ─── ECO PROGRESS CALENDAR ──────────────────────────────────────────── */
+
+async function loadEcoProgress() {
+  const grid = document.getElementById('eco-calendar-grid');
+  if (!grid) return;
+
+  if (!sbUser) {
+    grid.innerHTML = '<p class="eco-cal-loading">Sign in to see your eco history 🌿</p>';
+    return;
+  }
+
+  const DAYS = 35;
+  const cutoff = new Date(Date.now() - (DAYS - 1) * 86400000);
+  const cutoffStr = dateToStr(cutoff);
+
+  const { data, error } = await sb.from('challenge_completions')
+    .select('date')
+    .eq('user_id', sbUser.id)
+    .eq('challenge_id', 'eco')
+    .gte('date', cutoffStr);
+
+  if (error) {
+    console.error('[EcoProgress] load error:', error);
+    grid.innerHTML = '<p class="eco-cal-loading">Could not load history.</p>';
+    return;
+  }
+
+  const completedSet = new Set((data || []).map(r => r.date));
+  renderEcoCalendar(completedSet, DAYS);
+
+  const count = completedSet.size;
+  const countEl = document.getElementById('eco-cal-count');
+  if (countEl) countEl.textContent = count ? `${count} days ✅` : '';
+}
+
+function renderEcoCalendar(completedSet, days = 35) {
+  const grid = document.getElementById('eco-calendar-grid');
+  if (!grid) return;
+
+  const today = dateToStr(new Date());
+  const cols = 7, rows = Math.ceil(days / cols);
+
+  // Build day labels header
+  const dayLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+  const todayDow = new Date().getDay(); // 0=Sun
+
+  // We want the grid columns to align so that today falls in the last row's correct DOW column.
+  // Pad empty cells at the start so the first cell in the grid lines up with the right DOW.
+  const totalCells = rows * cols;
+  const startPad = totalCells - days; // cells before our first real day
+
+  let html = `<div class="eco-cal-grid" style="--eco-cal-cols:${cols}">`;
+
+  // Day-of-week labels
+  for (let d = 0; d < cols; d++) {
+    // Rotate labels so first column = DOW of (today - (days-1) days)
+    const firstDayDow = new Date(Date.now() - (days - 1) * 86400000).getDay();
+    const label = dayLabels[(firstDayDow + d) % 7];
+    html += `<div class="eco-cal-label">${label}</div>`;
+  }
+
+  // Padding cells
+  for (let p = 0; p < startPad; p++) {
+    html += `<div class="eco-cal-cell eco-cal-empty"></div>`;
+  }
+
+  // Real day cells
+  for (let i = 0; i < days; i++) {
+    const d = new Date(Date.now() - (days - 1 - i) * 86400000);
+    const ds = dateToStr(d);
+    const done = completedSet.has(ds);
+    const isToday = ds === today;
+    let cls = 'eco-cal-cell';
+    if (done)    cls += ' eco-cal-done';
+    if (isToday) cls += ' eco-cal-today';
+    const title = `${ds}${done ? ' ✅' : ''}`;
+    html += `<div class="${cls}" title="${title}"></div>`;
+  }
+
+  html += '</div>';
+
+  // Legend
+  html += `<div class="eco-cal-legend">
+    <span class="eco-cal-cell eco-cal-done eco-cal-legend-swatch"></span><span>Eco challenge done</span>
+    <span class="eco-cal-cell eco-cal-legend-swatch"></span><span>Not done</span>
+  </div>`;
+
+  grid.innerHTML = html;
+}
+
+/* ─── IMPACT MAP ─────────────────────────────────────────────────────── */
+
+function renderImpactMap() {
+  const container = document.getElementById('impact-map-container');
+  if (!container) return;
+
+  // Simplified SVG world map with continent outlines (equirectangular 800×400)
+  const continentPaths = `
+    <!-- North America -->
+    <path d="M60,60 L180,55 L200,75 L220,120 L195,160 L170,190 L140,200 L120,230 L95,220 L80,190 L65,170 L55,140 L50,100 Z" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
+    <!-- South America -->
+    <path d="M145,215 L190,210 L210,235 L215,270 L205,310 L185,340 L160,355 L140,340 L130,305 L125,270 L130,240 Z" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
+    <!-- Europe -->
+    <path d="M355,55 L410,50 L425,70 L415,95 L395,105 L370,100 L350,85 Z" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
+    <!-- Africa -->
+    <path d="M355,110 L415,105 L440,130 L445,175 L435,220 L415,255 L385,275 L360,265 L340,230 L330,185 L335,145 L345,120 Z" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
+    <!-- Asia -->
+    <path d="M420,45 L560,40 L620,60 L650,90 L660,130 L630,160 L590,170 L550,160 L510,175 L480,160 L450,140 L425,115 L415,85 Z" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
+    <!-- Oceania -->
+    <path d="M620,240 L680,235 L710,255 L710,285 L680,300 L640,290 L620,270 Z" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
+    <!-- Greenland -->
+    <path d="M260,30 L310,28 L320,50 L305,65 L270,60 L255,45 Z" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
+  `;
+
+  // Pulsing hotspot circles
+  const hotspotsHTML = IMPACT_HOTSPOTS.map(h => `
+    <g class="hotspot" data-id="${h.id}" tabindex="0" role="button" aria-label="${h.label}">
+      <circle cx="${h.cx}" cy="${h.cy}" r="12" fill="${h.color}" opacity="0.25" class="hotspot-pulse"/>
+      <circle cx="${h.cx}" cy="${h.cy}" r="7"  fill="${h.color}" opacity="0.85"/>
+      <circle cx="${h.cx}" cy="${h.cy}" r="3"  fill="white"/>
+    </g>
+  `).join('');
+
+  container.innerHTML = `
+    <svg class="world-map-svg" viewBox="0 0 760 380" xmlns="http://www.w3.org/2000/svg" aria-label="World impact map">
+      <rect width="760" height="380" fill="#e0f2fe" rx="12"/>
+      ${continentPaths}
+      ${hotspotsHTML}
+    </svg>
+  `;
+
+  // Hotspot click/keyboard handlers
+  container.querySelectorAll('.hotspot').forEach(el => {
+    const h = IMPACT_HOTSPOTS.find(x => x.id === el.dataset.id);
+    el.addEventListener('click', () => showHotspotInfo(h));
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') showHotspotInfo(h); });
+  });
+}
+
+function showHotspotInfo(h) {
+  const panel = document.getElementById('hotspot-panel');
+  if (!panel) return;
+  panel.innerHTML = `
+    <div class="hotspot-info-card" style="border-left:4px solid ${h.color}">
+      <div class="hotspot-info-label">${h.label}</div>
+      <p class="hotspot-info-fact">📖 ${h.fact}</p>
+      <p class="hotspot-info-action">✅ <strong>What you can do:</strong> ${h.action}</p>
+      <button class="hotspot-close-btn" onclick="document.getElementById('hotspot-panel').classList.add('hidden')">✕ Close</button>
+    </div>
+  `;
+  panel.classList.remove('hidden');
+}
+
+/* ─── ECO PAGE INIT ──────────────────────────────────────────────────── */
+
+async function initEcoPage() {
+  // Render static/sync parts immediately
+  refreshEcoTips();
+  renderImpactMap();
+  // Async: load eco progress calendar
+  await loadEcoProgress();
+}
 
 
 /* ─── INIT ───────────────────────────────────────────────────────────── */
@@ -1008,8 +1284,7 @@ document.getElementById('retake-carbon-btn').addEventListener('click', () => {
   renderStreakDots('study-streak-dots', 0);
   renderStreakDots('eco-streak-dots', 0);
   renderTip();
-  buildFactDots();
-  showFact(0);
+  refreshEcoTips();
   renderHWList();
 
   // seed a couple of example homework tasks

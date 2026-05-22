@@ -346,14 +346,17 @@
           </div>
         </div>
 
-        <!-- Climate Facts -->
+        <!-- Personalised Eco Tips -->
         <div class="card card-eco" id="climate-facts-card">
-          <div class="card-tag eco-tag">🌡️ Climate Facts</div>
-          <h3>Did You Know?</h3>
+          <div class="card-tag eco-tag">💚 Eco Tips</div>
+          <h3>Personalised for You</h3>
+          <div class="eco-tips-banner hidden" id="eco-tips-banner">
+            <span>🎯 Based on your Carbon Calculator results</span>
+          </div>
           <div class="fact-display">
             <div class="fact-number" id="fact-number">01</div>
-            <div class="fact-emoji" id="fact-emoji">🌊</div>
-            <p class="fact-text" id="fact-text">Loading fact...</p>
+            <div class="fact-emoji" id="fact-emoji">🌱</div>
+            <p class="fact-text" id="fact-text">Loading tips...</p>
           </div>
           <div class="fact-impact" id="fact-impact"></div>
           <div class="fact-nav">
@@ -361,63 +364,105 @@
             <div class="fact-dots" id="fact-dots"></div>
             <button class="btn btn-eco btn-sm" id="next-fact-btn">Next →</button>
           </div>
-          <button class="btn btn-outline btn-sm share-btn" id="share-fact-btn">📤 Share this fact</button>
+          <button class="btn btn-outline btn-sm share-btn" id="share-fact-btn">📤 Share this tip</button>
         </div>
 
-        <!-- Carbon Footprint Tracker -->
+        <!-- Carbon Calculator -->
         <div class="card card-eco" id="carbon-card">
-          <div class="card-tag eco-tag">♻️ Carbon Tracker</div>
+          <div class="card-tag eco-tag">♻️ Carbon Calculator</div>
           <h3>My Carbon Footprint</h3>
           <div class="carbon-form" id="carbon-form">
             <div class="carbon-question">
-              <label>🚗 How do you get to school?</label>
+              <label>✈️ How many times do you fly per year?</label>
               <div class="radio-group">
-                <label class="radio-opt"><input type="radio" name="transport" value="0" checked /> 🚶 Walk/Bike</label>
-                <label class="radio-opt"><input type="radio" name="transport" value="1" /> 🚌 Bus/Train</label>
-                <label class="radio-opt"><input type="radio" name="transport" value="3" /> 🚗 Car</label>
+                <label class="radio-opt"><input type="radio" name="c_flights" value="0" checked /> Never</label>
+                <label class="radio-opt"><input type="radio" name="c_flights" value="900" /> 1–2 flights</label>
+                <label class="radio-opt"><input type="radio" name="c_flights" value="2200" /> 3–5 flights</label>
+                <label class="radio-opt"><input type="radio" name="c_flights" value="4500" /> 5+ flights</label>
               </div>
             </div>
             <div class="carbon-question">
-              <label>🥗 How do you eat mostly?</label>
+              <label>🚿 How long are your showers?</label>
               <div class="radio-group">
-                <label class="radio-opt"><input type="radio" name="diet" value="0" checked /> 🥦 Plant-based</label>
-                <label class="radio-opt"><input type="radio" name="diet" value="2" /> 🍗 Mixed diet</label>
-                <label class="radio-opt"><input type="radio" name="diet" value="4" /> 🥩 Meat every day</label>
+                <label class="radio-opt"><input type="radio" name="c_shower" value="50" checked /> Under 5 min</label>
+                <label class="radio-opt"><input type="radio" name="c_shower" value="130" /> 5–10 min</label>
+                <label class="radio-opt"><input type="radio" name="c_shower" value="300" /> 10–20 min</label>
+                <label class="radio-opt"><input type="radio" name="c_shower" value="600" /> 20+ min</label>
               </div>
             </div>
             <div class="carbon-question">
-              <label>💡 Do you turn off lights/devices?</label>
+              <label>🥩 How often do you eat meat?</label>
               <div class="radio-group">
-                <label class="radio-opt"><input type="radio" name="energy" value="0" checked /> ✅ Always</label>
-                <label class="radio-opt"><input type="radio" name="energy" value="1" /> 😐 Sometimes</label>
-                <label class="radio-opt"><input type="radio" name="energy" value="3" /> ❌ Rarely</label>
+                <label class="radio-opt"><input type="radio" name="c_meat" value="200" checked /> Never</label>
+                <label class="radio-opt"><input type="radio" name="c_meat" value="700" /> Sometimes weekly</label>
+                <label class="radio-opt"><input type="radio" name="c_meat" value="1300" /> Most days</label>
+                <label class="radio-opt"><input type="radio" name="c_meat" value="1900" /> Every day</label>
               </div>
             </div>
             <div class="carbon-question">
-              <label>🛍️ Do you recycle/reuse?</label>
+              <label>🏫 How do you get to school?</label>
               <div class="radio-group">
-                <label class="radio-opt"><input type="radio" name="waste" value="0" checked /> ♻️ Yes, always</label>
-                <label class="radio-opt"><input type="radio" name="waste" value="1" /> 🤷 Sometimes</label>
-                <label class="radio-opt"><input type="radio" name="waste" value="3" /> ❌ Not really</label>
+                <label class="radio-opt"><input type="radio" name="c_transport" value="0" checked /> 🚶 Walk / Bike</label>
+                <label class="radio-opt"><input type="radio" name="c_transport" value="250" /> 🚌 Bus / Train</label>
+                <label class="radio-opt"><input type="radio" name="c_transport" value="900" /> 🚗 Car</label>
               </div>
             </div>
-            <button class="btn btn-eco" id="calc-carbon-btn">🌍 Calculate My Score</button>
+            <div class="carbon-question">
+              <label>❄️ Do you use AC or heating a lot?</label>
+              <div class="radio-group">
+                <label class="radio-opt"><input type="radio" name="c_ac" value="100" checked /> Rarely</label>
+                <label class="radio-opt"><input type="radio" name="c_ac" value="450" /> Sometimes</label>
+                <label class="radio-opt"><input type="radio" name="c_ac" value="1100" /> Most of the time</label>
+              </div>
+            </div>
+            <button class="btn btn-eco" id="calc-carbon-btn">🌍 Calculate My Footprint</button>
           </div>
           <div class="carbon-result hidden" id="carbon-result">
-            <div class="carbon-gauge">
-              <div class="gauge-arc" id="gauge-arc"></div>
-              <div class="gauge-score" id="gauge-score">0</div>
-              <div class="gauge-label">/ 10</div>
+            <div class="carbon-gauge-wrap">
+              <svg class="carbon-gauge-svg" viewBox="0 0 200 110" aria-hidden="true">
+                <path class="gauge-bg-path" d="M 20,100 A 80,80 0 0 1 180,100"
+                      fill="none" stroke="#e5e7eb" stroke-width="16" stroke-linecap="round"/>
+                <path class="gauge-fg-path" id="gauge-arc"
+                      d="M 20,100 A 80,80 0 0 1 180,100"
+                      fill="none" stroke="#16a34a" stroke-width="16" stroke-linecap="round"
+                      stroke-dasharray="251.3" stroke-dashoffset="251.3"/>
+              </svg>
+              <div class="gauge-center-text">
+                <div class="gauge-score" id="gauge-score">0</div>
+                <div class="gauge-unit">kg CO₂/yr</div>
+              </div>
             </div>
             <div class="carbon-grade" id="carbon-grade"></div>
             <p class="carbon-msg" id="carbon-msg"></p>
             <ul class="carbon-tips" id="carbon-tips"></ul>
-            <button class="btn btn-outline btn-sm" id="retake-carbon-btn">🔄 Retake Quiz</button>
+            <button class="btn btn-outline btn-sm" id="retake-carbon-btn">🔄 Retake</button>
           </div>
         </div>
 
-      </div>
-    </div>
+      </div><!-- /cards-grid -->
+
+      <!-- ── Eco Extras ──────────────────────────────────────────────── -->
+      <div class="container eco-extras">
+
+        <!-- Eco Progress Over Time -->
+        <div class="card card-eco" id="eco-progress-card">
+          <div class="card-tag eco-tag">📅 Eco Progress</div>
+          <h3>Challenge History <span class="eco-cal-count" id="eco-cal-count"></span></h3>
+          <div id="eco-calendar-grid"><p class="eco-cal-loading">Loading…</p></div>
+        </div>
+
+        <!-- Impact Map -->
+        <div class="card card-eco" id="impact-map-card">
+          <div class="card-tag eco-tag">🗺️ Impact Map</div>
+          <h3>Environmental Hotspots</h3>
+          <p class="impact-map-hint">Tap a hotspot to learn more</p>
+          <div id="impact-map-container"></div>
+          <div class="hotspot-panel hidden" id="hotspot-panel"></div>
+        </div>
+
+      </div><!-- /eco-extras -->
+
+    </div><!-- /page-eco -->
 
     <!-- ══ PLANNER PAGE ═══════════════════════════════════════════════ -->
     <div class="page" id="page-planner">
