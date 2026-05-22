@@ -32,7 +32,7 @@ function navigateTo(page) {
 document.querySelectorAll('.bnav-btn').forEach(btn =>
   btn.addEventListener('click', () => navigateTo(btn.dataset.page))
 );
-document.querySelectorAll('.dash-quick-btn').forEach(btn =>
+document.querySelectorAll('.dash-row-btn').forEach(btn =>
   btn.addEventListener('click', () => navigateTo(btn.dataset.page))
 );
 
@@ -119,16 +119,52 @@ function updateDashboard() {
   if (!sbProfile) return;
   const h = new Date().getHours();
   const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-  document.getElementById('dash-hello').textContent = `${g}, ${sbProfile.username}! 👋`;
+  // Extract first name from Google full_name, or from username
+  const meta = sbUser?.user_metadata || {};
+  const fullName = meta.full_name || meta.name || sbProfile.username;
+  const firstName = fullName.split(/[\s_\-]+/)[0] || sbProfile.username;
+  const greetEl = document.getElementById('dash-time-greeting');
+  const nameEl  = document.getElementById('dash-first-name');
+  if (greetEl) greetEl.textContent = g;
+  if (nameEl)  nameEl.textContent  = `${firstName}! 👋`;
   setAvatarEl(document.getElementById('dash-avatar'));
   updateDashXP();
   updateDashStats();
+  updateTodayActivity();
+}
+
+const LEVELS = [
+  { min: 0,   name: '🌱 Seedling',  next: 100 },
+  { min: 100, name: '🌿 Explorer',  next: 300 },
+  { min: 300, name: '🌳 Guardian',  next: 600 },
+  { min: 600, name: '🌍 Champion',  next: null },
+];
+
+function getLevelInfo(xp) {
+  const lvl = [...LEVELS].reverse().find(l => xp >= l.min) || LEVELS[0];
+  let pct = 0, toNext = '';
+  if (lvl.next !== null) {
+    pct    = Math.min(((xp - lvl.min) / (lvl.next - lvl.min)) * 100, 100);
+    toNext = `${lvl.next - xp} XP to next level`;
+  } else {
+    pct    = 100;
+    toNext = 'Max level reached! 🏆';
+  }
+  return { name: lvl.name, pct, toNext };
 }
 
 function updateDashXP() {
   if (!sbProfile) return;
-  document.getElementById('dash-xp-value').textContent = sbProfile.xp;
-  document.getElementById('dash-xp-bar').style.width = Math.min((sbProfile.xp % 100) / 100 * 100, 100) + '%';
+  const xp = sbProfile.xp;
+  const { name, pct, toNext } = getLevelInfo(xp);
+  const badgeEl = document.getElementById('xp-level-badge');
+  const valEl   = document.getElementById('dash-xp-value');
+  const barEl   = document.getElementById('dash-xp-bar');
+  const nextEl  = document.getElementById('xp-to-next');
+  if (badgeEl) badgeEl.textContent = name;
+  if (valEl)   valEl.textContent   = xp;
+  if (barEl)   barEl.style.width   = pct + '%';
+  if (nextEl)  nextEl.textContent  = toNext;
   fetchRank();
 }
 
@@ -140,13 +176,65 @@ async function fetchRank() {
   if (el) el.textContent = `#${(count ?? 0) + 1} on the leaderboard`;
 }
 
-function updateDashStats() {
-  const c = document.getElementById('dash-challenges');
-  const t = document.getElementById('dash-tasks');
+async function updateDashStats() {
+  if (!sbProfile) return;
+
+  // Challenges: total completions from Supabase
+  let chalCount = '–';
+  try {
+    const { data, error } = await sb.from('challenge_completions')
+      .select('id', { count: 'exact', head: false })
+      .eq('user_id', sbProfile.id);
+    if (!error) chalCount = (data || []).length;
+  } catch (e) { /* silent */ }
+
+  // Tasks Done: count done items from in-memory hwTasks array
+  const taskCount = hwTasks.filter(t => t.done).length;
+
+  // Eco Actions: eco completions from Supabase
+  let ecoCount = '–';
+  try {
+    const { data, error } = await sb.from('challenge_completions')
+      .select('id', { count: 'exact', head: false })
+      .eq('user_id', sbProfile.id).eq('challenge_id', 'eco');
+    if (!error) ecoCount = (data || []).length;
+  } catch (e) {
+    // fallback: if carbon answers exist, count as 1
+    try {
+      const ans = JSON.parse(localStorage.getItem('rh_carbon_answers') || 'null');
+      ecoCount = (ans && Object.values(ans).some(v => v > 0)) ? 1 : 0;
+    } catch (e2) { ecoCount = 0; }
+  }
+
+  const c  = document.getElementById('dash-challenges');
+  const t  = document.getElementById('dash-tasks');
   const co = document.getElementById('dash-co2');
-  if (c)  c.textContent  = challengesDone;
-  if (t)  t.textContent  = tasksDone;
-  if (co) co.textContent = co2Tracked;
+  if (c)  c.textContent  = chalCount;
+  if (t)  t.textContent  = taskCount;
+  if (co) co.textContent = ecoCount;
+}
+
+function updateTodayActivity() {
+  const el = document.getElementById('today-activity');
+  if (!el) return;
+  const items = [];
+  if (studyDone) items.push({ icon: '📚', text: 'Study challenge completed', cls: 'study' });
+  if (ecoDone)   items.push({ icon: '🌍', text: 'Eco mission completed',     cls: 'eco'   });
+  // Show up to 2 completed planner goals for today
+  const todayGoals = (plannerCache[dateToStr(new Date())]?.goals || []).filter(g => g.done);
+  todayGoals.slice(0, 2).forEach(g =>
+    items.push({ icon: '✅', text: g.text, cls: 'task' })
+  );
+  if (!items.length) {
+    el.innerHTML = '<p class="today-empty">No activity yet — complete a challenge to start! 🌟</p>';
+  } else {
+    el.innerHTML = items.map(item =>
+      `<div class="today-item today-item-${item.cls}">
+        <span class="today-item-icon">${item.icon}</span>
+        <span class="today-item-text">${escHtml(item.text)}</span>
+      </div>`
+    ).join('');
+  }
 }
 
 // Google OAuth sign-in
@@ -183,6 +271,11 @@ async function loadLeaderboard() {
   const el = document.getElementById('lb-list');
   el.innerHTML = '<div class="lb-loading">Loading rankings…</div>';
 
+  // Show "Your Rank" card if signed in
+  const yrCard = document.getElementById('lb-your-rank');
+  if (yrCard && sbProfile) yrCard.classList.remove('hidden');
+  else if (yrCard)         yrCard.classList.add('hidden');
+
   // 5-second safety net — never hang on a slow/dead query
   let timer;
   const timeout = new Promise((_, rej) =>
@@ -199,35 +292,26 @@ async function loadLeaderboard() {
     ]);
     clearTimeout(timer);
 
+    let rows = data || [];
     if (error) {
       console.error('[Leaderboard] Supabase error:', error);
-      // Detect RLS / permission errors and print the fix
-      if (error.code === '42501' || error.code === 'PGRST301' ||
-          (error.message || '').toLowerCase().includes('polic')) {
-        console.error(
-          '[Leaderboard] Looks like an RLS policy is blocking the query.\n' +
-          'Run this in your Supabase SQL Editor:\n\n' +
-          '  drop policy if exists "profiles_select" on public.profiles;\n' +
-          '  create policy "profiles_select" on public.profiles\n' +
-          '    for select using (true);\n'
-        );
-      }
-      el.innerHTML = '<p class="lb-empty">⚠️ Couldn\'t load rankings — check the console for details.</p>';
-      return;
+      rows = [];
     }
-
-    console.log('[Leaderboard] Loaded', (data || []).length, 'row(s)');
-    renderLeaderboard(data || []);
+    // Always show at least the current user on error or empty
+    if (!rows.length && sbProfile) {
+      rows = [{ id: sbProfile.id, username: sbProfile.username, xp: sbProfile.xp }];
+    }
+    console.log('[Leaderboard] Rendering', rows.length, 'row(s)');
+    renderLeaderboard(rows);
 
   } catch (err) {
     clearTimeout(timer);
-    if (err.message === 'lb_timeout') {
-      console.error('[Leaderboard] Query timed out after 5 s. ' +
-        'Check SUPABASE_URL / SUPABASE_KEY and your network connection.');
-    } else {
-      console.error('[Leaderboard] Unexpected error:', err);
-    }
-    el.innerHTML = '<p class="lb-empty">No rankings yet — be the first! 🏆</p>';
+    console.error('[Leaderboard] Error:', err);
+    // Fallback: show current user if signed in, otherwise empty state
+    const rows = sbProfile
+      ? [{ id: sbProfile.id, username: sbProfile.username, xp: sbProfile.xp }]
+      : [];
+    renderLeaderboard(rows);
   }
 }
 
@@ -239,18 +323,33 @@ function renderLeaderboard(rows) {
   }
   const medals = ['🥇', '🥈', '🥉'];
   const maxXp  = rows[0]?.xp || 1;
+
+  // Update "Your Rank" summary card
+  if (sbProfile) {
+    const myIdx  = rows.findIndex(r => r.id === sbProfile.id);
+    const yrRank = document.getElementById('lb-yr-rank');
+    const yrXp   = document.getElementById('lb-yr-xp');
+    if (yrRank) yrRank.textContent = myIdx >= 0 ? `#${myIdx + 1}` : '–';
+    if (yrXp)   yrXp.textContent   = `${sbProfile.xp} XP`;
+  }
+
   el.innerHTML = rows.map((row, i) => {
-    const isMe = sbProfile && sbProfile.id === row.id;
-    const pct  = maxXp > 0 ? Math.round((row.xp / maxXp) * 100) : 0;
+    const isMe    = sbProfile && sbProfile.id === row.id;
+    const pct     = maxXp > 0 ? Math.round((row.xp / maxXp) * 100) : 0;
+    const medal   = medals[i] ? `<span class="lb-medal-emoji">${medals[i]}</span>`
+                               : `<span class="lb-rank-num">#${i + 1}</span>`;
+    const initial = (row.username || '?')[0].toUpperCase();
+    const { name: lvlName } = getLevelInfo(row.xp);
     return `
       <div class="lb-row${isMe ? ' lb-me' : ''}${i < 3 ? ' lb-top' : ''}">
-        <div class="lb-rank">${medals[i] || `#${i + 1}`}</div>
-        <div class="lb-avatar">${row.username[0].toUpperCase()}</div>
+        <div class="lb-medal">${medal}</div>
+        <div class="lb-avatar">${initial}</div>
         <div class="lb-info">
-          <div class="lb-name">${row.username}${isMe ? ' <span class="lb-you-badge">You</span>' : ''}</div>
+          <div class="lb-name">${escHtml(row.username)}${isMe ? ' <span class="lb-you-badge">You</span>' : ''}</div>
+          <div class="lb-lvl">${lvlName}</div>
           <div class="lb-bar-wrap"><div class="lb-bar-fill" style="width:${pct}%"></div></div>
         </div>
-        <div class="lb-xp">${row.xp} XP</div>
+        <div class="lb-xp-badge">${row.xp} <span class="lb-xp-unit">XP</span></div>
       </div>`;
   }).join('');
 }

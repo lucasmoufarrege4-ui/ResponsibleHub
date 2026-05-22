@@ -66,55 +66,100 @@
 
       <!-- Logged-in: dashboard -->
       <div class="hidden" id="home-dashboard">
+
+        <!-- Greeting -->
         <div class="dash-greeting">
           <div class="dash-avatar" id="dash-avatar">?</div>
-          <div>
-            <h1 class="dash-hello" id="dash-hello">Hello! 👋</h1>
-            <p class="dash-sub">Keep up the great work 🌱</p>
+          <div class="dash-greeting-text">
+            <p class="dash-time-greeting" id="dash-time-greeting">Good morning</p>
+            <h1 class="dash-first-name" id="dash-first-name">there! 👋</h1>
+            <p class="dash-sub" id="dash-sub">Keep up the great work 🌱</p>
           </div>
         </div>
 
-        <div class="dash-xp-card">
-          <div class="dash-xp-top">
+        <!-- XP Hero Card -->
+        <div class="xp-hero-card">
+          <div class="xp-hero-inner">
             <div>
-              <div class="dash-xp-label">Total XP</div>
-              <div class="dash-xp-value" id="dash-xp-value">0</div>
+              <div class="xp-level-badge" id="xp-level-badge">🌱 Seedling</div>
+              <div class="xp-hero-number" id="dash-xp-value">0</div>
+              <div class="xp-hero-label">Total XP</div>
             </div>
-            <div class="dash-trophy">🏆</div>
+            <div class="xp-hero-trophy">🏆</div>
           </div>
-          <div class="dash-xp-bar-wrap">
-            <div class="dash-xp-bar" id="dash-xp-bar" style="width:0%"></div>
+          <div class="xp-bar-wrap">
+            <div class="xp-bar-fill" id="dash-xp-bar" style="width:0%"></div>
           </div>
-          <div class="dash-rank" id="dash-rank">Calculating rank…</div>
-        </div>
-
-        <div class="dash-stats">
-          <div class="dash-stat">
-            <span class="dash-stat-val" id="dash-challenges">0</span>
-            <span class="dash-stat-label">Challenges</span>
-          </div>
-          <div class="dash-stat">
-            <span class="dash-stat-val" id="dash-tasks">0</span>
-            <span class="dash-stat-label">Tasks Done</span>
-          </div>
-          <div class="dash-stat">
-            <span class="dash-stat-val" id="dash-co2">0</span>
-            <span class="dash-stat-label">CO₂ Tracked</span>
+          <div class="xp-bar-footer">
+            <span id="xp-to-next">0 XP to next level</span>
+            <span id="dash-rank">Rank #–</span>
           </div>
         </div>
 
+        <!-- Stat Cards -->
+        <div class="dash-stats-v2">
+          <div class="dash-stat-v2 stat-challenges">
+            <div class="stat-icon-big">🏅</div>
+            <div class="stat-val-big" id="dash-challenges">–</div>
+            <div class="stat-label-sm">Challenges</div>
+          </div>
+          <div class="dash-stat-v2 stat-tasks">
+            <div class="stat-icon-big">✅</div>
+            <div class="stat-val-big" id="dash-tasks">–</div>
+            <div class="stat-label-sm">Tasks Done</div>
+          </div>
+          <div class="dash-stat-v2 stat-co2">
+            <div class="stat-icon-big">🌿</div>
+            <div class="stat-val-big" id="dash-co2">–</div>
+            <div class="stat-label-sm">Eco Actions</div>
+          </div>
+        </div>
+
+        <!-- Today's Activity -->
+        <div class="dash-today">
+          <h3 class="dash-section-title">Today's Activity</h3>
+          <div id="today-activity" class="today-activity">
+            <p class="today-empty">No activity yet — complete a challenge to start! 🌟</p>
+          </div>
+        </div>
+
+        <!-- Quick Access -->
         <div class="dash-quick">
           <h3 class="dash-section-title">Quick Access</h3>
-          <div class="dash-quick-grid">
-            <button class="dash-quick-btn" data-page="study"><span class="dq-icon">📚</span><span class="dq-label">Study</span></button>
-            <button class="dash-quick-btn" data-page="eco"><span class="dq-icon">🌍</span><span class="dq-label">Eco</span></button>
-            <button class="dash-quick-btn" data-page="planner"><span class="dq-icon">📅</span><span class="dq-label">Planner</span></button>
-            <button class="dash-quick-btn" data-page="coach"><span class="dq-icon">🤖</span><span class="dq-label">AI Coach</span></button>
-            <button class="dash-quick-btn" data-page="leaderboard"><span class="dq-icon">🏆</span><span class="dq-label">Leaderboard</span></button>
+          <div class="dash-quick-rows">
+            <button class="dash-row-btn" data-page="study">
+              <div class="drb-icon study-accent">📚</div>
+              <div class="drb-content"><div class="drb-title">Study</div><div class="drb-desc">Daily challenges &amp; quiz</div></div>
+              <div class="drb-arrow">→</div>
+            </button>
+            <button class="dash-row-btn" data-page="eco">
+              <div class="drb-icon eco-accent">🌍</div>
+              <div class="drb-content"><div class="drb-title">Eco</div><div class="drb-desc">Eco missions &amp; carbon tracker</div></div>
+              <div class="drb-arrow">→</div>
+            </button>
+            <button class="dash-row-btn" data-page="planner">
+              <div class="drb-icon planner-accent">📅</div>
+              <div class="drb-content"><div class="drb-title">Planner</div><div class="drb-desc">Goals &amp; daily schedule</div></div>
+              <div class="drb-arrow">→</div>
+            </button>
+            <button class="dash-row-btn" data-page="coach">
+              <div class="drb-icon coach-accent">🤖</div>
+              <div class="drb-content"><div class="drb-title">AI Coach</div><div class="drb-desc">Personalised study plan</div></div>
+              <div class="drb-arrow">→</div>
+            </button>
+            <button class="dash-row-btn" data-page="leaderboard">
+              <div class="drb-icon lb-accent">🏆</div>
+              <div class="drb-content"><div class="drb-title">Leaderboard</div><div class="drb-desc">Rankings &amp; top players</div></div>
+              <div class="drb-arrow">→</div>
+            </button>
           </div>
         </div>
 
-        <button class="btn btn-outline btn-sm dash-signout" id="dash-signout-btn">↩ Sign out</button>
+        <!-- Sign Out -->
+        <div class="dash-signout-row">
+          <button class="btn-signout-sm" id="dash-signout-btn">↩ Sign out</button>
+        </div>
+
       </div>
     </div>
 
@@ -647,6 +692,11 @@
       </div>
       <div class="container">
         <div class="lb-wrap">
+          <div class="lb-your-rank hidden" id="lb-your-rank">
+            <span class="lb-yr-label">Your Rank</span>
+            <span class="lb-yr-rank" id="lb-yr-rank">#–</span>
+            <span class="lb-yr-xp" id="lb-yr-xp">0 XP</span>
+          </div>
           <div class="lb-list" id="lb-list">
             <div class="lb-loading">Loading rankings…</div>
           </div>
