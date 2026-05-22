@@ -587,13 +587,17 @@ function renderStreakDots(containerId, streak) {
 /* ─── CHALLENGE PERSISTENCE ──────────────────────────────────────────── */
 
 // Save a completion to Supabase — fire-and-forget, never blocks the UI.
-// challenge_id is 'study' or 'eco'. The unique constraint on (user_id, challenge_id, date)
-// means duplicate saves on the same day are silently ignored (23505 = unique_violation).
-async function saveChallengeCompletion(type) {
+// Table columns: id, user_id, challenge_id, completed_at, proof_text.
+async function saveChallengeCompletion(type, proofText = '') {
   if (!sbUser) return;
   const { error } = await sb.from('challenge_completions')
-    .insert({ user_id: sbUser.id, challenge_id: type, date: dateToStr(new Date()) });
-  if (error && error.code !== '23505') {
+    .insert({
+      user_id:      sbUser.id,
+      challenge_id: type,
+      completed_at: new Date().toISOString(),
+      proof_text:   proofText,
+    });
+  if (error) {
     console.error('[Challenges] saveChallengeCompletion error:', error);
   }
 }
@@ -603,21 +607,23 @@ async function saveChallengeCompletion(type) {
 async function loadChallengeState() {
   if (!sbUser) return;
   const today  = dateToStr(new Date());
-  const cutoff = dateToStr(new Date(Date.now() - 8 * 86400000));
+  const cutoff = new Date(Date.now() - 8 * 86400000).toISOString();
 
   const { data, error } = await sb.from('challenge_completions')
-    .select('challenge_id, date')
+    .select('challenge_id, completed_at')
     .eq('user_id', sbUser.id)
-    .gte('date', cutoff);
+    .gte('completed_at', cutoff);
 
   if (error) {
     console.error('[Challenges] loadChallengeState error:', error);
     return;
   }
 
+  // Extract local date string (YYYY-MM-DD) from each ISO timestamp
+  const toDate = r => r.completed_at.slice(0, 10);
   const rows = data || [];
-  const studyDates = new Set(rows.filter(r => r.challenge_id === 'study').map(r => r.date));
-  const ecoDates   = new Set(rows.filter(r => r.challenge_id === 'eco').map(r => r.date));
+  const studyDates = new Set(rows.filter(r => r.challenge_id === 'study').map(toDate));
+  const ecoDates   = new Set(rows.filter(r => r.challenge_id === 'eco').map(toDate));
 
   // Restore done state for today
   if (studyDates.has(today) && !studyDone) {
@@ -903,7 +909,7 @@ document.getElementById('eco-submit-btn').addEventListener('click', () => {
 
   // ── Save to Supabase in the background — never blocks the UI ────────
   if (sbUser) {
-    saveChallengeCompletion('eco');
+    saveChallengeCompletion('eco', text);
     addGoalToPlanner(`🌍 ${text}`).catch(err =>
       console.error('eco: background planner save failed', err)
     );
@@ -1105,21 +1111,19 @@ async function loadEcoProgress() {
   }
 
   const DAYS = 35;
-  const cutoff = new Date(Date.now() - (DAYS - 1) * 86400000);
-  const cutoffStr = dateToStr(cutoff);
 
   const { data, error } = await sb.from('challenge_completions')
-    .select('date')
+    .select('completed_at')
     .eq('user_id', sbUser.id)
     .eq('challenge_id', 'eco')
-    .gte('date', cutoffStr);
+    .gte('completed_at', new Date(Date.now() - (DAYS - 1) * 86400000).toISOString());
 
   if (error) {
     console.warn('[EcoProgress] load error (showing empty calendar):', error);
   }
 
-  // On error or empty result, render a calendar with no completed days rather than an error message
-  const completedSet = new Set((data || []).map(r => r.date));
+  // Extract YYYY-MM-DD from each timestamp; render empty calendar on error/empty
+  const completedSet = new Set((data || []).map(r => r.completed_at.slice(0, 10)));
   renderEcoCalendar(completedSet, DAYS);
 
   const count = completedSet.size;
@@ -1398,12 +1402,12 @@ async function loadVirtualTree() {
   const fallback = Math.max(co2Tracked, ecoStreak);
   if (!sbUser) { renderVirtualTree(fallback); return; }
 
-  const cutoff = dateToStr(new Date(Date.now() - 365 * 86400000)); // last year
+  const cutoff = new Date(Date.now() - 365 * 86400000).toISOString(); // last year
   const { data, error } = await sb.from('challenge_completions')
-    .select('date')
+    .select('completed_at')
     .eq('user_id', sbUser.id)
     .eq('challenge_id', 'eco')
-    .gte('date', cutoff);
+    .gte('completed_at', cutoff);
 
   if (error) {
     console.warn('[VirtualTree] DB load failed, using local fallback:', error);
