@@ -456,6 +456,7 @@ async function loadWeekData() {
 }
 
 function showPlannerApp() {
+  DayBuilder.init(); // idempotent — safe to call every time, only wires once
   document.getElementById('planner-locked').classList.add('hidden');
   document.getElementById('planner-app').classList.remove('hidden');
   selectedPlanDate = dateToStr(new Date()); // always land on today
@@ -723,8 +724,8 @@ const DayBuilder = (() => {
     if (q.type === 'yesno') {
       area.innerHTML = `
         <div class="chat-yesno-row">
-          <button class="chat-yn-btn chat-yn-yes" data-val="yes">👍 Yes</button>
-          <button class="chat-yn-btn chat-yn-no"  data-val="no">👎 No</button>
+          <button type="button" class="chat-yn-btn chat-yn-yes" data-val="yes">👍 Yes</button>
+          <button type="button" class="chat-yn-btn chat-yn-no"  data-val="no">👎 No</button>
         </div>`;
       area.querySelectorAll('.chat-yn-btn').forEach(btn =>
         btn.addEventListener('click', () =>
@@ -736,7 +737,7 @@ const DayBuilder = (() => {
       area.innerHTML = `
         <div class="chat-field-row">
           <input type="time" class="chat-field" id="chat-field" value="${q.defaultVal || ''}"/>
-          <button class="chat-next-btn" id="chat-next-btn">Next →</button>
+          <button type="button" class="chat-next-btn" id="chat-next-btn">Next →</button>
         </div>`;
       const f = area.querySelector('#chat-field');
       const b = area.querySelector('#chat-next-btn');
@@ -748,7 +749,7 @@ const DayBuilder = (() => {
       area.innerHTML = `
         <div class="chat-field-row">
           <input type="text" class="chat-field" id="chat-field" placeholder="Type here…" maxlength="120"/>
-          <button class="chat-next-btn" id="chat-next-btn">Next →</button>
+          <button type="button" class="chat-next-btn" id="chat-next-btn">Next →</button>
         </div>`;
       const f = area.querySelector('#chat-field');
       const b = area.querySelector('#chat-next-btn');
@@ -858,24 +859,53 @@ const DayBuilder = (() => {
     }, 600);
   }
 
-  /* ── wire up buttons ── */
+  /* ── wire up buttons via event delegation (most robust approach) ── */
+  let _inited = false;
   function init() {
-    document.getElementById('build-day-btn').addEventListener('click', start);
-    document.getElementById('sched-type-btn').addEventListener('click', () => showState('schedule'));
-    document.getElementById('sched-cancel-btn').addEventListener('click', () => {
-      const hasSchedule = document.getElementById('planner-schedule').value.trim();
-      showState(hasSchedule ? 'schedule' : 'idle');
+    if (_inited) return;
+    _inited = true;
+
+    // Event delegation on document catches clicks regardless of element
+    // display state, creation timing, or any other DOM quirk.
+    document.addEventListener('click', function(e) {
+      // Walk up to nearest button (handles clicks on child elements like emoji spans)
+      const btn = e.target.closest('button') || e.target;
+      const id  = btn && btn.id;
+      if (!id) return;
+
+      switch (id) {
+        case 'build-day-btn':
+        case 'regen-sched-btn':
+          e.preventDefault();
+          start();
+          break;
+        case 'sched-type-btn':
+          e.preventDefault();
+          showState('schedule');
+          setTimeout(() => { const ta = document.getElementById('planner-schedule'); if (ta) { ta.classList.remove('sched-textarea-hidden'); ta.focus(); } }, 50);
+          break;
+        case 'edit-sched-btn':
+          e.preventDefault();
+          showState('schedule');
+          setTimeout(() => { const ta = document.getElementById('planner-schedule'); if (ta) ta.focus(); }, 50);
+          break;
+        case 'sched-cancel-btn':
+          e.preventDefault();
+          {
+            const ta = document.getElementById('planner-schedule');
+            showState(ta && ta.value.trim() ? 'schedule' : 'idle');
+          }
+          break;
+      }
     });
-    document.getElementById('regen-sched-btn').addEventListener('click', start);
-    document.getElementById('edit-sched-btn').addEventListener('click', () => {
-      document.getElementById('planner-schedule').focus();
-      document.getElementById('planner-schedule').select();
-    });
+
+    console.log('[DayBuilder] event delegation attached');
   }
 
   return { showState, init };
 })();
 
+// Attach at module load time
 DayBuilder.init();
 
 /* ─── DATA ──────────────────────────────────────────────────────────── */
