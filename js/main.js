@@ -596,6 +596,30 @@ function addGoal() {
   renderGoals(); autoSavePlanner();
 }
 
+// Called by DayBuilder after schedule generation — injects the day's goal into Goals list
+function injectDayBuilderGoal(rawText) {
+  if (!rawText || !rawText.trim()) {
+    console.log('[DayBuilder] injectDayBuilderGoal: no goal text, skipping');
+    return;
+  }
+  const goalText = rawText.trim();
+  console.log('[DayBuilder] injectDayBuilderGoal called with:', goalText,
+              '| selectedPlanDate:', selectedPlanDate,
+              '| plannerGoals.length before:', plannerGoals.length);
+  const alreadyExists = plannerGoals.some(g => g.text === goalText);
+  if (alreadyExists) {
+    console.log('[DayBuilder] goal already in list, skipping');
+    return;
+  }
+  plannerGoals.push({ text: goalText, done: false, id: Date.now() });
+  if (plannerCache[selectedPlanDate]) {
+    plannerCache[selectedPlanDate].goals = [...plannerGoals];
+  }
+  renderGoals();
+  autoSavePlanner();
+  console.log('[DayBuilder] goal injected successfully, plannerGoals.length now:', plannerGoals.length);
+}
+
 async function savePlanner() {
   if (!sbUser) return;
   const schedule = document.getElementById('planner-schedule').value;
@@ -855,15 +879,8 @@ const DayBuilder = (() => {
       const schedule = generateSchedule(answers);
       document.getElementById('planner-schedule').value = schedule;
       showState('schedule');
-      // Inject the daily goal into the Goals list (same as clicking "+ Add")
-      if (answers.goal) {
-        const goalText = answers.goal.trim();
-        const alreadyExists = plannerGoals.some(g => g.text === goalText);
-        if (!alreadyExists) {
-          plannerGoals.push({ text: goalText, done: false, id: Date.now() });
-          renderGoals();
-        }
-      }
+      // Inject the daily goal into the Goals list via module-level function
+      injectDayBuilderGoal(answers.goal);
       autoSavePlanner();
     }, 600);
   }
