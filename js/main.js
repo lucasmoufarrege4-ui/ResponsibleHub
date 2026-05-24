@@ -855,6 +855,15 @@ const DayBuilder = (() => {
       const schedule = generateSchedule(answers);
       document.getElementById('planner-schedule').value = schedule;
       showState('schedule');
+      // Inject the daily goal into the Goals list (same as clicking "+ Add")
+      if (answers.goal) {
+        const goalText = answers.goal.trim();
+        const alreadyExists = plannerGoals.some(g => g.text === goalText);
+        if (!alreadyExists) {
+          plannerGoals.push({ text: goalText, done: false, id: Date.now() });
+          renderGoals();
+        }
+      }
       autoSavePlanner();
     }, 600);
   }
@@ -1852,24 +1861,38 @@ async function initEcoPage() {
 
 /* ─── REMINDERS ──────────────────────────────────────────────────────── */
 
-const REMINDERS_FIXED = [
-  { id: 'r_water',     emoji: '💧', text: 'Drink 8 glasses of water today' },
-  { id: 'r_move',      emoji: '🏃', text: 'Move your body for at least 10 minutes' },
-  { id: 'r_gratitude', emoji: '🙏', text: 'Write down 3 things you\'re grateful for' },
-  { id: 'r_phone',     emoji: '📵', text: 'Take a 30-minute break from your phone' },
-];
-
-const REMINDERS_POOL = [
-  { id: 'rp_read',    emoji: '📖', text: 'Read for 15 minutes' },
-  { id: 'rp_tidy',    emoji: '🧹', text: 'Tidy your study space' },
-  { id: 'rp_outside', emoji: '🌳', text: 'Spend 10 minutes outside' },
-  { id: 'rp_stretch', emoji: '🧘', text: 'Do 5 minutes of stretching or yoga' },
-  { id: 'rp_snack',   emoji: '🍎', text: 'Eat a healthy snack instead of junk food' },
-  { id: 'rp_kind',    emoji: '💛', text: 'Do something kind for someone today' },
-  { id: 'rp_reflect', emoji: '📝', text: 'Spend 5 minutes reflecting on your day' },
-  { id: 'rp_breath',  emoji: '🌬️', text: 'Try a 2-minute deep breathing exercise' },
-  { id: 'rp_posture', emoji: '🪑', text: 'Check and correct your posture right now' },
-  { id: 'rp_goals',   emoji: '🎯', text: 'Review your goals for this week' },
+// 30 rotating daily reminders — 3 shown per day, cycling through all 30 over 10 days
+const ALL_REMINDERS = [
+  { id: 'r01', emoji: '💧', title: 'Stay Hydrated',          desc: 'Drink 8 glasses of water throughout the day.' },
+  { id: 'r02', emoji: '😴', title: 'Sleep 8 Hours',           desc: 'Go to bed on time — your brain recharges while you sleep.' },
+  { id: 'r03', emoji: '🧘', title: 'Screen Break',            desc: 'Step away from your screen for 5 minutes right now.' },
+  { id: 'r04', emoji: '🥗', title: 'Eat Well',               desc: 'Include fruit or vegetables in your next meal.' },
+  { id: 'r05', emoji: '🏃', title: 'Move Your Body',          desc: 'Get at least 15 minutes of physical activity today.' },
+  { id: 'r06', emoji: '📚', title: 'Pomodoro Study',          desc: 'Study in 25-min blocks with 5-min breaks between them.' },
+  { id: 'r07', emoji: '🌱', title: 'Eco Action',              desc: 'Unplug chargers you\'re not using to save energy.' },
+  { id: 'r08', emoji: '🙏', title: 'Gratitude',               desc: 'Write down 3 things you\'re grateful for today.' },
+  { id: 'r09', emoji: '👥', title: 'Stay Connected',           desc: 'Send a kind message to a friend or family member.' },
+  { id: 'r10', emoji: '🎯', title: 'Deep Focus',              desc: 'Turn off notifications and focus for the next 30 minutes.' },
+  { id: 'r11', emoji: '🪑', title: 'Fix Your Posture',         desc: 'Sit up straight, roll your shoulders back, and breathe.' },
+  { id: 'r12', emoji: '📵', title: 'Digital Detox',            desc: 'Take a 30-minute break from social media.' },
+  { id: 'r13', emoji: '🌬️', title: 'Breathe Deeply',          desc: 'Take 5 slow, deep breaths to calm and reset your mind.' },
+  { id: 'r14', emoji: '📖', title: 'Read for Fun',             desc: 'Spend 15 minutes reading something you genuinely enjoy.' },
+  { id: 'r15', emoji: '🌳', title: 'Go Outside',              desc: 'Get 10 minutes of fresh air and natural sunlight.' },
+  { id: 'r16', emoji: '🧹', title: 'Tidy Your Space',          desc: 'A clear desk = a clear mind. Spend 5 minutes tidying up.' },
+  { id: 'r17', emoji: '🍎', title: 'Healthy Snack',            desc: 'Choose fruit or nuts instead of processed snacks.' },
+  { id: 'r18', emoji: '💛', title: 'Act of Kindness',          desc: 'Do one small kind thing for someone around you today.' },
+  { id: 'r19', emoji: '📝', title: 'Reflect on Your Day',      desc: 'Write 3 sentences about your wins and challenges.' },
+  { id: 'r20', emoji: '🎵', title: 'Mood Boost',               desc: 'Listen to your favourite uplifting song right now.' },
+  { id: 'r21', emoji: '👁️', title: '20-20-20 Eye Rest',        desc: 'Look 20 metres away for 20 seconds to rest your eyes.' },
+  { id: 'r22', emoji: '🌙', title: 'Wind Down Early',          desc: 'Dim your screen an hour before bed for better sleep.' },
+  { id: 'r23', emoji: '🧠', title: 'Brain Break',              desc: 'Doodle, sketch, or let your mind wander for 5 minutes.' },
+  { id: 'r24', emoji: '🤝', title: 'Show Appreciation',        desc: 'Thank someone who has helped or inspired you recently.' },
+  { id: 'r25', emoji: '♻️', title: 'Reduce Waste',             desc: 'Recycle or avoid single-use plastic at least once today.' },
+  { id: 'r26', emoji: '💪', title: 'Mini Workout',             desc: 'Do 20 jumping jacks or 10 push-ups right now.' },
+  { id: 'r27', emoji: '🌊', title: 'Mindful Moment',           desc: 'Notice 5 things you can see, 4 you hear, 3 you can feel.' },
+  { id: 'r28', emoji: '📅', title: 'Plan Tomorrow',            desc: 'Write down your top 3 priorities for tomorrow now.' },
+  { id: 'r29', emoji: '🚰', title: 'Skip the Caffeine',        desc: 'Swap your next coffee for herbal tea or sparkling water.' },
+  { id: 'r30', emoji: '🎓', title: 'Learn Something New',      desc: 'Watch a 5-min educational video or read an interesting article.' },
 ];
 
 let todayReminders   = [];       // { id, emoji, text, done }
@@ -1878,17 +1901,16 @@ let reminderDateSet  = new Set();// dates that have ≥1 completion (for streak)
 let remindersStreak  = 0;
 let currentPlannerTab = 'planner';
 
-// Seeded daily shuffle — same 4 random picks for everyone on the same calendar day
+// 3 different reminders per day — rotates through all 30 over 10 days,
+// then repeats. Same 3 for everyone on the same calendar date.
 function getDailyReminders() {
-  const seed = Math.floor(Date.now() / 86400000);
-  const pool = [...REMINDERS_POOL];
-  let s = seed;
-  for (let i = pool.length - 1; i > 0; i--) {
-    s = Math.imul(s, 1664525) + 1013904223 | 0;
-    const j = Math.abs(s) % (i + 1);
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  return [...REMINDERS_FIXED, ...pool.slice(0, 4)];
+  const daysSinceEpoch = Math.floor(Date.now() / 86400000);
+  const base = (daysSinceEpoch * 3) % ALL_REMINDERS.length;
+  return [
+    ALL_REMINDERS[base],
+    ALL_REMINDERS[(base + 1) % ALL_REMINDERS.length],
+    ALL_REMINDERS[(base + 2) % ALL_REMINDERS.length],
+  ];
 }
 
 function computeReminderStreak(dateSet) {
@@ -1940,12 +1962,15 @@ function renderReminders() {
 
   list.innerHTML = sorted.map(r => `
     <div class="reminder-item${r.done ? ' reminder-done' : ''}" id="rem-item-${r.id}">
-      <button class="reminder-check-btn${r.done ? ' is-done' : ''}"
+      <button type="button" class="reminder-check-btn${r.done ? ' is-done' : ''}"
               data-id="${r.id}" ${r.done ? 'disabled' : ''} aria-label="${r.done ? 'Done' : 'Mark done'}">
         ${r.done ? '✓' : ''}
       </button>
       <span class="reminder-emoji">${r.emoji}</span>
-      <span class="reminder-text">${r.text}</span>
+      <div class="reminder-body">
+        <span class="reminder-title">${r.title}</span>
+        <span class="reminder-desc">${r.desc}</span>
+      </div>
       ${!r.done ? '<span class="reminder-xp">+5 XP</span>' : ''}
     </div>
   `).join('');
