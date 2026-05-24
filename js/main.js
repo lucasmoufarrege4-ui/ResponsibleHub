@@ -479,6 +479,7 @@ async function loadPlannerData() {
     document.getElementById('planner-schedule').value = c.schedule;
     plannerGoals = [...c.goals];
     renderGoals();
+    DayBuilder.showState(c.schedule?.trim() ? 'schedule' : 'idle');
     return;
   }
   const { data } = await sb.from('daily_plans')
@@ -487,6 +488,7 @@ async function loadPlannerData() {
   document.getElementById('planner-schedule').value = plannerCache[selectedPlanDate].schedule;
   plannerGoals = [...plannerCache[selectedPlanDate].goals];
   renderGoals();
+  DayBuilder.showState(plannerCache[selectedPlanDate].schedule?.trim() ? 'schedule' : 'idle');
 }
 
 // Adds a completed goal to TODAY's plan (called by challenge submissions)
@@ -626,6 +628,255 @@ let _savePlannerTimer = null;
 function autoSavePlanner() { clearTimeout(_savePlannerTimer); _savePlannerTimer = setTimeout(savePlanner, 1500); }
 document.getElementById('planner-save-btn').addEventListener('click', savePlanner);
 document.getElementById('planner-schedule').addEventListener('input', autoSavePlanner);
+
+/* ─── DAY BUILDER ────────────────────────────────────────────────────── */
+const DayBuilder = (() => {
+
+  const BASE_QUESTIONS = [
+    { id: 'wakeup',    emoji: '⏰', text: 'What time did you wake up today?',                  type: 'time',  defaultVal: '07:00', follow: null },
+    { id: 'breakfast', emoji: '🍳', text: 'Did you have breakfast?',                           type: 'yesno', defaultVal: null,    follow: null },
+    { id: 'school',    emoji: '🏫', text: 'What time does school start today?',                type: 'time',  defaultVal: '08:00', follow: null },
+    { id: 'activity',  emoji: '⚽', text: 'Do you have any sports or activities today?',        type: 'yesno', defaultVal: null,
+      follow: { id: 'activity_detail', emoji: '⚽', text: 'What activity and at what time?',  type: 'text',  defaultVal: null, follow: null }
+    },
+    { id: 'homework',  emoji: '📚', text: 'Do you have homework or studying to do?',            type: 'yesno', defaultVal: null,
+      follow: { id: 'homework_detail', emoji: '📚', text: 'Which subjects?',                  type: 'text',  defaultVal: null, follow: null }
+    },
+    { id: 'sleep',     emoji: '😴', text: 'What time do you want to sleep tonight?',            type: 'time',  defaultVal: '22:00', follow: null },
+    { id: 'goal',      emoji: '🎯', text: "What's one goal you want to achieve today?",        type: 'text',  defaultVal: null, follow: null },
+  ];
+
+  let queue = [];
+  let answers = {};
+  let currentIdx = 0;
+
+  /* ── state switcher ── */
+  function showState(state) {
+    const textarea = document.getElementById('planner-schedule');
+    const idle     = document.getElementById('sched-idle');
+    const chat     = document.getElementById('sched-chat');
+    const result   = document.getElementById('sched-result');
+    if (!idle || !chat || !result) return; // guard if planner not yet rendered
+
+    if (state === 'idle') {
+      idle.classList.remove('hidden');
+      chat.classList.add('hidden');
+      textarea.classList.add('sched-textarea-hidden');
+      result.classList.add('hidden');
+    } else if (state === 'chat') {
+      idle.classList.add('hidden');
+      chat.classList.remove('hidden');
+      textarea.classList.add('sched-textarea-hidden');
+      result.classList.add('hidden');
+    } else { // 'schedule' — textarea + result buttons visible
+      idle.classList.add('hidden');
+      chat.classList.add('hidden');
+      textarea.classList.remove('sched-textarea-hidden');
+      result.classList.remove('hidden');
+    }
+  }
+
+  /* ── start / reset ── */
+  function start() {
+    queue = [...BASE_QUESTIONS];
+    answers = {};
+    currentIdx = 0;
+    document.getElementById('sched-chat-log').innerHTML = '';
+    document.getElementById('sched-chat-answer').innerHTML = '';
+    showState('chat');
+    askNext();
+  }
+
+  /* ── progress ── */
+  function updateProgress() {
+    const pct = queue.length ? (currentIdx / queue.length) * 100 : 0;
+    document.getElementById('sched-prog-fill').style.width = pct + '%';
+    document.getElementById('sched-prog-lbl').textContent =
+      `Question ${Math.min(currentIdx + 1, queue.length)} of ${queue.length}`;
+  }
+
+  /* ── question bubble ── */
+  function addQuestionBubble(q) {
+    const log = document.getElementById('sched-chat-log');
+    const div = document.createElement('div');
+    div.className = 'chat-bubble chat-q-bubble';
+    div.innerHTML = `<span class="chat-bbl-emoji">${q.emoji}</span><span class="chat-bbl-txt">${q.text}</span>`;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  /* ── answer bubble ── */
+  function addAnswerBubble(text) {
+    const log = document.getElementById('sched-chat-log');
+    const div = document.createElement('div');
+    div.className = 'chat-bubble chat-a-bubble';
+    div.textContent = text;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  /* ── render answer input ── */
+  function renderAnswerArea(q) {
+    const area = document.getElementById('sched-chat-answer');
+    area.innerHTML = '';
+
+    if (q.type === 'yesno') {
+      area.innerHTML = `
+        <div class="chat-yesno-row">
+          <button class="chat-yn-btn chat-yn-yes" data-val="yes">👍 Yes</button>
+          <button class="chat-yn-btn chat-yn-no"  data-val="no">👎 No</button>
+        </div>`;
+      area.querySelectorAll('.chat-yn-btn').forEach(btn =>
+        btn.addEventListener('click', () =>
+          submitAnswer(q, btn.dataset.val, btn.dataset.val === 'yes' ? 'Yes ✅' : 'No ✗')
+        )
+      );
+
+    } else if (q.type === 'time') {
+      area.innerHTML = `
+        <div class="chat-field-row">
+          <input type="time" class="chat-field" id="chat-field" value="${q.defaultVal || ''}"/>
+          <button class="chat-next-btn" id="chat-next-btn">Next →</button>
+        </div>`;
+      const f = area.querySelector('#chat-field');
+      const b = area.querySelector('#chat-next-btn');
+      b.addEventListener('click', () => { if (f.value) submitAnswer(q, f.value, f.value); });
+      f.addEventListener('keydown', e => { if (e.key === 'Enter' && f.value) submitAnswer(q, f.value, f.value); });
+      setTimeout(() => f.focus(), 80);
+
+    } else { // text
+      area.innerHTML = `
+        <div class="chat-field-row">
+          <input type="text" class="chat-field" id="chat-field" placeholder="Type here…" maxlength="120"/>
+          <button class="chat-next-btn" id="chat-next-btn">Next →</button>
+        </div>`;
+      const f = area.querySelector('#chat-field');
+      const b = area.querySelector('#chat-next-btn');
+      const go = () => { const v = f.value.trim(); if (v) submitAnswer(q, v, v); };
+      b.addEventListener('click', go);
+      f.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+      setTimeout(() => f.focus(), 80);
+    }
+  }
+
+  /* ── submit an answer ── */
+  function submitAnswer(q, value, display) {
+    answers[q.id] = value;
+    addAnswerBubble(display);
+    document.getElementById('sched-chat-answer').innerHTML = '';
+
+    // Insert conditional follow-up into queue right after current position
+    if (q.follow && value === 'yes') {
+      queue.splice(currentIdx + 1, 0, q.follow);
+    }
+
+    currentIdx++;
+    setTimeout(askNext, 320);
+  }
+
+  /* ── ask next question or finish ── */
+  function askNext() {
+    if (currentIdx >= queue.length) { finish(); return; }
+    updateProgress();
+    addQuestionBubble(queue[currentIdx]);
+    renderAnswerArea(queue[currentIdx]);
+  }
+
+  /* ── generate schedule string ── */
+  function toMin(t)   { if (!t) return null; const [h,m] = t.split(':').map(Number); return h*60+m; }
+  function toHHMM(m)  { return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`; }
+
+  function generateSchedule(ans) {
+    const entries = [];
+    const wake   = toMin(ans.wakeup) ?? 7*60;
+    const school = toMin(ans.school);
+    const sleep  = toMin(ans.sleep)  ?? 22*60;
+
+    entries.push({ t: wake,       label: '🌅 Wake up & morning routine' });
+    if (ans.breakfast === 'yes')
+      entries.push({ t: wake + 30, label: '🍳 Breakfast' });
+
+    if (school) {
+      entries.push({ t: Math.max(wake + 60, school - 20), label: '🚌 Travel to school' });
+      entries.push({ t: school, label: '🏫 School starts' });
+      const schoolEnd = school + 7*60;
+      if (12*60 > school && 12*60 < schoolEnd)
+        entries.push({ t: 12*60, label: '🥗 Lunch break' });
+      entries.push({ t: schoolEnd, label: '🏠 Arrived home' });
+    }
+
+    if (ans.activity === 'yes' && ans.activity_detail) {
+      const m = ans.activity_detail.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+      let actTime = school ? school + 7*60 + 30 : 16*60;
+      if (m) {
+        let h = parseInt(m[1]), mm = m[2] ? parseInt(m[2]) : 0;
+        if (m[3]?.toLowerCase() === 'pm' && h < 12) h += 12;
+        actTime = h*60 + mm;
+      }
+      const rawName = ans.activity_detail.replace(/\d{1,2}(?::\d{2})?\s*(?:am|pm)?/gi,'').replace(/\bat\b/gi,'').trim();
+      const actName = rawName ? rawName.charAt(0).toUpperCase() + rawName.slice(1) : 'Activity';
+      entries.push({ t: actTime, label: `⚽ ${actName}` });
+    }
+
+    if (ans.homework === 'yes') {
+      const hwTime = school ? school + 8*60 : 17*60;
+      const subj   = ans.homework_detail ? ` — ${ans.homework_detail}` : '';
+      entries.push({ t: hwTime, label: `📚 Homework & studying${subj}` });
+    }
+
+    const windDown = sleep - 30;
+    entries.push({ t: Math.max(wake+120, windDown - 90), label: '🎮 Free time / relax' });
+    entries.push({ t: windDown, label: '🌙 Wind down & prepare for sleep' });
+    entries.push({ t: sleep,    label: '😴 Sleep' });
+
+    // Deduplicate times, sort
+    const seen = new Set();
+    const sorted = entries
+      .filter(e => { if (seen.has(e.t)) return false; seen.add(e.t); return true; })
+      .sort((a, b) => a.t - b.t);
+
+    let lines = sorted.map(e => `${toHHMM(e.t)} — ${e.label}`);
+    if (ans.goal) lines.push(`\n🎯 Today's goal: ${ans.goal}`);
+    return lines.join('\n');
+  }
+
+  /* ── finish: put schedule in textarea ── */
+  function finish() {
+    // Show a brief "generating" message in chat
+    const log = document.getElementById('sched-chat-log');
+    const gen = document.createElement('div');
+    gen.className = 'chat-bubble chat-q-bubble chat-generating';
+    gen.innerHTML = '<span class="chat-bbl-emoji">✨</span><span class="chat-bbl-txt">Building your schedule…</span>';
+    log.appendChild(gen);
+    log.scrollTop = log.scrollHeight;
+
+    setTimeout(() => {
+      const schedule = generateSchedule(answers);
+      document.getElementById('planner-schedule').value = schedule;
+      showState('schedule');
+      autoSavePlanner();
+    }, 600);
+  }
+
+  /* ── wire up buttons ── */
+  function init() {
+    document.getElementById('build-day-btn').addEventListener('click', start);
+    document.getElementById('sched-type-btn').addEventListener('click', () => showState('schedule'));
+    document.getElementById('sched-cancel-btn').addEventListener('click', () => {
+      const hasSchedule = document.getElementById('planner-schedule').value.trim();
+      showState(hasSchedule ? 'schedule' : 'idle');
+    });
+    document.getElementById('regen-sched-btn').addEventListener('click', start);
+    document.getElementById('edit-sched-btn').addEventListener('click', () => {
+      document.getElementById('planner-schedule').focus();
+      document.getElementById('planner-schedule').select();
+    });
+  }
+
+  return { showState, init };
+})();
+
+DayBuilder.init();
 
 /* ─── DATA ──────────────────────────────────────────────────────────── */
 

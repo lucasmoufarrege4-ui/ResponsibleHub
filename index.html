@@ -579,12 +579,47 @@
               <span class="planner-user-badge" id="planner-user-badge"></span>
             </div>
             <div class="planner-grid">
-              <div class="card card-study planner-card">
+              <div class="card card-study planner-card" id="schedule-card">
                 <div class="card-tag">🗓️ Schedule</div>
                 <h3>My Schedule</h3>
-                <textarea id="planner-schedule" class="planner-textarea"
-                  placeholder="E.g.&#10;8:00am — Wake up &amp; breakfast&#10;9:00am — Math revision (1 hr)&#10;10:30am — English essay draft&#10;12:00pm — Lunch break&#10;1:30pm — Science notes…"
+
+                <!-- textarea always in DOM; visibility controlled by JS -->
+                <textarea id="planner-schedule" class="planner-textarea sched-textarea sched-textarea-hidden"
+                  placeholder="Your schedule will appear here — edit freely…"
                   rows="13"></textarea>
+
+                <!-- State: idle (no schedule yet) -->
+                <div class="sched-state" id="sched-idle">
+                  <div class="sched-empty-wrap">
+                    <div class="sched-empty-icon">📅</div>
+                    <p class="sched-empty-txt">No schedule yet for this day</p>
+                    <button class="btn btn-green sched-build-btn" id="build-day-btn">✨ Build My Day</button>
+                    <button class="sched-link-btn" id="sched-type-btn">✏️ Type it myself</button>
+                  </div>
+                </div>
+
+                <!-- State: chat flow -->
+                <div class="sched-state hidden" id="sched-chat">
+                  <div class="sched-chat-hdr">
+                    <div class="sched-prog-track">
+                      <div class="sched-prog-fill" id="sched-prog-fill"></div>
+                    </div>
+                    <div class="sched-prog-row">
+                      <span class="sched-prog-lbl" id="sched-prog-lbl">Question 1 of 7</span>
+                      <button class="sched-cancel-btn" id="sched-cancel-btn" title="Cancel">✕ Cancel</button>
+                    </div>
+                  </div>
+                  <div class="sched-chat-log" id="sched-chat-log"></div>
+                  <div class="sched-chat-answer" id="sched-chat-answer"></div>
+                </div>
+
+                <!-- State: result / manual edit (action buttons above textarea) -->
+                <div class="sched-state hidden" id="sched-result">
+                  <div class="sched-result-actions">
+                    <button class="btn btn-sm sched-action-btn" id="regen-sched-btn">🔄 Regenerate</button>
+                    <button class="btn btn-sm sched-action-btn" id="edit-sched-btn">✏️ Edit manually</button>
+                  </div>
+                </div>
               </div>
               <div class="card card-study planner-card">
                 <div class="card-tag">🎯 Goals</div>

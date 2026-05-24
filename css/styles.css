@@ -761,6 +761,127 @@ body {
   transition: border-color .2s, background .2s;
 }
 .planner-textarea:focus { border-color: var(--forest-mid); background: #fff; }
+.sched-textarea-hidden { display: none !important; }
+
+/* ── Day Builder states ──────────────────────────────────── */
+.sched-state { width: 100%; }
+
+/* Idle state */
+.sched-empty-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  gap: .9rem; padding: 1.8rem .5rem 1.4rem;
+}
+.sched-empty-icon { font-size: 2.4rem; line-height: 1; }
+.sched-empty-txt  { font-size: .88rem; color: var(--muted); text-align: center; margin: 0; }
+.sched-build-btn  { width: 100%; max-width: 220px; font-size: .95rem; padding: .7rem 1rem; }
+.sched-link-btn {
+  background: none; border: none; color: var(--muted);
+  font-size: .82rem; cursor: pointer; text-decoration: underline;
+  padding: 0; transition: color .18s;
+}
+.sched-link-btn:hover { color: var(--forest-mid); }
+
+/* Chat state header */
+.sched-chat-hdr { margin-top: .4rem; margin-bottom: .6rem; }
+.sched-prog-track {
+  width: 100%; height: 5px; background: var(--border);
+  border-radius: 99px; overflow: hidden; margin-bottom: .45rem;
+}
+.sched-prog-fill {
+  height: 100%; background: linear-gradient(90deg, var(--forest-mid), var(--sage));
+  border-radius: 99px; transition: width .4s ease; width: 0%;
+}
+.sched-prog-row {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.sched-prog-lbl  { font-size: .75rem; font-weight: 600; color: var(--muted); }
+.sched-cancel-btn {
+  background: none; border: none; color: var(--muted);
+  font-size: .75rem; cursor: pointer; padding: 0;
+  transition: color .18s;
+}
+.sched-cancel-btn:hover { color: #e76f51; }
+
+/* Chat message log */
+.sched-chat-log {
+  display: flex; flex-direction: column; gap: .6rem;
+  max-height: 240px; overflow-y: auto;
+  padding: .4rem .1rem; margin-bottom: .5rem;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+.sched-chat-log::-webkit-scrollbar { width: 4px; }
+.sched-chat-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Bubbles */
+.chat-bubble { display: flex; align-items: flex-start; gap: .45rem; max-width: 92%; }
+.chat-q-bubble {
+  align-self: flex-start;
+  background: linear-gradient(135deg, var(--forest-deep) 0%, var(--forest-mid) 100%);
+  color: #fff; padding: .55rem .8rem; border-radius: 16px 16px 16px 4px;
+  font-size: .84rem; line-height: 1.45;
+}
+.chat-a-bubble {
+  align-self: flex-end; margin-left: auto;
+  background: var(--card-bg); border: 1.5px solid var(--border);
+  color: var(--text); padding: .45rem .8rem;
+  border-radius: 16px 16px 4px 16px;
+  font-size: .84rem; font-weight: 600;
+}
+.chat-bbl-emoji { font-size: 1rem; flex-shrink: 0; line-height: 1.4; }
+.chat-bbl-txt   { flex: 1; }
+.chat-generating { opacity: .7; animation: chatFadeIn .35s ease; }
+
+@keyframes chatFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Answer area */
+.sched-chat-answer { margin-bottom: .6rem; }
+
+.chat-yesno-row { display: flex; gap: .6rem; }
+.chat-yn-btn {
+  flex: 1; padding: .55rem .5rem; border-radius: 10px;
+  border: 1.5px solid var(--border); background: var(--card-bg);
+  color: var(--text); font-size: .88rem; font-weight: 600;
+  cursor: pointer; transition: background .18s, border-color .18s, transform .1s;
+}
+.chat-yn-btn:hover { transform: translateY(-1px); }
+.chat-yn-yes:hover { background: #2d6a4f22; border-color: var(--forest-mid); color: var(--forest-mid); }
+.chat-yn-no:hover  { background: #e76f5122; border-color: #e76f51;          color: #e76f51; }
+
+.chat-field-row { display: flex; gap: .5rem; }
+.chat-field {
+  flex: 1; padding: .5rem .75rem;
+  border: 1.5px solid var(--border); border-radius: 10px;
+  background: var(--card-bg); color: var(--text);
+  font-size: .88rem; outline: none;
+  transition: border-color .2s;
+}
+.chat-field:focus { border-color: var(--forest-mid); }
+.chat-next-btn {
+  padding: .5rem 1rem; border-radius: 10px;
+  background: linear-gradient(135deg, var(--forest-deep), var(--forest-mid));
+  color: #fff; border: none; font-size: .86rem; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+  transition: opacity .18s, transform .1s;
+}
+.chat-next-btn:hover { opacity: .88; transform: translateY(-1px); }
+
+/* Result buttons row */
+.sched-result-actions {
+  display: flex; gap: .6rem; margin-bottom: .6rem; margin-top: .3rem;
+}
+.sched-action-btn {
+  flex: 1; padding: .48rem .5rem; border-radius: 10px;
+  border: 1.5px solid var(--border); background: var(--card-bg);
+  color: var(--text); font-size: .82rem; font-weight: 600;
+  cursor: pointer; transition: border-color .18s, background .18s, transform .1s;
+}
+.sched-action-btn:hover {
+  border-color: var(--forest-mid); background: #2d6a4f15;
+  transform: translateY(-1px);
+}
 
 .goal-add-row { display: flex; gap: .5rem; margin-bottom: .7rem; margin-top: .5rem; }
 .goal-add-row input {
@@ -2780,3 +2901,29 @@ body.light-mode .eco-badge.locked  { background: rgba(0,0,0,.03) !important; }
 body.light-mode .notif-time-input  { background: var(--cream) !important; border-color: var(--border) !important; }
 body.light-mode .profile-name-input { background: var(--cream) !important; }
 
+
+/* ── Day Builder light-mode overrides ───────────────────── */
+body.light-mode .chat-q-bubble {
+  background: linear-gradient(135deg, var(--forest-deep) 0%, var(--forest-mid) 100%) !important;
+  color: #fff !important;
+}
+body.light-mode .chat-a-bubble {
+  background: var(--cream) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+body.light-mode .chat-yn-btn {
+  background: var(--cream) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+body.light-mode .chat-field {
+  background: var(--cream) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+body.light-mode .sched-action-btn {
+  background: var(--cream) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
