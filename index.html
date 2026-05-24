@@ -18,11 +18,16 @@
   <!-- TOP BAR -->
   <header class="top-bar">
     <div class="top-bar-logo">🌱 <span>ResponsibleHub</span></div>
-    <div class="top-user hidden" id="top-user">
-      <div class="top-avatar" id="top-avatar">?</div>
-      <div class="top-user-text">
-        <span class="top-username" id="top-username"></span>
-        <span class="top-xp" id="top-xp">0 XP</span>
+    <div class="top-bar-right">
+      <button class="theme-toggle-btn" id="theme-toggle" title="Toggle theme" aria-label="Toggle theme">🌙</button>
+      <div class="top-user hidden" id="top-user">
+        <button class="top-avatar-btn" id="top-avatar-btn" title="My profile" aria-label="My profile">
+          <div class="top-avatar" id="top-avatar">?</div>
+        </button>
+        <div class="top-user-text">
+          <span class="top-username" id="top-username"></span>
+          <span class="top-xp" id="top-xp">0 XP</span>
+        </div>
       </div>
     </div>
   </header>
@@ -93,6 +98,24 @@
           <div class="xp-bar-footer">
             <span id="xp-to-next">0 XP to next level</span>
             <span id="dash-rank">Rank #–</span>
+          </div>
+        </div>
+
+        <!-- Widgets Row: Weather + Countdown -->
+        <div class="dash-widgets-row">
+          <!-- Weather Widget -->
+          <div class="weather-widget" id="weather-widget">
+            <div class="weather-loading">🌍 Loading weather…</div>
+          </div>
+          <!-- Countdown Widget -->
+          <div class="countdown-widget" id="countdown-widget">
+            <div class="cd-inner">
+              <span class="cd-icon">⏰</span>
+              <div class="cd-content">
+                <div class="cd-event" id="cd-event">Next Event</div>
+                <div class="cd-time" id="cd-time">–</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -645,6 +668,16 @@
               <p class="reminders-loading">Loading habits…</p>
             </div>
 
+            <!-- Notification Toggle -->
+            <div class="notif-toggle-row" id="notif-toggle-row">
+              <span class="notif-toggle-label">🔔 Daily nudge notification</span>
+              <input type="time" id="notif-time" value="09:00" class="notif-time-input" />
+              <label class="notif-switch" title="Enable daily reminder notification">
+                <input type="checkbox" id="notif-toggle" />
+                <span class="notif-slider"></span>
+              </label>
+            </div>
+
           </div><!-- /tab-reminders-panel -->
 
         </div>
@@ -728,6 +761,43 @@
             <div class="lb-loading">Loading rankings…</div>
           </div>
           <button class="btn btn-outline btn-sm lb-refresh-btn" id="lb-refresh-btn">🔄 Refresh</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PROFILE PAGE ══════════════════════════════════════════════ -->
+    <div class="page" id="page-profile">
+      <div class="container" style="max-width:600px;margin:0 auto;">
+        <div class="profile-header">
+          <button class="profile-back" id="profile-back-btn">← Back</button>
+          <h2 class="profile-h2">My Profile</h2>
+          <div style="width:60px"></div>
+        </div>
+        <div class="profile-hero">
+          <div class="profile-av-lg" id="profile-av-lg">?</div>
+          <div class="profile-name-display" id="profile-name-display">–</div>
+          <div class="profile-level-tag" id="profile-level-tag">🌱 Seedling</div>
+          <div class="profile-xp-tag" id="profile-xp-tag">0 XP</div>
+        </div>
+        <div class="profile-stats-row">
+          <div class="ps-card"><div class="ps-val" id="ps-challenges">–</div><div class="ps-label">Challenges</div></div>
+          <div class="ps-card"><div class="ps-val" id="ps-streak">–</div><div class="ps-label">Eco Streak</div></div>
+          <div class="ps-card"><div class="ps-val" id="ps-badges">–</div><div class="ps-label">Badges</div></div>
+          <div class="ps-card"><div class="ps-val" id="ps-joined">–</div><div class="ps-label">Joined</div></div>
+        </div>
+        <div class="profile-section-card">
+          <div class="profile-sec-title">🏅 Badges Earned</div>
+          <div class="profile-badges-wrap" id="profile-badges-wrap">
+            <p class="profile-no-badges">No badges yet — complete eco challenges! 🌿</p>
+          </div>
+        </div>
+        <div class="profile-section-card">
+          <div class="profile-sec-title">✏️ Edit Display Name</div>
+          <div class="profile-edit-row">
+            <input type="text" id="profile-name-input" class="profile-name-input" maxlength="20" placeholder="New username (letters/numbers/_ only)…" />
+            <button class="btn btn-study btn-sm" id="profile-name-save">Save</button>
+          </div>
+          <p class="profile-edit-status" id="profile-edit-status"></p>
         </div>
       </div>
     </div>

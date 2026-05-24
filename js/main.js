@@ -23,7 +23,8 @@ function navigateTo(page) {
     if (sbUser) showPlannerApp();
     else showPlannerLocked();
   }
-  if (page === 'home')  updateHomeView();
+  if (page === 'home')  { updateHomeView(); updateCountdown(); }
+  if (page === 'profile') initProfilePage();
   if (page === 'coach') initCoachPage();
   if (page === 'study') initStudyPage();
   if (page === 'eco')   initEcoPage();
@@ -35,6 +36,19 @@ document.querySelectorAll('.bnav-btn').forEach(btn =>
 document.querySelectorAll('.dash-row-btn').forEach(btn =>
   btn.addEventListener('click', () => navigateTo(btn.dataset.page))
 );
+
+/* ── Theme Toggle ────────────────────────────────────────────────── */
+(function initTheme() {
+  if (localStorage.getItem('rh_theme') === 'light') {
+    document.body.classList.add('light-mode');
+    document.getElementById('theme-toggle').textContent = '☀️';
+  }
+})();
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const isLight = document.body.classList.toggle('light-mode');
+  document.getElementById('theme-toggle').textContent = isLight ? '☀️' : '🌙';
+  localStorage.setItem('rh_theme', isLight ? 'light' : 'dark');
+});
 
 /* ── Auth State ───────────────────────────────────────────────────── */
 sb.auth.onAuthStateChange(async (_event, session) => {
@@ -450,6 +464,7 @@ function showPlannerApp() {
   switchPlannerTab('planner');
   loadWeekData();
   loadReminders(); // fire-and-forget, runs in parallel
+  initNotifToggle();
 }
 function showPlannerLocked() {
   document.getElementById('planner-locked').classList.remove('hidden');
@@ -2742,3 +2757,202 @@ loadSubjectProgress();
 renderSubjectProgress();
 renderPomodoro();
 initQuiz('math');
+
+/* ── Weather Widget ──────────────────────────────────────────────── */
+const WMO = {
+  0:  { label:'Clear sky',     emoji:'☀️',  eco:'Perfect day to air-dry clothes instead of using the dryer!' },
+  1:  { label:'Mainly clear',  emoji:'🌤️',  eco:'Great day for a walk or bike ride — skip the car today!' },
+  2:  { label:'Partly cloudy', emoji:'⛅',   eco:'Comfortable weather — ideal for cycling to school!' },
+  3:  { label:'Overcast',      emoji:'☁️',  eco:'Take the bus today — every trip replaces ~45 car journeys.' },
+  45: { label:'Foggy',         emoji:'🌫️',  eco:'Stay in and audit your home energy usage today!' },
+  48: { label:'Icy fog',       emoji:'🌫️',  eco:'Layer up instead of cranking the heating — saves energy!' },
+  51: { label:'Light drizzle', emoji:'🌦️',  eco:'Collect rainwater from your roof for watering plants!' },
+  53: { label:'Drizzle',       emoji:'🌦️',  eco:'Rainy days are perfect for planning your weekly eco goals.' },
+  55: { label:'Heavy drizzle', emoji:'🌧️',  eco:'Turn off sprinklers — nature is handling watering today!' },
+  61: { label:'Light rain',    emoji:'🌧️',  eco:'Capture rainwater today — it\'s free water for your garden!' },
+  63: { label:'Rain',          emoji:'🌧️',  eco:'Great day to audit which devices you can unplug.' },
+  65: { label:'Heavy rain',    emoji:'🌧️',  eco:'Heavy rain = free garden watering! Turn off irrigation.' },
+  80: { label:'Showers',       emoji:'🌧️',  eco:'Check your home\'s water efficiency on a rainy day like this.' },
+  95: { label:'Thunderstorm',  emoji:'⛈️',  eco:'Unplug electronics during the storm to save standby power.' },
+};
+function wmoInfo(code) {
+  if (WMO[code]) return WMO[code];
+  if (code >= 1 && code <= 3) return WMO[code] || WMO[3];
+  if (code === 48) return WMO[48];
+  if (code >= 51 && code <= 55) return WMO[51];
+  if (code >= 61 && code <= 65) return WMO[61];
+  if (code >= 71 && code <= 77) return WMO[61];
+  if (code >= 80 && code <= 82) return WMO[80];
+  if (code >= 85 && code <= 86) return WMO[80];
+  if (code >= 96) return WMO[95];
+  return WMO[3];
+}
+async function fetchWeather() {
+  const el = document.getElementById('weather-widget');
+  if (!el) return;
+  try {
+    const res  = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-23.5505&longitude=-46.6333&current=temperature_2m,weathercode&timezone=America%2FSao_Paulo');
+    const json = await res.json();
+    const temp = Math.round(json.current.temperature_2m);
+    const info = wmoInfo(json.current.weathercode);
+    el.innerHTML = `
+      <div class="weather-main">
+        <span class="weather-emoji">${info.emoji}</span>
+        <div class="weather-info">
+          <div class="weather-temp">${temp}°C</div>
+          <div class="weather-cond">${info.label} · São Paulo</div>
+        </div>
+      </div>
+      <div class="weather-eco-tip">🌱 ${info.eco}</div>`;
+  } catch {
+    if (el) el.innerHTML = '<div class="weather-err">🌍 Weather unavailable</div>';
+  }
+}
+fetchWeather();
+setInterval(fetchWeather, 30 * 60 * 1000);
+
+/* ── Countdown Timer ─────────────────────────────────────────────── */
+function updateCountdown() {
+  const evEl = document.getElementById('cd-event');
+  const tmEl = document.getElementById('cd-time');
+  if (!evEl || !tmEl) return;
+  const today = dateToStr(new Date());
+  const now   = Date.now();
+  const sorted = Object.keys(plannerCache).filter(ds => ds >= today).sort();
+  let foundText = null, foundDate = null;
+  for (const ds of sorted) {
+    const cached = plannerCache[ds];
+    const pending = (cached?.goals || []).filter(g => !g.done);
+    if (pending.length) { foundText = pending[0].text; foundDate = ds; break; }
+    if (ds > today && cached?.schedule?.trim()) { foundText = 'Planned day'; foundDate = ds; break; }
+  }
+  if (!foundText) {
+    evEl.textContent = 'No upcoming events';
+    tmEl.textContent = 'Add one in Planner! 📅';
+    return;
+  }
+  evEl.textContent = foundText.length > 38 ? foundText.slice(0, 38) + '…' : foundText;
+  const target = new Date(foundDate + (foundDate === today ? 'T23:59:59' : 'T00:00:00')).getTime();
+  const diff   = Math.max(0, target - now);
+  const days   = Math.floor(diff / 86400000);
+  const hours  = Math.floor((diff % 86400000) / 3600000);
+  const mins   = Math.floor((diff % 3600000) / 60000);
+  if (diff === 0)      tmEl.textContent = 'Due now!';
+  else if (days > 0)   tmEl.textContent = `${days}d ${hours}h remaining`;
+  else if (hours > 0)  tmEl.textContent = `${hours}h ${mins}m remaining`;
+  else                 tmEl.textContent = `${mins}m remaining`;
+}
+updateCountdown();
+setInterval(updateCountdown, 60000);
+
+/* ── Browser Notifications ───────────────────────────────────────── */
+let notifSentToday = '';
+function initNotifToggle() {
+  const toggle    = document.getElementById('notif-toggle');
+  const timeInput = document.getElementById('notif-time');
+  if (!toggle) return;
+  const enabled = localStorage.getItem('rh_notif') === 'on';
+  const saved   = localStorage.getItem('rh_notif_time') || '09:00';
+  toggle.checked = enabled && ('Notification' in window) && Notification.permission === 'granted';
+  if (timeInput) timeInput.value = saved;
+  toggle.addEventListener('change', async () => {
+    if (toggle.checked) {
+      if (!('Notification' in window)) { toggle.checked = false; showToast('❌ Notifications not supported', ''); return; }
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') { toggle.checked = false; showToast('❌ Permission denied — check browser settings', ''); return; }
+      localStorage.setItem('rh_notif', 'on');
+      showToast('🔔 Daily reminders enabled!', 'study-toast');
+      new Notification('✅ ResponsibleHub', { body: 'Daily reminders enabled! You\'ll be nudged at ' + (timeInput?.value || '09:00'), icon: '/icon.png' });
+    } else {
+      localStorage.setItem('rh_notif', 'off');
+      showToast('🔕 Reminders disabled', '');
+    }
+  });
+  if (timeInput) {
+    timeInput.addEventListener('change', () => localStorage.setItem('rh_notif_time', timeInput.value));
+  }
+}
+// Fire at the scheduled time if app is open
+setInterval(() => {
+  if (localStorage.getItem('rh_notif') !== 'on') return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const now   = new Date();
+  const hhmm  = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const sched = localStorage.getItem('rh_notif_time') || '09:00';
+  const today = dateToStr(now);
+  if (hhmm === sched && notifSentToday !== today) {
+    notifSentToday = today;
+    new Notification('⏰ ResponsibleHub Daily Reminder', { body: 'Time to check your habits and complete today\'s challenges! 🌟', icon: '/icon.png' });
+  }
+}, 60000);
+
+/* ── Profile Page ────────────────────────────────────────────────── */
+document.getElementById('top-avatar-btn').addEventListener('click', () => {
+  if (sbProfile) navigateTo('profile');
+});
+document.getElementById('profile-back-btn').addEventListener('click', () => navigateTo('home'));
+document.getElementById('profile-name-save').addEventListener('click', saveProfileName);
+
+function initProfilePage() {
+  if (!sbProfile) { navigateTo('home'); return; }
+  // Avatar
+  setAvatarEl(document.getElementById('profile-av-lg'));
+  // Name / level / XP
+  document.getElementById('profile-name-display').textContent = sbProfile.username;
+  const { name: lvlName } = getLevelInfo(sbProfile.xp);
+  document.getElementById('profile-level-tag').textContent  = lvlName;
+  document.getElementById('profile-xp-tag').textContent     = `${sbProfile.xp} XP`;
+  // Quick stats
+  document.getElementById('ps-streak').textContent = ecoStreak || '0';
+  document.getElementById('ps-badges').textContent = earnedBadgeIds.size;
+  if (sbProfile.created_at) {
+    const d = new Date(sbProfile.created_at);
+    document.getElementById('ps-joined').textContent =
+      d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+  }
+  // Async: challenge count
+  (async () => {
+    if (!sbProfile) return;
+    const { data } = await sb.from('challenge_completions')
+      .select('id', { count: 'exact', head: false }).eq('user_id', sbProfile.id);
+    const el = document.getElementById('ps-challenges');
+    if (el) el.textContent = (data || []).length;
+  })();
+  // Badges
+  const wrap = document.getElementById('profile-badges-wrap');
+  if (wrap) {
+    const earned = ECO_BADGES.filter(b => earnedBadgeIds.has(b.id));
+    if (!earned.length) {
+      wrap.innerHTML = '<p class="profile-no-badges">No badges yet — complete eco challenges! 🌿</p>';
+    } else {
+      wrap.innerHTML = earned.map(b => `
+        <div class="profile-badge">
+          <span class="profile-badge-emoji">${b.emoji}</span>
+          <div class="profile-badge-name">${escHtml(b.name)}</div>
+        </div>`).join('');
+    }
+  }
+}
+
+async function saveProfileName() {
+  if (!sbUser || !sbProfile) return;
+  const input  = document.getElementById('profile-name-input');
+  const status = document.getElementById('profile-edit-status');
+  const raw    = (input?.value || '').trim();
+  const clean  = raw.replace(/[^a-z0-9_\-]/gi, '').slice(0, 20);
+  if (!clean) { if (status) { status.textContent = '⚠️ Invalid name'; status.style.color = '#e53e3e'; } return; }
+  if (status) { status.textContent = 'Saving…'; status.style.color = 'var(--muted)'; }
+  const { error } = await sb.from('profiles').update({ username: clean }).eq('id', sbUser.id);
+  if (error) {
+    if (status) { status.textContent = '❌ Could not save — try another name'; status.style.color = '#e53e3e'; }
+  } else {
+    sbProfile.username = clean;
+    if (input) input.value = '';
+    const nameEl = document.getElementById('profile-name-display');
+    if (nameEl) nameEl.textContent = clean;
+    const topUn = document.getElementById('top-username');
+    if (topUn) topUn.textContent = clean;
+    if (status) { status.textContent = '✅ Name updated!'; status.style.color = '#52b788'; }
+    setTimeout(() => { if (status) status.textContent = ''; }, 2500);
+  }
+}
