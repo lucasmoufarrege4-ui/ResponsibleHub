@@ -2642,11 +2642,18 @@ let raiTyping  = false;
 // Generate a specific, actionable suggested planner goal from the user's quiz answers.
 // raiAnswers[0]=goals, [1]=activity, [2]=wake time, [3]=biggest challenge
 function raiSuggestGoal() {
-  if (raiAnswers.length < 4) return '';
+  console.log('[Coach] raiSuggestGoal called. raiAnswers:', JSON.stringify(raiAnswers));
+
+  if (raiAnswers.length < 4) {
+    console.warn('[Coach] raiSuggestGoal: raiAnswers has only', raiAnswers.length, 'item(s) — returning empty');
+    return '';
+  }
 
   const goal      = (raiAnswers[0] || '').charAt(0).toUpperCase(); // A-E
   const challenge = (raiAnswers[3] || '').charAt(0).toUpperCase(); // A-E
   const wakeKey   = (raiAnswers[2] || '').charAt(0).toUpperCase(); // A-D
+
+  console.log('[Coach] raiSuggestGoal: goal letter =', goal, '| challenge letter =', challenge, '| wakeKey =', wakeKey);
 
   const wakeTime = { A: '6:00am', B: '7:00am', C: '7:30am', D: '8:00am' }[wakeKey] || '7:00am';
 
@@ -2680,17 +2687,16 @@ function raiSuggestGoal() {
   };
 
   const key = `${goal}-${challenge}`;
-  if (table[key]) return table[key];
-
-  // Fallback by goal alone
-  const fallback = {
+  const result = table[key] || {
     A: `Wake up at ${wakeTime} and complete a 20-minute workout before school every day`,
     B: `Wake up at ${wakeTime} and spend 10 minutes planning your day before anything else`,
     C: `Swap one unhealthy snack for fruit or veg and drink 2 litres of water every day this week`,
     D: `Study for 45 minutes with no phone before dinner every day this week`,
     E: `Spend 10 minutes journaling or meditating each morning at ${wakeTime}`,
-  };
-  return fallback[goal] || 'Complete one focused 30-minute study session today with zero distractions';
+  }[goal] || 'Complete one focused 30-minute study session today with zero distractions';
+
+  console.log('[Coach] raiSuggestGoal: key =', key, '| result =', result);
+  return result;
 }
 
 function escHtml(s) {
@@ -2729,7 +2735,6 @@ function raiRender() {
                   <button class="rai-add-plan-btn" data-idx="${i}">📋 + Add to Planner</button>
                   <div class="rai-plan-form" id="rpf-${i}">
                     <input type="text" class="rai-plan-input" id="rpi-${i}"
-                           value="${escHtml(raiSuggestGoal())}"
                            placeholder="What goal or tip do you want to add?" maxlength="120"/>
                     <button class="btn btn-green btn-sm rai-plan-confirm" data-idx="${i}">✅ Add</button>
                   </div>
@@ -2767,6 +2772,16 @@ function raiRender() {
 }
 
 function _addRaiPlannerListeners(el) {
+  // Pre-fill suggestion directly as a JS property (reliable; avoids HTML-attribute parsing)
+  const suggestion = raiSuggestGoal();
+  console.log('[Coach] _addRaiPlannerListeners: suggestion =', suggestion || '(empty — answers not ready yet)');
+  el.querySelectorAll('.rai-plan-input').forEach(input => {
+    if (suggestion) {
+      input.value = suggestion;
+      console.log('[Coach] pre-filled input', input.id, '→', input.value);
+    }
+  });
+
   el.querySelectorAll('.rai-add-plan-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const idx = btn.dataset.idx;
