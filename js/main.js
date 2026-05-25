@@ -2639,6 +2639,60 @@ let raiAnswers = [];   // answers to Q1-Q4
 let raiHistory = [];   // { role:'ai'|'user', text }
 let raiTyping  = false;
 
+// Generate a specific, actionable suggested planner goal from the user's quiz answers.
+// raiAnswers[0]=goals, [1]=activity, [2]=wake time, [3]=biggest challenge
+function raiSuggestGoal() {
+  if (raiAnswers.length < 4) return '';
+
+  const goal      = (raiAnswers[0] || '').charAt(0).toUpperCase(); // A-E
+  const challenge = (raiAnswers[3] || '').charAt(0).toUpperCase(); // A-E
+  const wakeKey   = (raiAnswers[2] || '').charAt(0).toUpperCase(); // A-D
+
+  const wakeTime = { A: '6:00am', B: '7:00am', C: '7:30am', D: '8:00am' }[wakeKey] || '7:00am';
+
+  // 25 combinations: goal (A-E) × biggest challenge (A-E)
+  const table = {
+    'A-A': `Wake up at ${wakeTime} and do 20 push-ups and 20 squats before getting dressed`,
+    'A-B': `Go to bed by 10pm and wake up at ${wakeTime} to fit in a 15-minute morning workout`,
+    'A-C': `Swap your afternoon snack for a protein-rich option and work out 3 times this week`,
+    'A-D': `Schedule 3 training sessions this week at fixed times and stick to every one`,
+    'A-E': `Do 10 minutes of stretching at ${wakeTime} every morning to energise and de-stress`,
+    'B-A': `Wake up at ${wakeTime} and spend the first 10 minutes planning your day — every single day`,
+    'B-B': `Set a 10pm phone-off rule and wake up at ${wakeTime} — keep it for 5 days straight`,
+    'B-C': `Prep your clothes and bag the night before so your morning runs smoothly at ${wakeTime}`,
+    'B-D': `Write down your 3 top tasks each night, then act on them from ${wakeTime} every morning`,
+    'B-E': `Start every morning at ${wakeTime} with 5 minutes of calm journaling before anything else`,
+    'C-A': `Cook one healthy meal from scratch this week and replace one takeaway with home food`,
+    'C-B': `Stop eating 2 hours before bed and cut screen time after 9pm to sleep better`,
+    'C-C': `Replace 3 unhealthy meals this week with a home-cooked alternative — start tonight`,
+    'C-D': `Meal-prep on Sunday: 5 healthy lunches ready to go for the whole week`,
+    'C-E': `Drink 2 litres of water daily and eat a proper breakfast at ${wakeTime} — no skipping`,
+    'D-A': `Study for 45 minutes with your phone in another room before checking any messages`,
+    'D-B': `Complete your hardest task first at ${wakeTime} before your energy drops`,
+    'D-C': `Replace 30 minutes of phone scrolling with a focused study block every evening`,
+    'D-D': `Follow the same study schedule every day this week — same subject, same time, same place`,
+    'D-E': `Break your work into 25-minute focus blocks with 5-minute breaks — aim for 4 blocks today`,
+    'E-A': `Wake up at ${wakeTime}, take 5 deep breaths, and write down one thing you will accomplish today`,
+    'E-B': `Set a hard 10pm screen-off rule every night this week and track how your mood changes`,
+    'E-C': `Eat a proper breakfast and drink a full glass of water before checking your phone each morning`,
+    'E-D': `Write down 3 things you will do tomorrow every night before bed — make it a daily non-negotiable`,
+    'E-E': `Do 10 minutes of box breathing or mindfulness at ${wakeTime} every day for the next 7 days`,
+  };
+
+  const key = `${goal}-${challenge}`;
+  if (table[key]) return table[key];
+
+  // Fallback by goal alone
+  const fallback = {
+    A: `Wake up at ${wakeTime} and complete a 20-minute workout before school every day`,
+    B: `Wake up at ${wakeTime} and spend 10 minutes planning your day before anything else`,
+    C: `Swap one unhealthy snack for fruit or veg and drink 2 litres of water every day this week`,
+    D: `Study for 45 minutes with no phone before dinner every day this week`,
+    E: `Spend 10 minutes journaling or meditating each morning at ${wakeTime}`,
+  };
+  return fallback[goal] || 'Complete one focused 30-minute study session today with zero distractions';
+}
+
 function escHtml(s) {
   return String(s)
     .replace(/&/g, '&amp;')
@@ -2673,8 +2727,9 @@ function raiRender() {
                 </div>`
              : `<div class="rai-planner-capture" data-idx="${i}">
                   <button class="rai-add-plan-btn" data-idx="${i}">📋 + Add to Planner</button>
-                  <div class="rai-plan-form hidden" id="rpf-${i}">
+                  <div class="rai-plan-form" id="rpf-${i}">
                     <input type="text" class="rai-plan-input" id="rpi-${i}"
+                           value="${escHtml(raiSuggestGoal())}"
                            placeholder="What goal or tip do you want to add?" maxlength="120"/>
                     <button class="btn btn-green btn-sm rai-plan-confirm" data-idx="${i}">✅ Add</button>
                   </div>
