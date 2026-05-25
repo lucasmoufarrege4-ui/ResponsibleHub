@@ -360,6 +360,35 @@
           <div class="subject-progress-grid" id="subject-progress-grid"></div>
         </div>
 
+        <!-- Flashcards -->
+        <div class="card card-study" id="flashcards-card">
+          <div class="card-tag">🃏 Flashcards</div>
+          <h3>My Flashcards</h3>
+          <div class="fc-create-form">
+            <select id="fc-subject" class="fc-subject-select">
+              <option value="Math">📐 Math</option>
+              <option value="English">📖 English</option>
+              <option value="Science">🔬 Science</option>
+              <option value="Geography">🌍 Geography</option>
+              <option value="Art">🎨 Art</option>
+              <option value="Other">📋 Other</option>
+            </select>
+            <div class="fc-form-fields">
+              <input type="text" id="fc-front" class="fc-input" placeholder="Front — question or term…" maxlength="120"/>
+              <input type="text" id="fc-back"  class="fc-input" placeholder="Back — answer or definition…" maxlength="200"/>
+            </div>
+            <button type="button" class="btn btn-study btn-sm" id="fc-add-btn">+ Create Flashcard</button>
+          </div>
+          <div class="fc-list" id="fc-list"></div>
+        </div>
+
+        <!-- Quiz History -->
+        <div class="card card-study" id="quiz-history-card">
+          <div class="card-tag">📊 Quiz History</div>
+          <h3>My Quiz History</h3>
+          <div class="qh-list" id="qh-list"><p class="qh-empty">No quizzes taken yet.</p></div>
+        </div>
+
       </div><!-- /study-extras -->
 
     </div>
@@ -411,6 +440,37 @@
             <span>🌱 Eco Streak:</span>
             <div class="streak-dots" id="eco-streak-dots"></div>
             <span id="eco-streak-count">0 days</span>
+          </div>
+        </div>
+
+        <!-- Weekly Eco Challenge -->
+        <div class="card card-eco eco-weekly-card" id="eco-weekly-card">
+          <div class="card-tag eco-tag">🏆 Weekly Challenge</div>
+          <div class="weekly-xp-banner">⭐ +50 XP · Resets every Monday</div>
+          <h3>This Week's Eco Challenge</h3>
+          <div class="challenge-display">
+            <div class="challenge-emoji" id="eco-weekly-emoji">🌱</div>
+            <p class="challenge-text" id="eco-weekly-text">Loading weekly challenge…</p>
+          </div>
+          <div class="challenge-meta">
+            <span class="xp-badge eco-xp">+50 XP</span>
+            <span class="diff-badge eco-diff" id="eco-weekly-diff">Hard</span>
+          </div>
+          <div class="text-proof-form" id="eco-weekly-proof-form">
+            <label class="proof-label">✍️ How did you complete this challenge?</label>
+            <textarea class="proof-textarea" id="eco-weekly-proof-text"
+              placeholder="Describe what you did for this week's eco challenge…"
+              maxlength="300" rows="3"></textarea>
+            <button class="btn btn-eco btn-sm" id="eco-weekly-submit-btn">✅ Submit &amp; Earn 50 XP</button>
+          </div>
+          <div class="proof-saved hidden" id="eco-weekly-proof-saved">
+            <div class="proof-saved-content">
+              <span class="proof-saved-icon">🏆</span>
+              <div>
+                <p class="proof-saved-text" id="eco-weekly-saved-text"></p>
+                <p class="proof-saved-sub">✓ Weekly challenge complete — amazing work!</p>
+              </div>
+            </div>
           </div>
         </div>
 

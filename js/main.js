@@ -60,6 +60,9 @@ sb.auth.onAuthStateChange(async (_event, session) => {
     if (currentPage === 'planner') showPlannerApp();
     loadChallengeState(); // fire-and-forget — restores done/streak state after login
     loadNotes();          // fire-and-forget — loads study notes into cache
+    loadFlashcards();
+    loadQuizHistory();
+    checkWeeklyEcoCompletion();
   } else {
     sbProfile = null;
     updateTopBar();
@@ -1229,6 +1232,216 @@ function applyEcoDoneUI() {
   document.getElementById('eco-daily-btn').classList.add('hidden');
 }
 
+/* ─── FLASHCARDS ─────────────────────────────────────────────────────── */
+let flashcards = [];
+
+async function loadFlashcards() {
+  if (!sbUser) { renderFlashcards(); return; }
+  const { data, error } = await sb.from('flashcards')
+    .select('*').eq('user_id', sbUser.id)
+    .order('created_at', { ascending: false });
+  if (!error && data) flashcards = data;
+  renderFlashcards();
+}
+
+async function saveFlashcard(subject, front, back) {
+  if (!sbUser) { showToast('Sign in to save flashcards! 🔑', ''); return; }
+  const { data, error } = await sb.from('flashcards')
+    .insert({ user_id: sbUser.id, subject, front, back })
+    .select().single();
+  if (error) { showToast('❌ Could not save flashcard', ''); return; }
+  flashcards.unshift(data);
+  renderFlashcards();
+  showToast('🃏 Flashcard created!', 'study-toast');
+}
+
+async function deleteFlashcard(id) {
+  if (!sbUser) return;
+  await sb.from('flashcards').delete().eq('id', id).eq('user_id', sbUser.id);
+  flashcards = flashcards.filter(f => String(f.id) !== String(id));
+  renderFlashcards();
+}
+
+const FC_SUBJECT_EMOJIS = { Math: '📐', English: '📖', Science: '🔬', Geography: '🌍', Art: '🎨', Other: '📋' };
+
+function renderFlashcards() {
+  const list = document.getElementById('fc-list');
+  if (!list) return;
+  if (!flashcards.length) {
+    list.innerHTML = '<p class="fc-empty">No flashcards yet — create your first one above!</p>';
+    return;
+  }
+  const groups = {};
+  flashcards.forEach(f => {
+    if (!groups[f.subject]) groups[f.subject] = [];
+    groups[f.subject].push(f);
+  });
+  list.innerHTML = Object.entries(groups).map(([subj, cards]) => `
+    <div class="fc-group">
+      <div class="fc-group-hdr">${FC_SUBJECT_EMOJIS[subj] || '📋'} ${escHtml(subj)} <span class="fc-group-count">${cards.length}</span></div>
+      <div class="fc-grid">
+        ${cards.map(c => `
+          <div class="fc-card" id="fcard-${escHtml(String(c.id))}" tabindex="0" role="button" aria-label="Flashcard flip">
+            <div class="fc-inner">
+              <div class="fc-face fc-front">
+                <span class="fc-face-label">Q</span>
+                <p class="fc-face-text">${escHtml(c.front)}</p>
+              </div>
+              <div class="fc-face fc-back">
+                <span class="fc-face-label">A</span>
+                <p class="fc-face-text">${escHtml(c.back)}</p>
+                <button type="button" class="fc-del-btn" data-id="${escHtml(String(c.id))}" title="Delete card">🗑️</button>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.fc-card').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('.fc-del-btn')) return;
+      card.classList.toggle('flipped');
+    });
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.classList.toggle('flipped'); }
+    });
+  });
+
+  list.querySelectorAll('.fc-del-btn').forEach(btn =>
+    btn.addEventListener('click', e => { e.stopPropagation(); deleteFlashcard(btn.dataset.id); })
+  );
+}
+
+document.getElementById('fc-add-btn').addEventListener('click', () => {
+  const subject = document.getElementById('fc-subject').value;
+  const front   = document.getElementById('fc-front').value.trim();
+  const back    = document.getElementById('fc-back').value.trim();
+  if (!front || !back) { showToast('✍️ Fill in both sides of the card!', ''); return; }
+  document.getElementById('fc-front').value = '';
+  document.getElementById('fc-back').value  = '';
+  saveFlashcard(subject, front, back);
+});
+
+/* ─── QUIZ HISTORY ───────────────────────────────────────────────────── */
+async function saveQuizResult(subject, topic, score, total) {
+  if (!sbUser) return;
+  await sb.from('quiz_results').insert({
+    user_id: sbUser.id, subject, topic, score, total,
+    created_at: new Date().toISOString(),
+  });
+}
+
+async function loadQuizHistory() {
+  const el = document.getElementById('qh-list');
+  if (!el) return;
+  if (!sbUser) {
+    el.innerHTML = '<p class="qh-empty">Sign in to see your quiz history.</p>';
+    return;
+  }
+  const { data, error } = await sb.from('quiz_results')
+    .select('*').eq('user_id', sbUser.id)
+    .order('created_at', { ascending: false }).limit(10);
+  if (error || !data?.length) {
+    el.innerHTML = '<p class="qh-empty">No quizzes completed yet — try one above! 🧠</p>';
+    return;
+  }
+  const SE = { math: '📐', english: '📖', science: '🔬', geography: '🌍', art: '🎨' };
+  el.innerHTML = data.map(r => {
+    const pct = r.score / r.total;
+    const cls = pct >= 0.8 ? 'qh-badge-green' : pct >= 0.6 ? 'qh-badge-yellow' : 'qh-badge-red';
+    const dt  = new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    return `
+      <div class="qh-item">
+        <span class="qh-emoji">${SE[r.subject] || '📋'}</span>
+        <div class="qh-info">
+          <span class="qh-topic">${escHtml(r.topic)}</span>
+          <span class="qh-subject">${escHtml(r.subject)}</span>
+        </div>
+        <span class="qh-score ${cls}">${r.score}/${r.total}</span>
+        <span class="qh-date">${dt}</span>
+      </div>`;
+  }).join('');
+}
+
+/* ─── WEEKLY ECO CHALLENGE ───────────────────────────────────────────── */
+const WEEKLY_ECO_CHALLENGES = [
+  { emoji: '🚫🚗', text: 'Go car-free for the entire week — walk, cycle, or use public transport for every single trip.', diff: 'Hard' },
+  { emoji: '🌱',   text: 'Start a container garden: plant at least 3 seeds or seedlings and care for them all week.', diff: 'Medium' },
+  { emoji: '🍱',   text: 'Prep all your meals at home this week — zero takeaway containers or single-use packaging.', diff: 'Medium' },
+  { emoji: '♻️',   text: 'Audit your household waste: sort every single item into the correct recycling bin all week.', diff: 'Hard' },
+  { emoji: '💧',   text: 'Limit every shower to 4 minutes or under for all 7 days this week.', diff: 'Medium' },
+  { emoji: '🛒',   text: 'Shop exclusively with reusable bags and refuse every piece of single-use plastic this week.', diff: 'Easy' },
+  { emoji: '🥦',   text: 'Eat 100% plant-based for at least 5 consecutive days this week.', diff: 'Hard' },
+  { emoji: '⚡',   text: 'Reduce your electricity usage: unplug all idle devices and avoid AC/heating all week.', diff: 'Medium' },
+  { emoji: '📣',   text: 'Spread eco-awareness: share a climate fact with at least 5 different people this week.', diff: 'Easy' },
+  { emoji: '🧹',   text: 'Organise a community litter-pick in your street, park, or school grounds this week.', diff: 'Hard' },
+];
+
+let weeklyEcoDone = false;
+
+function getISOWeekNumber() {
+  const d = new Date();
+  const jan4 = new Date(d.getFullYear(), 0, 4);
+  const startOfWeek1 = new Date(jan4);
+  startOfWeek1.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7));
+  const diff = d - startOfWeek1;
+  return 1 + Math.floor(diff / (7 * 86400000));
+}
+
+function getWeekMonday() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(d.getFullYear(), d.getMonth(), diff).toISOString().slice(0, 10);
+}
+
+function loadWeeklyEcoChallenge() {
+  const c = WEEKLY_ECO_CHALLENGES[getISOWeekNumber() % WEEKLY_ECO_CHALLENGES.length];
+  document.getElementById('eco-weekly-emoji').textContent = c.emoji;
+  document.getElementById('eco-weekly-text').textContent  = c.text;
+  document.getElementById('eco-weekly-diff').textContent  = c.diff;
+}
+
+async function checkWeeklyEcoCompletion() {
+  if (!sbUser) return;
+  const monday = getWeekMonday();
+  const { data } = await sb.from('challenge_completions')
+    .select('id, proof_text')
+    .eq('user_id', sbUser.id)
+    .eq('challenge_id', 'eco_weekly')
+    .gte('completed_at', monday + 'T00:00:00.000Z')
+    .limit(1);
+  if (data?.length) {
+    weeklyEcoDone = true;
+    document.getElementById('eco-weekly-proof-form').classList.add('hidden');
+    document.getElementById('eco-weekly-proof-saved').classList.remove('hidden');
+    const t = document.getElementById('eco-weekly-saved-text');
+    if (t) t.textContent = data[0].proof_text ? `"${data[0].proof_text}"` : 'Weekly challenge already completed this week! 🏆';
+  }
+}
+
+document.getElementById('eco-weekly-submit-btn').addEventListener('click', () => {
+  if (weeklyEcoDone) return;
+  const text = document.getElementById('eco-weekly-proof-text').value.trim();
+  if (!text) { showToast('✍️ Describe how you completed this challenge!', ''); return; }
+
+  weeklyEcoDone = true;
+  document.getElementById('eco-weekly-proof-form').classList.add('hidden');
+  document.getElementById('eco-weekly-proof-saved').classList.remove('hidden');
+  document.getElementById('eco-weekly-saved-text').textContent = `"${text}"`;
+
+  addXP(50);
+  showToast('🏆 Weekly eco challenge complete! +50 XP!', 'eco-toast');
+
+  if (sbUser) {
+    saveChallengeCompletion('eco_weekly', text);
+  } else {
+    showToast('Sign in to save your XP! 🌟', '');
+  }
+});
+
 /* ─── STUDY CHALLENGE ────────────────────────────────────────────────── */
 
 let studyDone = false;
@@ -1948,6 +2161,7 @@ async function initEcoPage() {
   currentEcoChal   = getDailyIndex(ecoChallenges);
   loadStudyChallenge(currentStudyChal);
   loadEcoChallenge(currentEcoChal);
+  loadWeeklyEcoChallenge();
   renderStreakDots('study-streak-dots', 0);
   renderStreakDots('eco-streak-dots', 0);
   renderTip();
@@ -2887,6 +3101,8 @@ function answerQuiz(idx) {
     quizAnswered = false;
     if (quizQIndex >= quizQuestions.length) {
       quizDone = true;
+      saveQuizResult(quizSubject, quizTopic, quizScore, quizQuestions.length);
+      loadQuizHistory();
       updateSubjectProgress(quizSubject, quizScore, quizQuestions.length);
       addXP(10);
     }

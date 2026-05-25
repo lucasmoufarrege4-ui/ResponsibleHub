@@ -908,6 +908,101 @@ body {
   transform: translateY(-1px);
 }
 
+/* ══ FLASHCARDS ══════════════════════════════════════════════════════ */
+.fc-create-form { margin-bottom: 1.2rem; }
+.fc-subject-select {
+  width: 100%; padding: .5rem .75rem; margin-bottom: .6rem;
+  border: 1.5px solid var(--border); border-radius: 10px;
+  background: var(--card-bg); color: var(--text); font-size: .88rem;
+}
+.fc-form-fields { display: flex; flex-direction: column; gap: .5rem; margin-bottom: .6rem; }
+.fc-input {
+  width: 100%; padding: .5rem .75rem;
+  border: 1.5px solid var(--border); border-radius: 10px;
+  background: var(--card-bg); color: var(--text); font-size: .88rem;
+  box-sizing: border-box; transition: border-color .2s;
+}
+.fc-input:focus { outline: none; border-color: var(--forest-mid); }
+.fc-empty { color: var(--muted); font-size: .88rem; text-align: center; padding: 1rem 0; }
+.fc-group { margin-bottom: 1.2rem; }
+.fc-group-hdr {
+  font-size: .82rem; font-weight: 700; color: var(--forest-mid);
+  text-transform: uppercase; letter-spacing: .05em;
+  margin-bottom: .55rem; display: flex; align-items: center; gap: .4rem;
+}
+.fc-group-count {
+  background: var(--forest-mid); color: #fff;
+  border-radius: 99px; padding: .1rem .45rem; font-size: .72rem;
+}
+.fc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .7rem; }
+
+/* 3-D flip card */
+.fc-card {
+  height: 130px; perspective: 800px; cursor: pointer;
+  border-radius: 14px; outline: none;
+}
+.fc-card:focus-visible { box-shadow: 0 0 0 3px var(--forest-mid); }
+.fc-inner {
+  position: relative; width: 100%; height: 100%;
+  transform-style: preserve-3d;
+  transition: transform .45s cubic-bezier(.4,0,.2,1);
+  border-radius: 14px;
+}
+.fc-card.flipped .fc-inner { transform: rotateY(180deg); }
+.fc-face {
+  position: absolute; inset: 0;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  border-radius: 14px; padding: .7rem;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .35rem; text-align: center;
+  border: 1.5px solid var(--border);
+}
+.fc-front { background: linear-gradient(135deg, var(--forest-deep), var(--forest-mid)); color: #fff; }
+.fc-back  { background: var(--card-bg); color: var(--text); transform: rotateY(180deg); }
+.fc-face-label {
+  font-size: .65rem; font-weight: 800; letter-spacing: .1em;
+  opacity: .7; text-transform: uppercase;
+}
+.fc-face-text { font-size: .8rem; line-height: 1.4; word-break: break-word; }
+.fc-del-btn {
+  position: absolute; bottom: .4rem; right: .4rem;
+  background: none; border: none; cursor: pointer;
+  font-size: .9rem; opacity: .55; transition: opacity .15s;
+  padding: .2rem;
+}
+.fc-del-btn:hover { opacity: 1; }
+
+/* ══ QUIZ HISTORY ════════════════════════════════════════════════════ */
+.qh-list { display: flex; flex-direction: column; gap: .45rem; }
+.qh-empty { color: var(--muted); font-size: .88rem; text-align: center; padding: .8rem 0; }
+.qh-item {
+  display: flex; align-items: center; gap: .65rem;
+  padding: .6rem .75rem; border-radius: 10px;
+  border: 1.5px solid var(--border); background: var(--card-bg);
+}
+.qh-emoji { font-size: 1.2rem; flex-shrink: 0; }
+.qh-info  { flex: 1; display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
+.qh-topic { font-size: .86rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qh-subject { font-size: .73rem; color: var(--muted); text-transform: capitalize; }
+.qh-score {
+  flex-shrink: 0; padding: .2rem .55rem; border-radius: 99px;
+  font-size: .78rem; font-weight: 800;
+}
+.qh-badge-green  { background: #2d6a4f22; color: #27ae60; }
+.qh-badge-yellow { background: #f39c1222; color: #e67e22; }
+.qh-badge-red    { background: #e74c3c22; color: #e74c3c; }
+.qh-date { flex-shrink: 0; font-size: .72rem; color: var(--muted); }
+
+/* ══ WEEKLY ECO CHALLENGE ════════════════════════════════════════════ */
+.weekly-xp-banner {
+  display: inline-flex; align-items: center; gap: .4rem;
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  color: #fff; border-radius: 99px;
+  padding: .25rem .85rem; font-size: .78rem; font-weight: 700;
+  margin-bottom: .6rem;
+}
+.eco-weekly-card { border: 2px solid #f39c1255; }
+
 .goal-add-row { display: flex; gap: .5rem; margin-bottom: .7rem; margin-top: .5rem; }
 .goal-add-row input {
   flex: 1; padding: .56rem .88rem;
