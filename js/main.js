@@ -769,7 +769,7 @@ const DayBuilder = (() => {
       f.addEventListener('keydown', e => { if (e.key === 'Enter' && f.value) submitAnswer(q, f.value, f.value); });
       setTimeout(() => f.focus(), 80);
 
-    } else if (q.type === 'activity_list') {
+    } else if (q.type === 'activity_list' || q.id === 'activities') {
       renderActivityListArea(q);
 
     } else { // text
