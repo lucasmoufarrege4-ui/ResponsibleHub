@@ -1234,32 +1234,106 @@ function applyEcoDoneUI() {
 
 /* ─── FLASHCARDS ─────────────────────────────────────────────────────── */
 let flashcards = [];
+const _FC_LS_KEY = 'rh_flashcards';
+
+function _fcLsLoad()      { try { return JSON.parse(localStorage.getItem(_FC_LS_KEY) || '[]'); } catch { return []; } }
+function _fcLsSave(arr)   { try { localStorage.setItem(_FC_LS_KEY, JSON.stringify(arr)); } catch {} }
+function _fcLocalCard(subject, front, back) {
+  return { id: 'local_' + Date.now(), subject, front, back,
+           created_at: new Date().toISOString(), _local: true };
+}
 
 async function loadFlashcards() {
-  if (!sbUser) { renderFlashcards(); return; }
+  const local = _fcLsLoad();
+
+  if (!sbUser) {
+    // Not logged in — show whatever is in localStorage
+    flashcards = local;
+    renderFlashcards();
+    return;
+  }
+
   const { data, error } = await sb.from('flashcards')
     .select('*').eq('user_id', sbUser.id)
     .order('created_at', { ascending: false });
-  if (!error && data) flashcards = data;
+
+  if (error) {
+    console.error('[Flashcards] load error (table may not exist yet):', error);
+    // Fall back to localStorage so cards still appear
+    flashcards = local;
+    renderFlashcards();
+    return;
+  }
+
+  flashcards = data || [];
+
+  // Sync any cards created while logged out
+  const unsynced = local.filter(c => c._local);
+  for (const c of unsynced) {
+    const { data: saved, error: se } = await sb.from('flashcards')
+      .insert({ user_id: sbUser.id, subject: c.subject, front: c.front, back: c.back })
+      .select().single();
+    if (!se && saved) {
+      flashcards.unshift(saved);
+    } else {
+      flashcards.push(c); // keep local copy if sync fails
+    }
+  }
+  if (unsynced.length) _fcLsSave([]); // clear synced local cards
+
   renderFlashcards();
 }
 
 async function saveFlashcard(subject, front, back) {
-  if (!sbUser) { showToast('Sign in to save flashcards! 🔑', ''); return; }
+  if (!sbUser) {
+    // Not logged in — persist to localStorage and show immediately
+    const card = _fcLocalCard(subject, front, back);
+    const local = _fcLsLoad();
+    local.unshift(card);
+    _fcLsSave(local);
+    flashcards.unshift(card);
+    renderFlashcards();
+    showToast('🃏 Card saved locally — sign in to sync!', '');
+    return;
+  }
+
   const { data, error } = await sb.from('flashcards')
     .insert({ user_id: sbUser.id, subject, front, back })
     .select().single();
-  if (error) { showToast('❌ Could not save flashcard', ''); return; }
+
+  if (error) {
+    console.error('[Flashcards] Supabase insert failed:', error);
+    // Graceful fallback: save to localStorage anyway
+    const card = _fcLocalCard(subject, front, back);
+    const local = _fcLsLoad();
+    local.unshift(card);
+    _fcLsSave(local);
+    flashcards.unshift(card);
+    renderFlashcards();
+    showToast('⚠️ Saved locally (Supabase unavailable)', '');
+    return;
+  }
+
   flashcards.unshift(data);
   renderFlashcards();
   showToast('🃏 Flashcard created!', 'study-toast');
 }
 
 async function deleteFlashcard(id) {
-  if (!sbUser) return;
-  await sb.from('flashcards').delete().eq('id', id).eq('user_id', sbUser.id);
+  // Optimistic removal — remove from array and re-render immediately
   flashcards = flashcards.filter(f => String(f.id) !== String(id));
   renderFlashcards();
+
+  // Remove from localStorage (covers local-only cards)
+  const local = _fcLsLoad();
+  const trimmed = local.filter(c => String(c.id) !== String(id));
+  if (trimmed.length !== local.length) _fcLsSave(trimmed);
+
+  // Remove from Supabase (only for server-saved cards)
+  if (sbUser && !String(id).startsWith('local_')) {
+    const { error } = await sb.from('flashcards').delete().eq('id', id).eq('user_id', sbUser.id);
+    if (error) console.error('[Flashcards] delete error:', error);
+  }
 }
 
 const FC_SUBJECT_EMOJIS = { Math: '📐', English: '📖', Science: '🔬', Geography: '🌍', Art: '🎨', Other: '📋' };
