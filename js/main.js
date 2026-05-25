@@ -463,9 +463,15 @@ async function loadWeekData() {
   const weekDates = getWeekDates().map(dateToStr);
   const { data } = await sb.from('daily_plans')
     .select('date, schedule, goals').eq('user_id', sbUser.id).in('date', weekDates);
-  // Seed cache with empties for all 7 days, then overwrite with DB rows
-  weekDates.forEach(ds => { if (!plannerCache[ds]) plannerCache[ds] = { schedule: '', goals: [] }; });
-  if (data) data.forEach(r => { plannerCache[r.date] = { schedule: r.schedule || '', goals: r.goals || [] }; });
+  // Seed cache with empties for all 7 days, then overwrite with DB rows.
+  // _loaded marks an entry as having been authoritative-fetched from Supabase so
+  // loadPlannerData() knows it can trust the cache (even if the value is empty).
+  weekDates.forEach(ds => {
+    if (!plannerCache[ds]?._loaded) plannerCache[ds] = { schedule: '', goals: [], _loaded: true };
+  });
+  if (data) data.forEach(r => {
+    plannerCache[r.date] = { schedule: r.schedule || '', goals: r.goals || [], _loaded: true };
+  });
   renderWeekStrip();
   updatePlannerDateHeader();
   await loadPlannerData();
@@ -491,8 +497,9 @@ function showPlannerLocked() {
 
 async function loadPlannerData() {
   if (!sbUser) return;
-  // Serve from cache when available (avoids redundant Supabase calls when switching days)
-  if (plannerCache[selectedPlanDate]) {
+  // Serve from cache only when the entry was actually loaded from Supabase (_loaded flag).
+  // Entries without _loaded were never fetched, so always go to the DB.
+  if (plannerCache[selectedPlanDate]?._loaded) {
     const c = plannerCache[selectedPlanDate];
     document.getElementById('planner-schedule').value = c.schedule;
     plannerGoals = [...c.goals];
@@ -522,7 +529,7 @@ async function addGoalToPlanner(text) {
         // PGRST116 = row not found (expected on first use), anything else is a real error
         console.error('addGoalToPlanner: fetch error', error);
       }
-      plannerCache[today] = { schedule: data?.schedule || '', goals: data?.goals || [] };
+      plannerCache[today] = { schedule: data?.schedule || '', goals: data?.goals || [], _loaded: true };
     }
     plannerCache[today].goals.push({ text, done: true, id: Date.now() });
     // Update live UI only if the planner is open and showing today
@@ -642,7 +649,7 @@ async function savePlanner() {
   const schedule = document.getElementById('planner-schedule').value;
   const statusEl = document.getElementById('planner-save-status');
   statusEl.textContent = 'Saving…';
-  plannerCache[selectedPlanDate] = { schedule, goals: [...plannerGoals] };
+  plannerCache[selectedPlanDate] = { schedule, goals: [...plannerGoals], _loaded: true };
   const { error } = await sb.from('daily_plans').upsert(
     { user_id: sbUser.id, date: selectedPlanDate, schedule, goals: plannerGoals, updated_at: new Date().toISOString() },
     { onConflict: 'user_id,date' }
@@ -658,7 +665,7 @@ async function savePlanner() {
 async function savePlannerSilent() {
   if (!sbUser) return;
   const schedule = document.getElementById('planner-schedule').value;
-  plannerCache[selectedPlanDate] = { schedule, goals: [...plannerGoals] };
+  plannerCache[selectedPlanDate] = { schedule, goals: [...plannerGoals], _loaded: true };
   await sb.from('daily_plans').upsert(
     { user_id: sbUser.id, date: selectedPlanDate, schedule, goals: plannerGoals, updated_at: new Date().toISOString() },
     { onConflict: 'user_id,date' }
@@ -667,7 +674,7 @@ async function savePlannerSilent() {
 }
 
 let _savePlannerTimer = null;
-function autoSavePlanner() { clearTimeout(_savePlannerTimer); _savePlannerTimer = setTimeout(savePlanner, 1500); }
+function autoSavePlanner() { clearTimeout(_savePlannerTimer); _savePlannerTimer = setTimeout(savePlanner, 1000); }
 document.getElementById('planner-save-btn').addEventListener('click', savePlanner);
 document.getElementById('planner-schedule').addEventListener('input', autoSavePlanner);
 
@@ -2555,8 +2562,20 @@ function buildCoachPresets() {
 }
 
 function initCoachPage() {
-  // Start the Response AI chat on first visit; keep history on return visits
-  if (raiHistory.length === 0) raiInit();
+  // If already initialised in memory (tab switch, not a refresh), just re-render.
+  if (raiHistory.length > 0) { raiRender(); return; }
+
+  // Try to restore a previous session from localStorage.
+  if (raiLoadState()) {
+    raiTyping = false; // never restore a mid-animation state
+    const inputRow = document.getElementById('rai-input-row');
+    if (inputRow) inputRow.classList.toggle('hidden', raiStep < 6);
+    raiRender();
+    return;
+  }
+
+  // Nothing saved — start fresh.
+  raiInit();
 }
 
 document.getElementById('coach-generate-btn').addEventListener('click', () => {
@@ -2639,6 +2658,33 @@ let raiAnswers = [];   // answers to Q1-Q4
 let raiHistory = [];   // { role:'ai'|'user', text }
 let raiTyping  = false;
 
+const RAI_LS_KEY = 'rh_rai_state';
+
+/** Persist current coach state to localStorage after every meaningful change. */
+function raiSaveState() {
+  try {
+    localStorage.setItem(RAI_LS_KEY, JSON.stringify({
+      step: raiStep,
+      answers: raiAnswers,
+      history: raiHistory,
+    }));
+  } catch (e) { /* storage quota — non-fatal */ }
+}
+
+/** Restore coach state from localStorage. Returns true if valid state was found. */
+function raiLoadState() {
+  try {
+    const raw = localStorage.getItem(RAI_LS_KEY);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (!Array.isArray(s.history) || s.history.length === 0) return false;
+    raiStep    = s.step    ?? 0;
+    raiAnswers = s.answers ?? [];
+    raiHistory = s.history;
+    return true;
+  } catch { return false; }
+}
+
 // Generate a specific, actionable suggested planner goal from the user's quiz answers.
 // raiAnswers[0]=goals, [1]=activity, [2]=wake time, [3]=biggest challenge
 function raiSuggestGoal() {
@@ -2710,9 +2756,11 @@ function escHtml(s) {
 
 function raiInit() {
   raiStep = 1; raiAnswers = []; raiHistory = []; raiTyping = false;
+  localStorage.removeItem(RAI_LS_KEY);
   const inputRow = document.getElementById('rai-input-row');
   if (inputRow) inputRow.classList.add('hidden');
   raiHistory.push({ role: 'ai', text: RAI_QUESTIONS[0].text });
+  raiSaveState();
   raiRender();
 }
 
@@ -2826,6 +2874,7 @@ async function _raiConfirmAdd(idx) {
   // Persist the "done" state so re-renders keep the success label
   const histIdx = parseInt(idx, 10);
   if (raiHistory[histIdx]) raiHistory[histIdx].plannerAdded = true;
+  raiSaveState();
 
   showToast('✅ Added to your Planner!', 'study-toast');
 }
@@ -2835,6 +2884,7 @@ function raiPickOption(optText) {
   raiAnswers.push(optText);
   raiHistory.push({ role: 'user', text: optText });
   raiTyping = true;
+  raiSaveState();
   raiRender();
 
   if (raiStep < 4) {
@@ -2842,6 +2892,7 @@ function raiPickOption(optText) {
       raiTyping = false;
       raiStep++;
       raiHistory.push({ role: 'ai', text: RAI_QUESTIONS[raiStep - 1].text });
+      raiSaveState();
       raiRender();
     }, 800);
   } else {
@@ -2869,6 +2920,7 @@ function raiSendToClaudeAI() {
     text: '📊 Your personalized plan is ready in Claude AI — check that tab now!\n\nCome back here anytime to ask me follow-up questions.',
     plannerBtn: true,
   });
+  raiSaveState();
 
   const inputRow = document.getElementById('rai-input-row');
   if (inputRow) inputRow.classList.remove('hidden');
@@ -2883,6 +2935,7 @@ function raiSendFollowup() {
 
   raiHistory.push({ role: 'user', text });
   raiTyping = true;
+  raiSaveState();
   raiRender();
 
   setTimeout(() => {
@@ -2902,6 +2955,7 @@ function raiSendFollowup() {
     window.open(`https://claude.ai/new?q=${encodeURIComponent(prompt)}`, '_blank', 'noopener');
 
     raiHistory.push({ role: 'ai', text: '↗ Response ready in Claude AI — check the new tab!', plannerBtn: true });
+    raiSaveState();
     raiRender();
   }, 1000);
 }
@@ -2909,6 +2963,10 @@ function raiSendFollowup() {
 document.getElementById('rai-send-btn').addEventListener('click', raiSendFollowup);
 document.getElementById('rai-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') raiSendFollowup();
+});
+document.getElementById('rai-reset-btn').addEventListener('click', () => {
+  if (!confirm('Reset the coach and start the questionnaire again?')) return;
+  raiInit();
 });
 
 /* ─── QUIZ INTERATIVO ────────────────────────────────────────────────── */

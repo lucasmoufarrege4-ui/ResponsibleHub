@@ -1424,6 +1424,14 @@ body {
   background: linear-gradient(135deg, var(--forest-dark) 0%, var(--forest-mid) 100%);
   color: #fff;
 }
+.rai-reset-btn {
+  margin-left: auto; flex-shrink: 0;
+  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22);
+  color: #fff; font-size: .72rem; font-weight: 700; letter-spacing: .02em;
+  padding: .28rem .65rem; border-radius: 20px; cursor: pointer;
+  transition: background .18s;
+}
+.rai-reset-btn:hover { background: rgba(255,255,255,.22); }
 .rai-hdr-avatar {
   width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
   background: rgba(255,255,255,.15);
