@@ -1285,37 +1285,49 @@ async function loadFlashcards() {
 }
 
 async function saveFlashcard(subject, front, back) {
+  // ── Step 1: show card immediately (optimistic) ───────────────────────
+  // A temp card is pushed into the array and rendered BEFORE any async
+  // work, so the card is always visible regardless of network timing.
+  const tempId = 'tmp_' + Date.now();
+  const tempCard = { id: tempId, subject, front, back,
+                     created_at: new Date().toISOString(), _local: !sbUser };
+  flashcards.unshift(tempCard);
+  renderFlashcards();
+  console.log('[Flashcards] optimistic card shown. array length:', flashcards.length);
+
+  // ── Step 2a: not logged in — make temp card permanent in localStorage ─
   if (!sbUser) {
-    // Not logged in — persist to localStorage and show immediately
-    const card = _fcLocalCard(subject, front, back);
-    const local = _fcLsLoad();
-    local.unshift(card);
-    _fcLsSave(local);
-    flashcards.unshift(card);
+    const permCard = { ..._fcLocalCard(subject, front, back), _local: true };
+    flashcards = flashcards.map(f => f.id === tempId ? permCard : f);
+    const ls = _fcLsLoad(); ls.unshift(permCard); _fcLsSave(ls);
     renderFlashcards();
     showToast('🃏 Card saved locally — sign in to sync!', '');
     return;
   }
 
+  // ── Step 2b: logged in — persist to Supabase in background ───────────
+  console.log('[Flashcards] inserting to Supabase…');
   const { data, error } = await sb.from('flashcards')
     .insert({ user_id: sbUser.id, subject, front, back })
     .select().single();
 
   if (error) {
-    console.error('[Flashcards] Supabase insert failed:', error);
-    // Graceful fallback: save to localStorage anyway
-    const card = _fcLocalCard(subject, front, back);
-    const local = _fcLsLoad();
-    local.unshift(card);
-    _fcLsSave(local);
-    flashcards.unshift(card);
+    // Supabase failed — convert temp card to a permanent local card
+    console.error('[Flashcards] Supabase insert error:', error);
+    const permCard = { ..._fcLocalCard(subject, front, back), _local: true };
+    flashcards = flashcards.map(f => f.id === tempId ? permCard : f);
+    const ls = _fcLsLoad(); ls.unshift(permCard); _fcLsSave(ls);
     renderFlashcards();
     showToast('⚠️ Saved locally (Supabase unavailable)', '');
     return;
   }
 
-  flashcards.unshift(data);
+  // ── Step 3: swap temp ID for real server row (silent update) ─────────
+  console.log('[Flashcards] Supabase insert OK, real id:', data?.id,
+              '| array length before swap:', flashcards.length);
+  flashcards = flashcards.map(f => f.id === tempId ? data : f);
   renderFlashcards();
+  console.log('[Flashcards] render after id-swap, array length:', flashcards.length);
   showToast('🃏 Flashcard created!', 'study-toast');
 }
 
@@ -1340,7 +1352,9 @@ const FC_SUBJECT_EMOJIS = { Math: '📐', English: '📖', Science: '🔬', Geog
 
 function renderFlashcards() {
   const list = document.getElementById('fc-list');
-  if (!list) return;
+  if (!list) { console.warn('[Flashcards] renderFlashcards: #fc-list not found'); return; }
+  console.log('[Flashcards] renderFlashcards called, count:', flashcards.length,
+              '| items:', flashcards.map(f => f.id));
   if (!flashcards.length) {
     list.innerHTML = '<p class="fc-empty">No flashcards yet — create your first one above!</p>';
     return;
