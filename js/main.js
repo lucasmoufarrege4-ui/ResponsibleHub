@@ -4633,8 +4633,8 @@ const FragranceAdvisor = (() => {
       renderChips(area, q.options, false, 1, val => submitAnswer(q, val, val));
     } else if (q.type === 'text') {
       area.innerHTML = `
-        <div class="chat-field-row">
-          <input type="text" class="chat-field" id="frag-text-field" placeholder="${escHtml(q.placeholder || 'Type here…')}" maxlength="160"/>
+        <div class="chat-field-row chat-field-row--textarea">
+          <textarea class="chat-field chat-field--textarea" id="frag-text-field" rows="3" placeholder="${escHtml(q.placeholder || 'Type here…')}"></textarea>
           <button type="button" class="chat-next-btn" id="frag-next-btn">Next →</button>
         </div>`;
       const f = area.querySelector('#frag-text-field');
@@ -4644,7 +4644,6 @@ const FragranceAdvisor = (() => {
         submitAnswer(q, v, v);
       };
       b.addEventListener('click', go);
-      f.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
       setTimeout(() => f.focus(), 80);
     }
   }

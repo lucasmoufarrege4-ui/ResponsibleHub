@@ -851,12 +851,17 @@ body {
 .chat-yn-no:hover  { background: #e76f5122; border-color: #e76f51;          color: #e76f51; }
 
 .chat-field-row { display: flex; gap: .5rem; }
+.chat-field-row--textarea { align-items: flex-start; }
 .chat-field {
   flex: 1; padding: .5rem .75rem;
   border: 1.5px solid var(--border); border-radius: 10px;
   background: var(--card-bg); color: var(--text);
   font-size: .88rem; outline: none;
   transition: border-color .2s;
+}
+.chat-field--textarea {
+  resize: vertical; min-height: 4.5rem;
+  line-height: 1.5; font-family: inherit;
 }
 .chat-field:focus { border-color: var(--forest-mid); }
 .chat-next-btn {
