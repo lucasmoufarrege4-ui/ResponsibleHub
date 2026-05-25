@@ -60,9 +60,14 @@ sb.auth.onAuthStateChange(async (_event, session) => {
     if (currentPage === 'planner') showPlannerApp();
     loadChallengeState(); // fire-and-forget — restores done/streak state after login
     loadNotes();          // fire-and-forget — loads study notes into cache
-    loadFlashcards();
-    loadQuizHistory();
-    checkWeeklyEcoCompletion();
+    // Only do full data loads on the initial sign-in / session restore.
+    // TOKEN_REFRESHED fires during normal DB operations and must NOT
+    // overwrite in-memory state (e.g. flashcards mid-save).
+    if (_event === 'SIGNED_IN' || _event === 'INITIAL_SESSION') {
+      loadFlashcards();
+      loadQuizHistory();
+      checkWeeklyEcoCompletion();
+    }
   } else {
     sbProfile = null;
     updateTopBar();
@@ -1325,7 +1330,15 @@ async function saveFlashcard(subject, front, back) {
   // ── Step 3: swap temp ID for real server row (silent update) ─────────
   console.log('[Flashcards] Supabase insert OK, real id:', data?.id,
               '| array length before swap:', flashcards.length);
-  flashcards = flashcards.map(f => f.id === tempId ? data : f);
+  const tempIdx = flashcards.findIndex(f => f.id === tempId);
+  if (tempIdx !== -1) {
+    // Normal path: replace temp card with real server row
+    flashcards[tempIdx] = data;
+  } else {
+    // Temp was cleared by a concurrent loadFlashcards() — push real card directly
+    console.warn('[Flashcards] temp card was cleared before swap; pushing real card');
+    flashcards.unshift(data);
+  }
   renderFlashcards();
   console.log('[Flashcards] render after id-swap, array length:', flashcards.length);
   showToast('🃏 Flashcard created!', 'study-toast');
