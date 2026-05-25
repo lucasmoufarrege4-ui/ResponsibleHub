@@ -60,16 +60,20 @@ sb.auth.onAuthStateChange(async (_event, session) => {
     if (currentPage === 'planner') showPlannerApp();
     loadChallengeState(); // fire-and-forget — restores done/streak state after login
     loadNotes();          // fire-and-forget — loads study notes into cache
-    // Only do full data loads on the initial sign-in / session restore.
-    // TOKEN_REFRESHED fires during normal DB operations and must NOT
-    // overwrite in-memory state (e.g. flashcards mid-save).
-    if (_event === 'SIGNED_IN' || _event === 'INITIAL_SESSION') {
+    // Load user data on sign-in / session restore.
+    // Also allow TOKEN_REFRESHED to trigger a load when the array is still
+    // empty — this covers the case where INITIAL_SESSION fires with a null
+    // session (expired token) and TOKEN_REFRESHED carries the real session.
+    // When the array is already populated we block TOKEN_REFRESHED so a
+    // background token refresh can't wipe cards that are mid-save.
+    if (_event === 'SIGNED_IN' || _event === 'INITIAL_SESSION' || flashcards.length === 0) {
       loadFlashcards();
       loadQuizHistory();
       checkWeeklyEcoCompletion();
     }
   } else {
     sbProfile = null;
+    flashcards = []; // reset so the empty-array guard re-triggers on next login
     updateTopBar();
     updateHomeView();
     if (currentPage === 'planner') showPlannerLocked();
@@ -1255,42 +1259,52 @@ function _fcLocalCard(subject, front, back) {
 
 async function loadFlashcards() {
   const local = _fcLsLoad();
+  console.log('[Flashcards] loadFlashcards called. sbUser:', !!sbUser, '| localStorage cards:', local.length);
 
   if (!sbUser) {
     // Not logged in — show whatever is in localStorage
     flashcards = local;
+    console.log('[Flashcards] no user, showing', flashcards.length, 'local card(s)');
     renderFlashcards();
     return;
   }
 
+  console.log('[Flashcards] fetching from Supabase for user:', sbUser.id);
   const { data, error } = await sb.from('flashcards')
     .select('*').eq('user_id', sbUser.id)
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('[Flashcards] load error (table may not exist yet):', error);
+    console.error('[Flashcards] Supabase fetch error (table may not exist):', error);
     // Fall back to localStorage so cards still appear
     flashcards = local;
     renderFlashcards();
     return;
   }
 
+  console.log('[Flashcards] Supabase returned', data?.length ?? 0, 'card(s)');
   flashcards = data || [];
 
   // Sync any cards created while logged out
   const unsynced = local.filter(c => c._local);
-  for (const c of unsynced) {
-    const { data: saved, error: se } = await sb.from('flashcards')
-      .insert({ user_id: sbUser.id, subject: c.subject, front: c.front, back: c.back })
-      .select().single();
-    if (!se && saved) {
-      flashcards.unshift(saved);
-    } else {
-      flashcards.push(c); // keep local copy if sync fails
+  if (unsynced.length) {
+    console.log('[Flashcards] syncing', unsynced.length, 'offline card(s) to Supabase');
+    for (const c of unsynced) {
+      const { data: saved, error: se } = await sb.from('flashcards')
+        .insert({ user_id: sbUser.id, subject: c.subject, front: c.front, back: c.back })
+        .select().single();
+      if (!se && saved) {
+        flashcards.unshift(saved);
+        console.log('[Flashcards] synced offline card:', saved.id);
+      } else {
+        console.warn('[Flashcards] offline sync failed, keeping local copy:', se);
+        flashcards.push(c);
+      }
     }
+    _fcLsSave([]); // clear synced local cards
   }
-  if (unsynced.length) _fcLsSave([]); // clear synced local cards
 
+  console.log('[Flashcards] rendering', flashcards.length, 'card(s)');
   renderFlashcards();
 }
 
