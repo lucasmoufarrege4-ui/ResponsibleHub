@@ -2122,6 +2122,57 @@ body {
   .eco-more .card { flex: 1; min-width: 0; }
 }
 
+/* ================================================================
+   ECO PAGE — FULL-WIDTH ROW LAYOUT (eco-r1/r2/r3)
+   ================================================================ */
+
+/* Shared base for all eco layout rows */
+.eco-r3, .eco-r1, .eco-r2 {
+  display: grid;
+  gap: 1.4rem;
+  align-items: start;
+  margin-bottom: 1.4rem;
+}
+
+/* Row 1 — 3-col: Daily Mission | Weekly Challenge | Eco Tips */
+.eco-r3 { grid-template-columns: repeat(3, 1fr); }
+
+/* Row 2 — full-width: Carbon Calculator */
+.eco-r1 { grid-template-columns: 1fr; }
+
+/* Row 3 — 2-col: Badges | Virtual Tree */
+.eco-r2 { grid-template-columns: repeat(2, 1fr); }
+
+/* Carbon form 2-col question grid */
+.carbon-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .9rem;
+  align-items: start;
+}
+
+/* Span both columns (last question + calculate button) */
+.carbon-full { grid-column: 1 / -1; }
+
+/* Compact radio pills in carbon calculator */
+#carbon-card .radio-opt {
+  padding: .25rem .55rem;
+  font-size: .72rem;
+}
+
+/* Responsive: tablet — collapse 3-col to 2-col */
+@media (max-width: 900px) {
+  .eco-r3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Responsive: mobile — single column everywhere */
+@media (max-width: 600px) {
+  .eco-r3,
+  .eco-r2,
+  .carbon-form-grid { grid-template-columns: 1fr; }
+  .carbon-full { grid-column: auto; }
+}
+
 /* ── Badge Gallery ───────────────────────────────────────────────── */
 .badge-gallery {
   display: grid;

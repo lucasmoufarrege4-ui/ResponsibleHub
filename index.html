@@ -9,7 +9,7 @@
   <link rel="apple-touch-icon" href="icon.png" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#2d6a4f" />
-  <link rel="stylesheet" href="css/styles.css?v=8" />
+  <link rel="stylesheet" href="css/styles.css?v=9" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -402,7 +402,8 @@
           <p>Every small action you take helps protect our planet!</p>
         </div>
       </div>
-      <div class="container cards-grid">
+      <!-- Row 1: 3-col — Daily Mission | Weekly Challenge | Eco Tips -->
+      <div class="eco-r3">
 
         <!-- Eco Daily Challenge -->
         <div class="card card-eco" id="eco-challenge-card">
@@ -495,55 +496,60 @@
           <button class="btn btn-outline btn-sm share-btn" id="share-fact-btn">📤 Share this tip</button>
         </div>
 
-        <!-- Carbon Calculator -->
+      </div><!-- /eco-r3 -->
+
+      <!-- Row 2: full-width Carbon Calculator -->
+      <div class="eco-r1">
         <div class="card card-eco" id="carbon-card">
           <div class="card-tag eco-tag">♻️ Carbon Calculator</div>
           <h3>My Carbon Footprint</h3>
           <div class="carbon-form" id="carbon-form">
-            <div class="carbon-question">
-              <label>✈️ How many times do you fly per year?</label>
-              <div class="radio-group">
-                <label class="radio-opt"><input type="radio" name="c_flights" value="0" checked /> Never</label>
-                <label class="radio-opt"><input type="radio" name="c_flights" value="900" /> 1–2 flights</label>
-                <label class="radio-opt"><input type="radio" name="c_flights" value="2200" /> 3–5 flights</label>
-                <label class="radio-opt"><input type="radio" name="c_flights" value="4500" /> 5+ flights</label>
+            <div class="carbon-form-grid">
+              <div class="carbon-question">
+                <label>✈️ How many times do you fly per year?</label>
+                <div class="radio-group">
+                  <label class="radio-opt"><input type="radio" name="c_flights" value="0" checked /> Never</label>
+                  <label class="radio-opt"><input type="radio" name="c_flights" value="900" /> 1–2 flights</label>
+                  <label class="radio-opt"><input type="radio" name="c_flights" value="2200" /> 3–5 flights</label>
+                  <label class="radio-opt"><input type="radio" name="c_flights" value="4500" /> 5+ flights</label>
+                </div>
               </div>
-            </div>
-            <div class="carbon-question">
-              <label>🚿 How long are your showers?</label>
-              <div class="radio-group">
-                <label class="radio-opt"><input type="radio" name="c_shower" value="50" checked /> Under 5 min</label>
-                <label class="radio-opt"><input type="radio" name="c_shower" value="130" /> 5–10 min</label>
-                <label class="radio-opt"><input type="radio" name="c_shower" value="300" /> 10–20 min</label>
-                <label class="radio-opt"><input type="radio" name="c_shower" value="600" /> 20+ min</label>
+              <div class="carbon-question">
+                <label>🚿 How long are your showers?</label>
+                <div class="radio-group">
+                  <label class="radio-opt"><input type="radio" name="c_shower" value="50" checked /> Under 5 min</label>
+                  <label class="radio-opt"><input type="radio" name="c_shower" value="130" /> 5–10 min</label>
+                  <label class="radio-opt"><input type="radio" name="c_shower" value="300" /> 10–20 min</label>
+                  <label class="radio-opt"><input type="radio" name="c_shower" value="600" /> 20+ min</label>
+                </div>
               </div>
-            </div>
-            <div class="carbon-question">
-              <label>🥩 How often do you eat meat?</label>
-              <div class="radio-group">
-                <label class="radio-opt"><input type="radio" name="c_meat" value="200" checked /> Never</label>
-                <label class="radio-opt"><input type="radio" name="c_meat" value="700" /> Sometimes weekly</label>
-                <label class="radio-opt"><input type="radio" name="c_meat" value="1300" /> Most days</label>
-                <label class="radio-opt"><input type="radio" name="c_meat" value="1900" /> Every day</label>
+              <div class="carbon-question">
+                <label>🥩 How often do you eat meat?</label>
+                <div class="radio-group">
+                  <label class="radio-opt"><input type="radio" name="c_meat" value="200" checked /> Never</label>
+                  <label class="radio-opt"><input type="radio" name="c_meat" value="700" /> Sometimes weekly</label>
+                  <label class="radio-opt"><input type="radio" name="c_meat" value="1300" /> Most days</label>
+                  <label class="radio-opt"><input type="radio" name="c_meat" value="1900" /> Every day</label>
+                </div>
               </div>
-            </div>
-            <div class="carbon-question">
-              <label>🏫 How do you get to school?</label>
-              <div class="radio-group">
-                <label class="radio-opt"><input type="radio" name="c_transport" value="0" checked /> 🚶 Walk / Bike</label>
-                <label class="radio-opt"><input type="radio" name="c_transport" value="250" /> 🚌 Bus / Train</label>
-                <label class="radio-opt"><input type="radio" name="c_transport" value="900" /> 🚗 Car</label>
+              <div class="carbon-question">
+                <label>🏫 How do you get to school?</label>
+                <div class="radio-group">
+                  <label class="radio-opt"><input type="radio" name="c_transport" value="0" checked /> 🚶 Walk / Bike</label>
+                  <label class="radio-opt"><input type="radio" name="c_transport" value="250" /> 🚌 Bus / Train</label>
+                  <label class="radio-opt"><input type="radio" name="c_transport" value="900" /> 🚗 Car</label>
+                </div>
               </div>
-            </div>
-            <div class="carbon-question">
-              <label>❄️ Do you use AC or heating a lot?</label>
-              <div class="radio-group">
-                <label class="radio-opt"><input type="radio" name="c_ac" value="100" checked /> Rarely</label>
-                <label class="radio-opt"><input type="radio" name="c_ac" value="450" /> Sometimes</label>
-                <label class="radio-opt"><input type="radio" name="c_ac" value="1100" /> Most of the time</label>
+              <div class="carbon-question carbon-full">
+                <label>❄️ Do you use AC or heating a lot?</label>
+                <div class="radio-group">
+                  <label class="radio-opt"><input type="radio" name="c_ac" value="100" checked /> Rarely</label>
+                  <label class="radio-opt"><input type="radio" name="c_ac" value="450" /> Sometimes</label>
+                  <label class="radio-opt"><input type="radio" name="c_ac" value="1100" /> Most of the time</label>
+                </div>
               </div>
+              <button class="btn btn-eco carbon-full" id="calc-carbon-btn">🌍 Calculate My Footprint</button>
             </div>
-            <button class="btn btn-eco" id="calc-carbon-btn">🌍 Calculate My Footprint</button>
           </div>
           <div class="carbon-result hidden" id="carbon-result">
             <div class="carbon-gauge-wrap">
@@ -572,11 +578,10 @@
           </div>
         </div>
 
-      </div><!-- /cards-grid -->
+      </div><!-- /eco-r1 -->
 
-
-      <!-- ── Eco More: Badges + Virtual Tree ────────────────────────── -->
-      <div class="container eco-more">
+      <!-- Row 3: 2-col — Eco Badges | Virtual Tree -->
+      <div class="eco-r2">
 
         <!-- Badge Gallery -->
         <div class="card card-eco" id="badge-gallery-card">
@@ -595,7 +600,7 @@
           <p class="tree-action-count" id="tree-action-count">0 eco actions completed</p>
         </div>
 
-      </div><!-- /eco-more -->
+      </div><!-- /eco-r2 -->
 
     </div><!-- /page-eco -->
 
@@ -937,6 +942,6 @@
   <span class="fab-label">Ask AI Tutor</span>
 </button>
 
-<script src="js/main.js?v=8"></script>
+<script src="js/main.js?v=9"></script>
 </body>
 </html>

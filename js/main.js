@@ -1773,11 +1773,11 @@ function loadEcoChallenge(idx, isPreview = false) {
   }
 }
 
-document.getElementById('eco-submit-btn').addEventListener('click', () => {
+document.getElementById('eco-submit-btn').addEventListener('click', async () => {
   const text = document.getElementById('eco-proof-text').value.trim();
   if (!text) { showToast('✍️ Describe your eco action first!', ''); return; }
 
-  // ── Complete the challenge immediately (no awaiting network) ──────────
+  // ── Update UI immediately ─────────────────────────────────────────────
   ecoDone = true;
   ecoStreak = Math.min(ecoStreak + 1, 7);
   challengesDone++;
@@ -1786,27 +1786,42 @@ document.getElementById('eco-submit-btn').addEventListener('click', () => {
   document.getElementById('eco-streak-count').textContent =
     `${ecoStreak} day${ecoStreak !== 1 ? 's' : ''}`;
   updateHeroStats();
-
   document.getElementById('eco-proof-form').classList.add('hidden');
   document.getElementById('eco-proof-saved').classList.remove('hidden');
   document.getElementById('eco-proof-saved-text').textContent = `"${text}"`;
   document.getElementById('eco-daily-btn').classList.add('hidden');
-
-  showToast('🌱 Eco mission complete! The planet thanks you!', 'eco-toast');
-  addXP(ecoChallenges[currentEcoChal].xp);
-
-  // Update tree immediately with new count
   renderVirtualTree(co2Tracked);
+  showToast('🌱 Eco mission complete! The planet thanks you!', 'eco-toast');
 
-  // ── Save to Supabase in the background — never blocks the UI ────────
-  if (sbUser) {
+  // ── XP: apply optimistically then persist ────────────────────────────
+  const xpAmount = ecoChallenges[currentEcoChal].xp;
+  console.log('[Eco] submit: xpAmount =', xpAmount,
+              '| sbUser:', !!sbUser, '| sbProfile:', !!sbProfile);
+
+  if (sbUser && sbProfile) {
+    // Show updated XP in top bar immediately — don't wait for the RPC
+    sbProfile.xp += xpAmount;
+    updateTopBar();
+    updateDashXP();
+    console.log('[Eco] optimistic XP applied, top bar updated. Calling RPC…');
+
+    const { error: xpErr } = await sb.rpc('increment_xp', { uid: sbUser.id, amount: xpAmount });
+    if (xpErr) {
+      console.error('[Eco] increment_xp RPC failed:', xpErr);
+    } else {
+      console.log('[Eco] XP persisted OK. sbProfile.xp now:', sbProfile.xp);
+      showToast(`+${xpAmount} XP saved! 🌟`, 'study-toast');
+      if (currentPage === 'leaderboard') loadLeaderboard();
+    }
+
+    // ── Save completion + planner + badges in background ───────────────
     saveChallengeCompletion('eco', text);
     addGoalToPlanner(`🌍 ${text}`).catch(err =>
-      console.error('eco: background planner save failed', err)
+      console.error('[Eco] background planner save failed:', err)
     );
-    // Check for newly earned badges (fire-and-forget)
     checkAndAwardBadges({ proofText: text });
   } else {
+    console.warn('[Eco] XP not saved — sbUser:', !!sbUser, 'sbProfile:', !!sbProfile);
     showToast('Sign in to earn XP & save to Planner! 🌟', '');
   }
 });
