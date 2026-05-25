@@ -3912,9 +3912,16 @@ function mnInit() {
 }
 
 async function mnLoadSubject(subj) {
+  // Cancel any debounced save that hasn't fired yet — it belongs to the previous subject.
+  clearTimeout(_mnTimer);
+  _mnTimer = null;
+
   const editor = document.getElementById('mn-editor');
   const ts     = document.getElementById('mn-saved-ts');
   const ind    = document.getElementById('mn-saving-indicator');
+
+  // Always reset the indicator before loading so it can never be left in "Saving…"
+  if (ind) { ind.textContent = ''; ind.style.color = ''; }
 
   if (!sbUser) {
     editor.innerHTML = '';
@@ -3949,33 +3956,44 @@ async function mnLoadSubject(subj) {
 }
 
 async function mnSave() {
-  if (!sbUser || _mnLoading) return;
+  const ind = document.getElementById('mn-saving-indicator');
+  const ts  = document.getElementById('mn-saved-ts');
+
+  // Early-return cases: always clear the indicator so it never stays on "Saving…"
+  if (!sbUser || _mnLoading) {
+    if (ind) { ind.textContent = ''; ind.style.color = ''; }
+    return;
+  }
+
   const content = document.getElementById('mn-editor').innerHTML;
   const subj    = _mnSubject;
   const existId = _mnNoteIds[subj];
-  const ind     = document.getElementById('mn-saving-indicator');
-  const ts      = document.getElementById('mn-saved-ts');
 
-  let error;
-  if (existId) {
-    ({ error } = await sb.from('study_notes')
-      .update({ content, title: subj + ' Notes' })
-      .eq('id', existId).eq('user_id', sbUser.id));
-  } else {
-    const { data, error: ie } = await sb.from('study_notes')
-      .insert({ user_id: sbUser.id, subject: subj, title: subj + ' Notes', content })
-      .select('id, created_at').single();
-    error = ie;
-    if (!ie && data) _mnNoteIds[subj] = data.id;
-  }
+  try {
+    let error;
+    if (existId) {
+      ({ error } = await sb.from('study_notes')
+        .update({ content, title: subj + ' Notes' })
+        .eq('id', existId).eq('user_id', sbUser.id));
+    } else {
+      const { data, error: ie } = await sb.from('study_notes')
+        .insert({ user_id: sbUser.id, subject: subj, title: subj + ' Notes', content })
+        .select('id, created_at').single();
+      error = ie;
+      if (!ie && data) _mnNoteIds[subj] = data.id;
+    }
 
-  if (error) {
-    console.error('[MyNotes] save error:', error);
-    if (ind) ind.textContent = '❌ Failed';
-  } else {
-    const now = new Date();
-    if (ts)  ts.textContent  = `Last saved: ${now.toLocaleDateString('en-GB',{day:'numeric',month:'short'})} ${now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}`;
-    if (ind) ind.textContent = '';
+    if (error) {
+      console.error('[MyNotes] save error:', error);
+      if (ind) { ind.textContent = '❌ Save failed'; ind.style.color = '#e53e3e'; }
+    } else {
+      const now = new Date();
+      if (ts)  ts.textContent = `Last saved: ${now.toLocaleDateString('en-GB',{day:'numeric',month:'short'})} ${now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}`;
+      if (ind) { ind.textContent = ''; ind.style.color = ''; }
+    }
+  } catch (e) {
+    console.error('[MyNotes] unexpected save error:', e);
+    if (ind) { ind.textContent = '❌ Save failed'; ind.style.color = '#e53e3e'; }
   }
 }
 
