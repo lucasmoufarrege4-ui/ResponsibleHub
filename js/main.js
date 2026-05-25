@@ -98,6 +98,7 @@ async function addXP(amount) {
     console.warn('[XP] addXP called but sbUser/sbProfile not ready. sbUser:', !!sbUser, 'sbProfile:', !!sbProfile);
     return;
   }
+  const levelBefore = getLevelInfo(sbProfile.xp).name;
   const { error } = await sb.rpc('increment_xp', { uid: sbUser.id, amount });
   if (error) {
     console.error('[XP] increment_xp RPC error:', error);
@@ -107,8 +108,44 @@ async function addXP(amount) {
     updateDashXP();
     showToast(`+${amount} XP saved! 🌟`, 'study-toast');
     if (currentPage === 'leaderboard') loadLeaderboard();
+    const levelAfter = getLevelInfo(sbProfile.xp).name;
+    if (levelBefore !== levelAfter) showLevelUpCelebration(levelAfter);
   }
 }
+
+function showLevelUpCelebration(levelName) {
+  const ov = document.getElementById('levelup-overlay');
+  if (!ov) return;
+  document.getElementById('levelup-name').textContent = levelName;
+  ov.classList.remove('hidden');
+  _spawnConfetti();
+}
+
+function _spawnConfetti() {
+  const container = document.getElementById('levelup-sparks');
+  if (!container) return;
+  container.innerHTML = '';
+  const colors = ['#52b788','#f6d860','#e88c30','#74c0fc','#f783ac','#a9e34b','#ff6b6b'];
+  for (let i = 0; i < 60; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = [
+      `left:${Math.random()*100}%`,
+      `background:${colors[i % colors.length]}`,
+      `animation-delay:${(Math.random()*1.2).toFixed(2)}s`,
+      `animation-duration:${(1.4 + Math.random()*1.4).toFixed(2)}s`,
+      `width:${Math.round(6 + Math.random()*7)}px`,
+      `height:${Math.round(6 + Math.random()*7)}px`,
+      `border-radius:${Math.random() > 0.5 ? '50%' : '2px'}`,
+    ].join(';');
+    container.appendChild(el);
+  }
+}
+
+document.getElementById('levelup-close-btn').addEventListener('click', () => {
+  document.getElementById('levelup-overlay').classList.add('hidden');
+  document.getElementById('levelup-sparks').innerHTML = '';
+});
 
 /* ── Avatar helper ────────────────────────────────────────────────── */
 // Sets a circular avatar <div>: Google photo when available, initial letter otherwise.
@@ -162,6 +199,7 @@ function updateDashboard() {
   updateDashXP();
   updateDashStats();
   updateTodayActivity();
+  checkLoginStreak();
 }
 
 const LEVELS = [
@@ -205,6 +243,41 @@ async function fetchRank() {
     .select('*', { count: 'exact', head: true }).gt('xp', sbProfile.xp);
   const el = document.getElementById('dash-rank');
   if (el) el.textContent = `#${(count ?? 0) + 1} on the leaderboard`;
+}
+
+async function checkLoginStreak() {
+  if (!sbUser || !sbProfile) return;
+  const today = dateToStr(new Date());
+  const lastLogin = sbProfile.last_login_date;
+  let streak = sbProfile.login_streak || 0;
+
+  if (lastLogin === today) { updateStreakDisplay(streak); return; }
+
+  const yest = dateToStr(new Date(Date.now() - 86400000));
+  streak = (lastLogin === yest) ? streak + 1 : 1;
+
+  try {
+    const { error } = await sb.from('profiles')
+      .update({ login_streak: streak, last_login_date: today })
+      .eq('id', sbUser.id);
+    if (!error) { sbProfile.login_streak = streak; sbProfile.last_login_date = today; }
+  } catch(e) { console.warn('[Streak] update error:', e); }
+
+  updateStreakDisplay(streak);
+}
+
+function updateStreakDisplay(streak) {
+  const el   = document.getElementById('streak-hero');
+  const cnt  = document.getElementById('streak-count');
+  const desc = document.getElementById('streak-desc');
+  if (!el) return;
+  if (streak > 0) el.classList.remove('hidden'); else { el.classList.add('hidden'); return; }
+  if (cnt)  cnt.textContent  = streak;
+  if (desc) desc.textContent =
+    streak >= 30 ? '🏆 Legendary!' :
+    streak >= 14 ? '🔥 On fire!'   :
+    streak >=  7 ? '💪 Great week!' :
+    streak >=  3 ? '⭐ Keep it up!' : '🌱 Just started!';
 }
 
 async function updateDashStats() {
@@ -298,7 +371,10 @@ document.getElementById('dash-signout-btn').addEventListener('click', async () =
 document.getElementById('planner-go-home-btn').addEventListener('click', () => navigateTo('home'));
 
 /* ── Leaderboard ──────────────────────────────────────────────────── */
+let lbFilter = 'alltime';
+
 async function loadLeaderboard() {
+  if (lbFilter !== 'alltime') return loadLeaderboardPeriod(lbFilter);
   const el = document.getElementById('lb-list');
   el.innerHTML = '<div class="lb-loading">Loading rankings…</div>';
 
@@ -386,6 +462,67 @@ function renderLeaderboard(rows) {
 }
 
 document.getElementById('lb-refresh-btn').addEventListener('click', loadLeaderboard);
+
+document.getElementById('lb-filter-tabs').querySelectorAll('.lb-filter-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('lb-filter-tabs').querySelectorAll('.lb-filter-tab')
+      .forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    lbFilter = btn.dataset.filter;
+    loadLeaderboard();
+  });
+});
+
+async function loadLeaderboardPeriod(period) {
+  const el = document.getElementById('lb-list');
+  el.innerHTML = '<div class="lb-loading">Loading rankings…</div>';
+  const yrCard = document.getElementById('lb-your-rank');
+  if (yrCard && sbProfile) yrCard.classList.remove('hidden');
+  else if (yrCard) yrCard.classList.add('hidden');
+
+  try {
+    const now = new Date();
+    let cutoff;
+    if (period === 'week') {
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+      monday.setHours(0,0,0,0);
+      cutoff = monday.toISOString();
+    } else {
+      cutoff = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    }
+
+    const { data: completions } = await sb.from('challenge_completions')
+      .select('user_id, challenge_id')
+      .gte('completed_at', cutoff);
+
+    const XP_PER = { study: 15, eco: 20, eco_weekly: 50 };
+    const xpMap = {};
+    (completions || []).forEach(c => {
+      xpMap[c.user_id] = (xpMap[c.user_id] || 0) + (XP_PER[c.challenge_id] || 15);
+    });
+
+    const userIds = Object.keys(xpMap);
+    let rows = [];
+    if (userIds.length) {
+      const { data: profiles } = await sb.from('profiles')
+        .select('id, username, xp').in('id', userIds);
+      rows = (profiles || [])
+        .map(p => ({ id: p.id, username: p.username, xp: xpMap[p.id] || 0 }))
+        .sort((a, b) => b.xp - a.xp).slice(0, 20);
+    }
+    if (sbProfile && !rows.find(r => r.id === sbProfile.id)) {
+      rows.push({ id: sbProfile.id, username: sbProfile.username, xp: xpMap[sbProfile.id] || 0 });
+    }
+    if (!rows.length && sbProfile) {
+      rows = [{ id: sbProfile.id, username: sbProfile.username, xp: 0 }];
+    }
+    renderLeaderboard(rows);
+  } catch(err) {
+    console.error('[Leaderboard] period error:', err);
+    renderLeaderboard(sbProfile ? [{ id: sbProfile.id, username: sbProfile.username, xp: 0 }] : []);
+  }
+}
 
 /* ── AI Tutor FAB ─────────────────────────────────────────────────── */
 document.getElementById('fab-tutor').addEventListener('click', () => {
@@ -1396,6 +1533,8 @@ function renderFlashcards() {
               '| items:', flashcards.map(f => f.id));
   if (!flashcards.length) {
     list.innerHTML = '<p class="fc-empty">No flashcards yet — create your first one above!</p>';
+    const reviewBtn = document.getElementById('fc-start-review-btn');
+    if (reviewBtn) reviewBtn.classList.add('hidden');
     return;
   }
   const groups = {};
@@ -1439,7 +1578,93 @@ function renderFlashcards() {
   list.querySelectorAll('.fc-del-btn').forEach(btn =>
     btn.addEventListener('click', e => { e.stopPropagation(); deleteFlashcard(btn.dataset.id); })
   );
+  const reviewBtn = document.getElementById('fc-start-review-btn');
+  if (reviewBtn) reviewBtn.classList.toggle('hidden', flashcards.length === 0);
 }
+
+/* ── Flashcard Review Mode ─────────────────────────────────────────── */
+let _reviewQueue   = [];
+let _reviewIdx     = 0;
+let _reviewGot     = [];
+let _reviewMissed  = [];
+let _reviewFlipped = false;
+
+function startFlashcardReview(cards) {
+  if (!cards || !cards.length) { showToast('No flashcards to review!', ''); return; }
+  _reviewQueue  = [...cards].sort(() => Math.random() - 0.5);
+  _reviewIdx    = 0;
+  _reviewGot    = [];
+  _reviewMissed = [];
+  const ov    = document.getElementById('fc-review-overlay');
+  const rs    = document.getElementById('fc-review-results');
+  const stage = document.querySelector('.fc-review-stage');
+  if (rs)    rs.classList.add('hidden');
+  if (stage) stage.classList.remove('hidden');
+  ov.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  _showReviewCard();
+}
+
+function _showReviewCard() {
+  const card = _reviewQueue[_reviewIdx];
+  document.getElementById('fc-review-q').textContent = card.front;
+  document.getElementById('fc-review-a').textContent = card.back;
+  document.getElementById('fc-review-progress').textContent = `${_reviewIdx + 1} / ${_reviewQueue.length}`;
+  const hint = document.getElementById('fc-review-hint');
+  const btns = document.getElementById('fc-review-btns');
+  hint.textContent = 'Tap card to reveal answer';
+  hint.classList.remove('hidden');
+  btns.classList.add('hidden');
+  document.getElementById('fc-review-inner').classList.remove('flipped');
+  _reviewFlipped = false;
+}
+
+function _reviewFlip() {
+  if (_reviewFlipped) return;
+  _reviewFlipped = true;
+  document.getElementById('fc-review-inner').classList.add('flipped');
+  document.getElementById('fc-review-hint').classList.add('hidden');
+  document.getElementById('fc-review-btns').classList.remove('hidden');
+}
+
+function _reviewAnswer(got) {
+  if (got) _reviewGot.push(_reviewQueue[_reviewIdx]);
+  else     _reviewMissed.push(_reviewQueue[_reviewIdx]);
+  _reviewIdx++;
+  if (_reviewIdx < _reviewQueue.length) _showReviewCard();
+  else _showReviewResults();
+}
+
+function _showReviewResults() {
+  document.querySelector('.fc-review-stage').classList.add('hidden');
+  document.getElementById('fc-review-results').classList.remove('hidden');
+  const total = _reviewQueue.length;
+  const got   = _reviewGot.length;
+  const pct   = Math.round(got / total * 100);
+  document.getElementById('fc-review-score').textContent = `${got} / ${total}`;
+  document.getElementById('fc-review-pct').textContent   = `${pct}%`;
+  document.getElementById('fc-review-results-emoji').textContent =
+    pct >= 80 ? '🎉' : pct >= 50 ? '💪' : '📖';
+  const againBtn = document.getElementById('fc-review-again-btn');
+  if (againBtn) againBtn.classList.toggle('hidden', _reviewMissed.length === 0);
+}
+
+function _exitReview() {
+  document.getElementById('fc-review-overlay').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('fc-review-card').addEventListener('click', _reviewFlip);
+document.getElementById('fc-review-got-btn').addEventListener('click', () => _reviewAnswer(true));
+document.getElementById('fc-review-miss-btn').addEventListener('click', () => _reviewAnswer(false));
+document.getElementById('fc-review-exit-btn').addEventListener('click', _exitReview);
+document.getElementById('fc-review-done-btn').addEventListener('click', _exitReview);
+document.getElementById('fc-review-again-btn').addEventListener('click', () => {
+  if (_reviewMissed.length) startFlashcardReview(_reviewMissed);
+});
+document.getElementById('fc-start-review-btn').addEventListener('click', () => {
+  startFlashcardReview(flashcards);
+});
 
 document.getElementById('fc-add-btn').addEventListener('click', () => {
   const subject = document.getElementById('fc-subject').value;
@@ -3646,6 +3871,114 @@ document.getElementById('notes-content').addEventListener('keydown', e => {
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) saveNote();
 });
 
+/* ── My Notes (per-subject, auto-save) ───────────────────────────── */
+let _mnSubject = 'Math';
+let _mnNoteIds = {};
+let _mnTimer   = null;
+let _mnLoading = false;
+let _mnInited  = false;
+
+function mnInit() {
+  if (_mnInited) return;
+  _mnInited = true;
+
+  document.getElementById('mn-tabs').querySelectorAll('.mn-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('mn-tabs').querySelectorAll('.mn-tab')
+        .forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      _mnSubject = btn.dataset.subj;
+      mnLoadSubject(_mnSubject);
+    });
+  });
+
+  document.getElementById('my-notes-card').querySelectorAll('.mn-fmt-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      document.execCommand(btn.dataset.cmd, false, null);
+      document.getElementById('mn-editor').focus();
+    });
+  });
+
+  document.getElementById('mn-editor').addEventListener('input', () => {
+    if (_mnLoading) return;
+    clearTimeout(_mnTimer);
+    const ind = document.getElementById('mn-saving-indicator');
+    if (ind) ind.textContent = 'Saving…';
+    _mnTimer = setTimeout(mnSave, 1500);
+  });
+
+  mnLoadSubject(_mnSubject);
+}
+
+async function mnLoadSubject(subj) {
+  const editor = document.getElementById('mn-editor');
+  const ts     = document.getElementById('mn-saved-ts');
+  const ind    = document.getElementById('mn-saving-indicator');
+
+  if (!sbUser) {
+    editor.innerHTML = '';
+    if (ts) ts.textContent = 'Sign in to save notes.';
+    return;
+  }
+
+  _mnLoading = true;
+  editor.contentEditable = 'false';
+  if (ind) ind.textContent = 'Loading…';
+
+  const { data } = await sb.from('study_notes')
+    .select('id, content, created_at')
+    .eq('user_id', sbUser.id)
+    .eq('subject', subj)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  const note = data && data[0];
+  _mnNoteIds[subj] = note ? note.id : null;
+  editor.innerHTML = note ? (note.content || '') : '';
+
+  if (note && ts) {
+    const d = new Date(note.created_at);
+    ts.textContent = `Last saved: ${d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})} ${d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}`;
+  } else if (ts) {
+    ts.textContent = 'No notes yet for this subject.';
+  }
+  if (ind) ind.textContent = '';
+  editor.contentEditable = 'true';
+  _mnLoading = false;
+}
+
+async function mnSave() {
+  if (!sbUser || _mnLoading) return;
+  const content = document.getElementById('mn-editor').innerHTML;
+  const subj    = _mnSubject;
+  const existId = _mnNoteIds[subj];
+  const ind     = document.getElementById('mn-saving-indicator');
+  const ts      = document.getElementById('mn-saved-ts');
+
+  let error;
+  if (existId) {
+    ({ error } = await sb.from('study_notes')
+      .update({ content, title: subj + ' Notes' })
+      .eq('id', existId).eq('user_id', sbUser.id));
+  } else {
+    const { data, error: ie } = await sb.from('study_notes')
+      .insert({ user_id: sbUser.id, subject: subj, title: subj + ' Notes', content })
+      .select('id, created_at').single();
+    error = ie;
+    if (!ie && data) _mnNoteIds[subj] = data.id;
+  }
+
+  if (error) {
+    console.error('[MyNotes] save error:', error);
+    if (ind) ind.textContent = '❌ Failed';
+  } else {
+    const now = new Date();
+    if (ts)  ts.textContent  = `Last saved: ${now.toLocaleDateString('en-GB',{day:'numeric',month:'short'})} ${now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}`;
+    if (ind) ind.textContent = '';
+  }
+}
+
 /* ─── PROGRESSO POR DISCIPLINA ──────────────────────────────────────── */
 
 const SUBJECT_META = [
@@ -3715,6 +4048,7 @@ function initStudyPage() {
   if (sbUser && notesCache.length === 0) loadNotes();
   else renderNotes();
   renderSubjectProgress();
+  mnInit();
 }
 
 // ── Boot new study components (runs once on page load) ───────────────

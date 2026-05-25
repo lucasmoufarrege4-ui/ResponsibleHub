@@ -101,6 +101,16 @@
           </div>
         </div>
 
+        <!-- Login Streak -->
+        <div class="streak-hero hidden" id="streak-hero">
+          <span class="streak-fire">🔥</span>
+          <div class="streak-info">
+            <span class="streak-count" id="streak-count">0</span>
+            <span class="streak-label">day streak</span>
+          </div>
+          <span class="streak-desc" id="streak-desc">Keep it up!</span>
+        </div>
+
         <!-- Widgets Row: Weather + Countdown -->
         <div class="dash-widgets-row">
           <!-- Weather Widget -->
@@ -380,6 +390,37 @@
             <button type="button" class="btn btn-study btn-sm" id="fc-add-btn">+ Create Flashcard</button>
           </div>
           <div class="fc-list" id="fc-list"></div>
+          <div class="fc-review-launch">
+            <button type="button" class="btn btn-study" id="fc-start-review-btn">🎯 Start Review</button>
+          </div>
+        </div>
+
+        <!-- My Notes -->
+        <div class="card card-study" id="my-notes-card">
+          <div class="card-tag">📓 My Notes</div>
+          <h3>Subject Notes</h3>
+          <p class="mn-subtitle">Pick a subject — notes auto-save as you type.</p>
+          <div class="mn-tabs" id="mn-tabs">
+            <button class="mn-tab active" data-subj="Math">📐 Math</button>
+            <button class="mn-tab" data-subj="English">📖 English</button>
+            <button class="mn-tab" data-subj="Science">🔬 Science</button>
+            <button class="mn-tab" data-subj="Geography">🌍 Geo</button>
+            <button class="mn-tab" data-subj="Art">🎨 Art</button>
+            <button class="mn-tab" data-subj="Other">📋 Other</button>
+          </div>
+          <div class="mn-toolbar">
+            <button type="button" class="mn-fmt-btn" data-cmd="bold"                title="Bold"><b>B</b></button>
+            <button type="button" class="mn-fmt-btn mn-fmt-italic" data-cmd="italic" title="Italic"><i>I</i></button>
+            <button type="button" class="mn-fmt-btn" data-cmd="underline"           title="Underline"><u>U</u></button>
+            <button type="button" class="mn-fmt-btn" data-cmd="insertUnorderedList" title="Bullet list">• List</button>
+            <button type="button" class="mn-fmt-btn" data-cmd="insertOrderedList"   title="Numbered">1. List</button>
+          </div>
+          <div class="mn-editor" id="mn-editor" contenteditable="true" spellcheck="true"
+               data-placeholder="Start typing your notes for this subject…"></div>
+          <div class="mn-footer">
+            <span class="mn-saved-ts" id="mn-saved-ts">Not saved yet</span>
+            <span class="mn-saving-indicator" id="mn-saving-indicator"></span>
+          </div>
         </div>
 
         <!-- Quiz History -->
@@ -853,6 +894,11 @@
       </div>
       <div class="container">
         <div class="lb-wrap">
+          <div class="lb-filter-tabs" id="lb-filter-tabs">
+            <button class="lb-filter-tab active" data-filter="alltime">All Time</button>
+            <button class="lb-filter-tab" data-filter="week">This Week</button>
+            <button class="lb-filter-tab" data-filter="month">This Month</button>
+          </div>
           <div class="lb-your-rank hidden" id="lb-your-rank">
             <span class="lb-yr-label">Your Rank</span>
             <span class="lb-yr-rank" id="lb-yr-rank">#–</span>
@@ -904,6 +950,55 @@
     </div>
 
   </main>
+
+  <!-- FLASHCARD REVIEW OVERLAY -->
+  <div class="fc-review-overlay hidden" id="fc-review-overlay">
+    <div class="fc-review-header">
+      <button class="fc-review-exit-btn" id="fc-review-exit-btn">✕ Exit Review</button>
+      <div class="fc-review-progress" id="fc-review-progress">1 / 10</div>
+    </div>
+    <div class="fc-review-stage">
+      <div class="fc-review-card" id="fc-review-card">
+        <div class="fc-review-inner" id="fc-review-inner">
+          <div class="fc-review-face fc-review-front">
+            <span class="fc-review-face-label">Question</span>
+            <p class="fc-review-face-text" id="fc-review-q"></p>
+          </div>
+          <div class="fc-review-face fc-review-back">
+            <span class="fc-review-face-label">Answer</span>
+            <p class="fc-review-face-text" id="fc-review-a"></p>
+          </div>
+        </div>
+      </div>
+      <p class="fc-review-hint" id="fc-review-hint">Tap card to reveal answer</p>
+      <div class="fc-review-btns hidden" id="fc-review-btns">
+        <button class="fc-review-btn fc-review-miss" id="fc-review-miss-btn">❌ Missed it</button>
+        <button class="fc-review-btn fc-review-got" id="fc-review-got-btn">✅ Got it</button>
+      </div>
+    </div>
+    <div class="fc-review-results hidden" id="fc-review-results">
+      <div class="fc-review-results-emoji" id="fc-review-results-emoji">🎉</div>
+      <h2 class="fc-review-results-title">Review Complete!</h2>
+      <div class="fc-review-score" id="fc-review-score">8 / 10</div>
+      <div class="fc-review-pct" id="fc-review-pct">80%</div>
+      <div class="fc-review-results-btns">
+        <button class="btn btn-outline" id="fc-review-again-btn">🔁 Review Missed Cards</button>
+        <button class="btn btn-study" id="fc-review-done-btn">✅ Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEVEL UP OVERLAY -->
+  <div class="levelup-overlay hidden" id="levelup-overlay">
+    <div class="levelup-box">
+      <div class="levelup-sparks" id="levelup-sparks"></div>
+      <div class="levelup-crown">🎉</div>
+      <div class="levelup-title">LEVEL UP!</div>
+      <div class="levelup-name" id="levelup-name">🌿 Explorer</div>
+      <p class="levelup-sub">You've reached a new level. Keep going!</p>
+      <button class="btn btn-study" id="levelup-close-btn">Keep Going! 🚀</button>
+    </div>
+  </div>
 
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav">

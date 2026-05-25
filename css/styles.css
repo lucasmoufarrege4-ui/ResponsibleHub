@@ -3161,3 +3161,164 @@ body.light-mode .sched-action-btn {
   border-color: var(--border) !important;
   color: var(--text) !important;
 }
+
+/* ══ FLASHCARD REVIEW OVERLAY ══════════════════════════════════════ */
+.fc-review-overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: #0d1117;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.fc-review-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .9rem 1.2rem;
+  background: rgba(255,255,255,.04);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  flex-shrink: 0;
+}
+.fc-review-exit-btn {
+  background: none; border: 1px solid rgba(255,255,255,.2);
+  color: #aaa; font-size: .82rem; padding: .3rem .75rem;
+  border-radius: 20px; cursor: pointer; transition: color .15s, border-color .15s;
+}
+.fc-review-exit-btn:hover { color: #fff; border-color: rgba(255,255,255,.5); }
+.fc-review-progress { font-size: .85rem; color: #aaa; font-weight: 600; }
+.fc-review-stage {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 1.5rem; padding: 1.5rem;
+}
+.fc-review-card {
+  width: 100%; max-width: 480px; height: 260px;
+  perspective: 1000px; cursor: pointer;
+}
+.fc-review-inner {
+  width: 100%; height: 100%; position: relative;
+  transform-style: preserve-3d; transition: transform .45s ease;
+}
+.fc-review-inner.flipped { transform: rotateY(180deg); }
+.fc-review-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  border-radius: 18px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: .75rem; padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,.4);
+}
+.fc-review-front { background: linear-gradient(135deg,#1a2a3a,#2d3b4d); }
+.fc-review-back  { background: linear-gradient(135deg,#1a3a2a,#2d6a4f); transform: rotateY(180deg); }
+.fc-review-face-label {
+  font-size: .72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .1em; opacity: .6; color: #fff;
+}
+.fc-review-face-text {
+  font-size: 1.15rem; font-weight: 600; color: #fff;
+  text-align: center; line-height: 1.5; margin: 0;
+}
+.fc-review-hint { font-size: .85rem; color: #888; margin: 0; }
+.fc-review-btns { display: flex; gap: 1rem; }
+.fc-review-btn {
+  padding: .75rem 1.8rem; border-radius: 30px; border: none;
+  font-size: 1rem; font-weight: 700; cursor: pointer;
+  transition: transform .15s, opacity .15s;
+}
+.fc-review-btn:active { transform: scale(.94); }
+.fc-review-miss { background: #e53e3e; color: #fff; }
+.fc-review-got  { background: #38a169; color: #fff; }
+.fc-review-results {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 1rem; padding: 2rem;
+}
+.fc-review-results-emoji { font-size: 3.5rem; }
+.fc-review-results-title { font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0; }
+.fc-review-score { font-size: 3rem; font-weight: 900; color: #52b788; }
+.fc-review-pct   { font-size: 1.2rem; color: #aaa; }
+.fc-review-results-btns { display: flex; flex-wrap: wrap; gap: .8rem; justify-content: center; margin-top: .5rem; }
+.fc-review-launch { margin-top: 1rem; display: flex; justify-content: center; }
+
+/* ══ MY NOTES CARD ══════════════════════════════════════════════════ */
+.mn-subtitle { font-size: .82rem; color: var(--muted); margin: -.25rem 0 .75rem; }
+.mn-tabs { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .75rem; }
+.mn-tab {
+  padding: .3rem .7rem; border-radius: 20px;
+  border: 1px solid var(--border); background: var(--card-bg);
+  color: var(--text-muted,#aaa); font-size: .78rem; font-weight: 600;
+  cursor: pointer; transition: background .18s, color .18s;
+}
+.mn-tab:hover  { background: var(--forest-mid); color: #fff; border-color: var(--forest-mid); }
+.mn-tab.active { background: var(--forest-mid); color: #fff; border-color: var(--forest-mid); }
+.mn-toolbar { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: .5rem; }
+.mn-fmt-btn {
+  padding: .25rem .6rem; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--card-bg);
+  color: var(--text); font-size: .82rem; cursor: pointer;
+  line-height: 1.4; transition: background .15s;
+}
+.mn-fmt-btn:hover { background: var(--forest-mid); color: #fff; border-color: var(--forest-mid); }
+.mn-fmt-italic { font-style: italic; }
+.mn-editor {
+  min-height: 180px; max-height: 400px; overflow-y: auto;
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: .85rem 1rem; font-size: .93rem; line-height: 1.65;
+  color: var(--text); background: var(--card-bg);
+  outline: none; transition: border-color .2s;
+}
+.mn-editor:focus { border-color: var(--forest-mid); }
+.mn-editor:empty::before {
+  content: attr(data-placeholder); color: var(--muted); pointer-events: none;
+}
+.mn-editor ul, .mn-editor ol { padding-left: 1.4rem; margin: .3rem 0; }
+.mn-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: .5rem; font-size: .76rem;
+}
+.mn-saved-ts         { color: var(--muted); }
+.mn-saving-indicator { color: var(--forest-mid); font-weight: 600; }
+
+/* ══ LOGIN STREAK ═══════════════════════════════════════════════════ */
+.streak-hero {
+  display: flex; align-items: center; gap: .9rem;
+  background: linear-gradient(135deg,#7b2d00,#c05621);
+  border-radius: 16px; padding: .9rem 1.2rem; margin-bottom: 1rem;
+}
+.streak-fire  { font-size: 2rem; }
+.streak-info  { display: flex; align-items: baseline; gap: .3rem; }
+.streak-count { font-size: 2rem; font-weight: 900; color: #fff; line-height: 1; }
+.streak-label { font-size: .85rem; font-weight: 600; color: rgba(255,255,255,.8); }
+.streak-desc  { margin-left: auto; font-size: .78rem; color: rgba(255,255,255,.85); font-weight: 600; }
+
+/* ══ LEVEL UP OVERLAY ═══════════════════════════════════════════════ */
+.levelup-overlay {
+  position: fixed; inset: 0; z-index: 9100;
+  background: rgba(0,0,0,.72); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+}
+.levelup-box {
+  position: relative; overflow: hidden;
+  background: linear-gradient(135deg,#1a2f1a,#2d6a4f);
+  border-radius: 24px; padding: 2.5rem 2rem; text-align: center;
+  max-width: 340px; width: 90%;
+  box-shadow: 0 24px 80px rgba(0,0,0,.6);
+}
+.levelup-sparks { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.levelup-crown  { font-size: 3rem; }
+.levelup-title  { font-size: 1.8rem; font-weight: 900; color: #f6d860; letter-spacing: .06em; margin: .4rem 0; }
+.levelup-name   { font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: .5rem; }
+.levelup-sub    { font-size: .9rem; color: rgba(255,255,255,.75); margin-bottom: 1.25rem; }
+.confetti-piece {
+  position: absolute; top: -12px;
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall {
+  0%   { transform: translateY(0)    rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(520px) rotate(720deg); opacity: 0; }
+}
+
+/* ══ LEADERBOARD FILTERS ════════════════════════════════════════════ */
+.lb-filter-tabs { display: flex; gap: .5rem; margin-bottom: 1rem; }
+.lb-filter-tab {
+  flex: 1; padding: .45rem .5rem; border-radius: 20px;
+  border: 1px solid var(--border); background: var(--card-bg);
+  color: var(--text-muted,#aaa); font-size: .8rem; font-weight: 600;
+  cursor: pointer; transition: background .18s, color .18s;
+}
+.lb-filter-tab:hover  { background: var(--forest-mid); color: #fff; border-color: var(--forest-mid); }
+.lb-filter-tab.active { background: var(--forest-mid); color: #fff; border-color: var(--forest-mid); }

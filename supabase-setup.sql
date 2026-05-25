@@ -156,3 +156,8 @@ create policy "challenge_completions_all"
   on public.challenge_completions for all
   using  (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+-- 8. LOGIN STREAK — run if not already added
+alter table public.profiles
+  add column if not exists login_streak    integer not null default 0,
+  add column if not exists last_login_date date;
