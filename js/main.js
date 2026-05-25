@@ -90,9 +90,14 @@ async function ensureProfile() {
 }
 
 async function addXP(amount) {
-  if (!sbUser || !sbProfile) return;
+  if (!sbUser || !sbProfile) {
+    console.warn('[XP] addXP called but sbUser/sbProfile not ready. sbUser:', !!sbUser, 'sbProfile:', !!sbProfile);
+    return;
+  }
   const { error } = await sb.rpc('increment_xp', { uid: sbUser.id, amount });
-  if (!error) {
+  if (error) {
+    console.error('[XP] increment_xp RPC error:', error);
+  } else {
     sbProfile.xp += amount;
     updateTopBar();
     updateDashXP();
@@ -1427,11 +1432,20 @@ document.getElementById('fc-add-btn').addEventListener('click', () => {
 
 /* ─── QUIZ HISTORY ───────────────────────────────────────────────────── */
 async function saveQuizResult(subject, topic, score, total) {
-  if (!sbUser) return;
-  await sb.from('quiz_results').insert({
+  if (!sbUser) {
+    console.log('[Quiz] saveQuizResult: no user, skipping');
+    return;
+  }
+  console.log('[Quiz] saving result:', subject, topic, score, '/', total);
+  const { error } = await sb.from('quiz_results').insert({
     user_id: sbUser.id, subject, topic, score, total,
     created_at: new Date().toISOString(),
   });
+  if (error) {
+    console.error('[Quiz] saveQuizResult error (table may not exist):', error);
+  } else {
+    console.log('[Quiz] result saved OK');
+  }
 }
 
 async function loadQuizHistory() {
@@ -3197,15 +3211,16 @@ function answerQuiz(idx) {
     else if (i === idx && !correct) btn.classList.add('wrong');
   });
 
-  setTimeout(() => {
+  setTimeout(async () => {
     quizQIndex++;
     quizAnswered = false;
     if (quizQIndex >= quizQuestions.length) {
       quizDone = true;
-      saveQuizResult(quizSubject, quizTopic, quizScore, quizQuestions.length);
-      loadQuizHistory();
       updateSubjectProgress(quizSubject, quizScore, quizQuestions.length);
       addXP(10);
+      // Await the insert so the row exists before loadQuizHistory() SELECTs
+      await saveQuizResult(quizSubject, quizTopic, quizScore, quizQuestions.length);
+      loadQuizHistory();
     }
     renderQuiz();
   }, 1000);
