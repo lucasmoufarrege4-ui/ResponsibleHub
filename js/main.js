@@ -26,6 +26,7 @@ function navigateTo(page) {
   if (page === 'home')  { updateHomeView(); updateCountdown(); }
   if (page === 'profile') initProfilePage();
   if (page === 'coach') initCoachPage();
+  if (page === 'style') initStylePage();
   if (page === 'study') initStudyPage();
   if (page === 'eco')   initEcoPage();
 }
@@ -4250,6 +4251,606 @@ function initProfilePage() {
     }
   }
 }
+
+/* ─── STYLE PAGE ─────────────────────────────────────────────────────── */
+
+/* ── Outfit Builder ──────────────────────────────────────────────────── */
+const OutfitBuilder = (() => {
+
+  /* Cached weather temp (populated at init) */
+  let _weatherTemp = null;
+
+  const QUESTIONS = [
+    {
+      id: 'occasion', emoji: '🎯',
+      text: "What's the occasion today?",
+      type: 'chips',
+      options: ['School', 'Casual hangout', 'Sports / gym', 'Date night', 'Family event', 'Work / internship'],
+    },
+    {
+      id: 'weather', emoji: '🌡️',
+      text: 'How is the weather right now?',
+      type: 'chips',
+      options: [], // filled dynamically from temp
+    },
+    {
+      id: 'vibe', emoji: '✨',
+      text: 'Pick your style vibe:',
+      type: 'chips',
+      options: ['Streetwear', 'Smart-casual', 'Minimalist', 'Sporty', 'Vintage', 'Preppy'],
+    },
+    {
+      id: 'bottoms', emoji: '👖',
+      text: 'What bottoms do you have available? (pick all that apply)',
+      type: 'multichips',
+      options: ['Jeans', 'Chinos', 'Shorts', 'Joggers', 'Sweatpants', 'Trousers', 'Skirt'],
+      min: 1,
+    },
+    {
+      id: 'shoes', emoji: '👟',
+      text: 'Which shoes can you choose from? (pick all that apply)',
+      type: 'multichips',
+      options: ['Sneakers', 'Loafers', 'Boots', 'Sandals', 'Running shoes', 'Dress shoes', 'Slides'],
+      min: 1,
+    },
+    {
+      id: 'accessories', emoji: '⌚',
+      text: 'Any accessories you want to include? (optional)',
+      type: 'multichips',
+      options: ['Watch', 'Cap / hat', 'Sunglasses', 'Belt', 'Backpack', 'Chain / necklace', 'Skip'],
+      min: 0,
+    },
+  ];
+
+  let queue = [];
+  let answers = {};
+  let currentIdx = 0;
+
+  /* ── weather chips ── */
+  function weatherChips(tempC) {
+    if (tempC === null) return ['Hot (30°C+)', 'Warm (22–30°C)', 'Mild (15–22°C)', 'Cool (under 15°C)'];
+    if (tempC >= 30) return ['Hot (30°C+)', 'Warm (22–30°C)', 'Mild (15–22°C)', 'Cool (under 15°C)'];
+    if (tempC >= 22) return ['Hot (30°C+)', 'Warm (22–30°C)', 'Mild (15–22°C)', 'Cool (under 15°C)'];
+    if (tempC >= 15) return ['Hot (30°C+)', 'Warm (22–30°C)', 'Mild (15–22°C)', 'Cool (under 15°C)'];
+    return ['Hot (30°C+)', 'Warm (22–30°C)', 'Mild (15–22°C)', 'Cool (under 15°C)'];
+  }
+  function weatherAutoSelect(tempC) {
+    if (tempC === null) return null;
+    if (tempC >= 30) return 'Hot (30°C+)';
+    if (tempC >= 22) return 'Warm (22–30°C)';
+    if (tempC >= 15) return 'Mild (15–22°C)';
+    return 'Cool (under 15°C)';
+  }
+
+  function showLauncher() {
+    document.getElementById('outfit-launcher').classList.remove('hidden');
+    document.getElementById('outfit-chat-wrap').classList.add('hidden');
+    document.getElementById('outfit-result').classList.add('hidden');
+    document.getElementById('outfit-result').innerHTML = '';
+  }
+
+  function start() {
+    queue = QUESTIONS.map(q => ({ ...q, options: q.id === 'weather' ? weatherChips(_weatherTemp) : [...q.options] }));
+    answers = {};
+    currentIdx = 0;
+    document.getElementById('outfit-launcher').classList.add('hidden');
+    document.getElementById('outfit-result').classList.add('hidden');
+    document.getElementById('outfit-result').innerHTML = '';
+    document.getElementById('outfit-chat-wrap').classList.remove('hidden');
+    document.getElementById('outfit-chat-log').innerHTML = '';
+    document.getElementById('outfit-chat-answer').innerHTML = '';
+    askNext();
+  }
+
+  function updateProgress() {
+    const pct = (currentIdx / queue.length) * 100;
+    document.getElementById('outfit-prog-fill').style.width = pct + '%';
+    document.getElementById('outfit-prog-lbl').textContent =
+      `Question ${Math.min(currentIdx + 1, queue.length)} of ${queue.length}`;
+  }
+
+  function addQ(q) {
+    const log = document.getElementById('outfit-chat-log');
+    const d = document.createElement('div');
+    d.className = 'chat-bubble chat-q-bubble';
+    d.innerHTML = `<span class="chat-bbl-emoji">${q.emoji}</span><span class="chat-bbl-txt">${q.text}</span>`;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function addA(text) {
+    const log = document.getElementById('outfit-chat-log');
+    const d = document.createElement('div');
+    d.className = 'chat-bubble chat-a-bubble';
+    d.textContent = text;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function askNext() {
+    if (currentIdx >= queue.length) { finish(); return; }
+    const q = queue[currentIdx];
+    updateProgress();
+    addQ(q);
+
+    // Auto-answer weather if temp available
+    if (q.id === 'weather' && _weatherTemp !== null) {
+      const auto = weatherAutoSelect(_weatherTemp);
+      setTimeout(() => submitAnswer(q, auto, `${auto} (auto-detected)`), 380);
+      return;
+    }
+
+    renderAnswerArea(q);
+  }
+
+  function renderAnswerArea(q) {
+    const area = document.getElementById('outfit-chat-answer');
+    area.innerHTML = '';
+
+    if (q.type === 'chips') {
+      renderChips(area, q.options, false, q.min ?? 1, val => submitAnswer(q, val, val));
+    } else if (q.type === 'multichips') {
+      renderMultiChips(area, q.options, q.min ?? 1, vals => {
+        const label = vals.length ? vals.join(', ') : '—';
+        submitAnswer(q, vals, label);
+      });
+    }
+  }
+
+  function submitAnswer(q, val, label) {
+    answers[q.id] = val;
+    addA(label);
+    document.getElementById('outfit-chat-answer').innerHTML = '';
+    currentIdx++;
+    setTimeout(askNext, 320);
+  }
+
+  function finish() {
+    document.getElementById('outfit-prog-fill').style.width = '100%';
+    document.getElementById('outfit-prog-lbl').textContent = 'Done!';
+    document.getElementById('outfit-chat-answer').innerHTML = '';
+
+    const result = buildOutfitResult(answers);
+    const el = document.getElementById('outfit-result');
+    el.classList.remove('hidden');
+    el.innerHTML = `
+      <div class="style-result-card">
+        <div class="style-result-title">👕 Your Outfit Suggestion</div>
+        <div class="style-result-section">
+          <div class="style-result-section-hdr">Top</div>
+          <div class="style-result-items">${result.top.map(i => `<span class="style-result-item">${i}</span>`).join('')}</div>
+        </div>
+        <div class="style-result-section">
+          <div class="style-result-section-hdr">Bottom</div>
+          <div class="style-result-items">${result.bottom.map(i => `<span class="style-result-item">${i}</span>`).join('')}</div>
+        </div>
+        <div class="style-result-section">
+          <div class="style-result-section-hdr">Shoes</div>
+          <div class="style-result-items">${result.shoes.map(i => `<span class="style-result-item">${i}</span>`).join('')}</div>
+        </div>
+        ${result.accessories.length ? `
+        <div class="style-result-section">
+          <div class="style-result-section-hdr">Accessories</div>
+          <div class="style-result-items">${result.accessories.map(i => `<span class="style-result-item">${i}</span>`).join('')}</div>
+        </div>` : ''}
+        <div class="style-result-tip">💡 ${result.tip}</div>
+      </div>
+      <button class="style-restart-btn" id="outfit-restart-btn">🔄 Start Over</button>`;
+    el.querySelector('#outfit-restart-btn').addEventListener('click', showLauncher);
+    document.getElementById('outfit-chat-wrap').classList.add('hidden');
+  }
+
+  /* ── recommendation engine ── */
+  function buildOutfitResult(a) {
+    const occasion  = a.occasion  || 'Casual hangout';
+    const weather   = a.weather   || 'Warm (22–30°C)';
+    const vibe      = a.vibe      || 'Minimalist';
+    const bottoms   = Array.isArray(a.bottoms) ? a.bottoms : [a.bottoms].filter(Boolean);
+    const shoes     = Array.isArray(a.shoes)   ? a.shoes   : [a.shoes].filter(Boolean);
+    const accs      = Array.isArray(a.accessories) ? a.accessories.filter(v => v !== 'Skip') : [];
+
+    const hot  = weather.startsWith('Hot');
+    const cool = weather.startsWith('Cool') || weather.startsWith('Mild');
+
+    /* top layer */
+    const topMap = {
+      'Streetwear':    hot ? ['Graphic tee', 'Oversized tee'] : ['Hoodie', 'Graphic tee'],
+      'Smart-casual':  hot ? ['Linen shirt', 'Polo shirt']    : ['Oxford shirt', 'Knit sweater'],
+      'Minimalist':    hot ? ['Plain white tee', 'Linen tee']  : ['Clean crewneck', 'Monochrome tee'],
+      'Sporty':        hot ? ['Compression tee', 'Tank top']   : ['Quarter-zip', 'Sports hoodie'],
+      'Vintage':       hot ? ['Band tee', 'Henley shirt']      : ['Flannel shirt', 'Vintage sweatshirt'],
+      'Preppy':        hot ? ['Polo shirt', 'Button-down']     : ['Blazer', 'Cable-knit sweater'],
+    };
+    const top = topMap[vibe] || ['Plain tee', 'Light shirt'];
+
+    /* bottom pick — prefer available */
+    const bottomPrefer = {
+      'School':          ['Chinos', 'Jeans', 'Trousers'],
+      'Casual hangout':  ['Jeans', 'Shorts', 'Joggers'],
+      'Sports / gym':    ['Shorts', 'Joggers', 'Sweatpants'],
+      'Date night':      ['Chinos', 'Trousers', 'Jeans'],
+      'Family event':    ['Chinos', 'Trousers', 'Jeans'],
+      'Work / internship': ['Trousers', 'Chinos', 'Jeans'],
+    };
+    const pref = bottomPrefer[occasion] || ['Jeans', 'Chinos'];
+    const bottom = pref.filter(b => bottoms.includes(b)).slice(0, 2);
+    if (!bottom.length && bottoms.length) bottom.push(bottoms[0]);
+    if (!bottom.length) bottom.push('Jeans');
+
+    /* shoe pick */
+    const shoePrefer = {
+      'School':          ['Sneakers', 'Loafers'],
+      'Casual hangout':  ['Sneakers', 'Slides', 'Sandals'],
+      'Sports / gym':    ['Running shoes', 'Sneakers'],
+      'Date night':      ['Loafers', 'Boots', 'Dress shoes'],
+      'Family event':    ['Loafers', 'Dress shoes', 'Sneakers'],
+      'Work / internship': ['Dress shoes', 'Loafers', 'Boots'],
+    };
+    const sp = shoePrefer[occasion] || ['Sneakers'];
+    const chosenShoes = sp.filter(s => shoes.includes(s)).slice(0, 1);
+    if (!chosenShoes.length && shoes.length) chosenShoes.push(shoes[0]);
+    if (!chosenShoes.length) chosenShoes.push('Sneakers');
+
+    /* tip */
+    const tips = {
+      'Hot (30°C+)':     'In this heat, light breathable fabrics like linen or cotton are your best friends.',
+      'Warm (22–30°C)':  'Great weather to layer — a light shirt over a tee works perfectly.',
+      'Mild (15–22°C)':  'A mid-layer like a bomber or light jacket will keep you comfortable all day.',
+      'Cool (under 15°C)': 'Layer up! Start with a base, add a sweater, and top with a coat or jacket.',
+    };
+    const tip = tips[weather] || 'Dress for comfort and confidence — you\'ve got this!';
+
+    return { top, bottom, shoes: chosenShoes, accessories: accs, tip };
+  }
+
+  /* ── public init ── */
+  function init(weatherTemp) {
+    _weatherTemp = weatherTemp;
+    document.getElementById('outfit-start-btn').addEventListener('click', start);
+    document.getElementById('outfit-cancel-btn').addEventListener('click', showLauncher);
+  }
+
+  return { init };
+})();
+
+
+/* ── Fragrance Advisor ───────────────────────────────────────────────── */
+const FragranceAdvisor = (() => {
+
+  let _weatherTemp = null;
+
+  const QUESTIONS = [
+    {
+      id: 'owned', emoji: '🧴',
+      text: 'Which fragrances do you already own? (type them, or leave blank)',
+      type: 'text',
+      placeholder: 'e.g. Bleu de Chanel, Dior Sauvage… or leave blank',
+    },
+    {
+      id: 'occasion', emoji: '🎯',
+      text: "What's the occasion?",
+      type: 'chips',
+      options: ['Everyday / school', 'Casual hangout', 'Date night', 'Sports / gym', 'Office / work', 'Special event'],
+    },
+    {
+      id: 'temperature', emoji: '🌡️',
+      text: 'How warm is it outside?',
+      type: 'chips',
+      options: ['Hot (30°C+)', 'Warm (22–30°C)', 'Mild (15–22°C)', 'Cool (under 15°C)'],
+    },
+    {
+      id: 'timeofday', emoji: '🕐',
+      text: 'What time of day is it for?',
+      type: 'chips',
+      options: ['Morning', 'Afternoon', 'Evening', 'Night out'],
+    },
+    {
+      id: 'vibe', emoji: '✨',
+      text: 'What vibe are you going for?',
+      type: 'chips',
+      options: ['Fresh & clean', 'Woody & warm', 'Sweet & gourmand', 'Spicy & bold', 'Aquatic & light', 'Floral & soft'],
+    },
+  ];
+
+  let queue = [];
+  let answers = {};
+  let currentIdx = 0;
+
+  function tempToRange(t) {
+    if (t === null) return null;
+    if (t >= 30) return 'Hot (30°C+)';
+    if (t >= 22) return 'Warm (22–30°C)';
+    if (t >= 15) return 'Mild (15–22°C)';
+    return 'Cool (under 15°C)';
+  }
+
+  function showLauncher() {
+    document.getElementById('frag-launcher').classList.remove('hidden');
+    document.getElementById('frag-chat-wrap').classList.add('hidden');
+    document.getElementById('frag-result').classList.add('hidden');
+    document.getElementById('frag-result').innerHTML = '';
+  }
+
+  function start() {
+    queue = QUESTIONS.map(q => ({ ...q }));
+    answers = {};
+    currentIdx = 0;
+    document.getElementById('frag-launcher').classList.add('hidden');
+    document.getElementById('frag-result').classList.add('hidden');
+    document.getElementById('frag-result').innerHTML = '';
+    document.getElementById('frag-chat-wrap').classList.remove('hidden');
+    document.getElementById('frag-chat-log').innerHTML = '';
+    document.getElementById('frag-chat-answer').innerHTML = '';
+    askNext();
+  }
+
+  function updateProgress() {
+    const pct = (currentIdx / queue.length) * 100;
+    document.getElementById('frag-prog-fill').style.width = pct + '%';
+    document.getElementById('frag-prog-lbl').textContent =
+      `Question ${Math.min(currentIdx + 1, queue.length)} of ${queue.length}`;
+  }
+
+  function addQ(q) {
+    const log = document.getElementById('frag-chat-log');
+    const d = document.createElement('div');
+    d.className = 'chat-bubble chat-q-bubble';
+    d.innerHTML = `<span class="chat-bbl-emoji">${q.emoji}</span><span class="chat-bbl-txt">${q.text}</span>`;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function addA(text) {
+    const log = document.getElementById('frag-chat-log');
+    const d = document.createElement('div');
+    d.className = 'chat-bubble chat-a-bubble';
+    d.textContent = text;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function askNext() {
+    if (currentIdx >= queue.length) { finish(); return; }
+    const q = queue[currentIdx];
+    updateProgress();
+    addQ(q);
+
+    // Auto-answer temperature
+    if (q.id === 'temperature' && _weatherTemp !== null) {
+      const auto = tempToRange(_weatherTemp);
+      setTimeout(() => submitAnswer(q, auto, `${auto} (auto-detected)`), 380);
+      return;
+    }
+
+    renderAnswerArea(q);
+  }
+
+  function renderAnswerArea(q) {
+    const area = document.getElementById('frag-chat-answer');
+    area.innerHTML = '';
+
+    if (q.type === 'chips') {
+      renderChips(area, q.options, false, 1, val => submitAnswer(q, val, val));
+    } else if (q.type === 'text') {
+      area.innerHTML = `
+        <div class="chat-field-row">
+          <input type="text" class="chat-field" id="frag-text-field" placeholder="${escHtml(q.placeholder || 'Type here…')}" maxlength="160"/>
+          <button type="button" class="chat-next-btn" id="frag-next-btn">Next →</button>
+        </div>`;
+      const f = area.querySelector('#frag-text-field');
+      const b = area.querySelector('#frag-next-btn');
+      const go = () => {
+        const v = f.value.trim() || '(none listed)';
+        submitAnswer(q, v, v);
+      };
+      b.addEventListener('click', go);
+      f.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+      setTimeout(() => f.focus(), 80);
+    }
+  }
+
+  function submitAnswer(q, val, label) {
+    answers[q.id] = val;
+    addA(label);
+    document.getElementById('frag-chat-answer').innerHTML = '';
+    currentIdx++;
+    setTimeout(askNext, 320);
+  }
+
+  function finish() {
+    document.getElementById('frag-prog-fill').style.width = '100%';
+    document.getElementById('frag-prog-lbl').textContent = 'Done!';
+    document.getElementById('frag-chat-answer').innerHTML = '';
+
+    const result = buildFragResult(answers);
+    const el = document.getElementById('frag-result');
+    el.classList.remove('hidden');
+    el.innerHTML = `
+      <div class="style-result-card">
+        <div class="style-result-title">🌸 Your Fragrance Match</div>
+        <div class="style-result-section">
+          <div class="style-result-section-hdr">Top Pick</div>
+          <div class="style-result-items"><span class="style-result-item">${result.topPick}</span></div>
+        </div>
+        <div class="style-result-section">
+          <div class="style-result-section-hdr">Also Consider</div>
+          <div class="style-result-items">${result.alternatives.map(i => `<span class="style-result-item">${i}</span>`).join('')}</div>
+        </div>
+        <div class="style-result-section">
+          <div class="style-result-section-hdr">Scent Profile</div>
+          <div class="style-result-items">${result.notes.map(n => `<span class="style-result-item">${n}</span>`).join('')}</div>
+        </div>
+        <div class="style-result-tip">💡 ${result.tip}</div>
+      </div>
+      <button class="style-restart-btn" id="frag-restart-btn">🔄 Start Over</button>`;
+    el.querySelector('#frag-restart-btn').addEventListener('click', showLauncher);
+    document.getElementById('frag-chat-wrap').classList.add('hidden');
+  }
+
+  /* ── fragrance engine ── */
+  function buildFragResult(a) {
+    const occasion = a.occasion  || 'Casual hangout';
+    const temp     = a.temperature || 'Warm (22–30°C)';
+    const tod      = a.timeofday || 'Afternoon';
+    const vibe     = a.vibe     || 'Fresh & clean';
+    const hot  = temp.startsWith('Hot');
+    const cool = temp.startsWith('Cool') || temp.startsWith('Mild');
+    const evening = tod === 'Evening' || tod === 'Night out';
+
+    /* scent-note profiles by vibe */
+    const noteMap = {
+      'Fresh & clean':     ['Citrus', 'Aquatic', 'White musk', 'Light woods'],
+      'Woody & warm':      ['Cedarwood', 'Sandalwood', 'Vetiver', 'Amber'],
+      'Sweet & gourmand':  ['Vanilla', 'Tonka bean', 'Caramel', 'Benzoin'],
+      'Spicy & bold':      ['Black pepper', 'Cardamom', 'Oud', 'Leather'],
+      'Aquatic & light':   ['Sea breeze', 'Marine accord', 'Bergamot', 'Light musk'],
+      'Floral & soft':     ['Rose', 'Jasmine', 'Peony', 'Soft musk'],
+    };
+    const notes = noteMap[vibe] || ['Citrus', 'Musk', 'Woods'];
+
+    /* fragrance pick logic */
+    const fragMatrix = {
+      'Fresh & clean': {
+        hot:     { day: 'Acqua di Gio – Giorgio Armani', night: 'Bleu de Chanel EDT' },
+        cool:    { day: 'CK One – Calvin Klein',          night: 'Dior Sauvage EDT'  },
+      },
+      'Woody & warm': {
+        hot:     { day: 'Tom Ford Oud Wood',          night: 'Aventus – Creed'         },
+        cool:    { day: 'Terre d\'Hermès',             night: 'Dior Fahrenheit'         },
+      },
+      'Sweet & gourmand': {
+        hot:     { day: 'Thierry Mugler A*Men',       night: 'La Nuit de L\'Homme – YSL' },
+        cool:    { day: 'Paco Rabanne 1 Million',      night: 'Viktor & Rolf Spicebomb'   },
+      },
+      'Spicy & bold': {
+        hot:     { day: 'Spicebomb Extreme – V&R',    night: 'Tom Ford Black Orchid'  },
+        cool:    { day: 'Ambre Nuit – Dior',           night: 'Le Male – JPG'          },
+      },
+      'Aquatic & light': {
+        hot:     { day: 'Davidoff Cool Water',        night: 'Issey Miyake L\'Eau d\'Issey' },
+        cool:    { day: 'Polo Blue – Ralph Lauren',    night: 'Versace Pour Homme'            },
+      },
+      'Floral & soft': {
+        hot:     { day: 'Light Blue – Dolce & Gabbana', night: 'Coco Mademoiselle – Chanel' },
+        cool:    { day: 'Flowerbomb – Viktor & Rolf',   night: 'Black Opium – YSL'           },
+      },
+    };
+
+    const matrix = fragMatrix[vibe] || fragMatrix['Fresh & clean'];
+    const slot   = hot ? matrix.hot : matrix.cool;
+    const topPick = evening ? slot.night : slot.day;
+
+    /* alternatives */
+    const altMap = {
+      'Fresh & clean':    ['Versace Man Eau Fraîche', 'Bvlgari Aqva', 'L\'Eau d\'Issey'],
+      'Woody & warm':     ['Sauvage EDP – Dior', 'Encre Noire – Lalique', 'Santal 33 – Le Labo'],
+      'Sweet & gourmand': ['Invictus – Paco Rabanne', 'Million Lucky – PR', 'Eros – Versace'],
+      'Spicy & bold':     ['Oud for Greatness – Initio', 'Black – Bulgari', 'Eros Flame – Versace'],
+      'Aquatic & light':  ['Homme Sport – Chanel', 'Allure Homme – Chanel', 'Blue Label – Burberry'],
+      'Floral & soft':    ['La Vie est Belle – Lancôme', 'Miss Dior Blooming', 'Daisy – Marc Jacobs'],
+    };
+    const alternatives = (altMap[vibe] || ['Try a local niche boutique for unique picks']).slice(0, 3);
+
+    /* application tip */
+    const tempTips = {
+      'Hot (30°C+)':     'In heat, apply to pulse points (wrists, neck) — go lighter with 1–2 sprays; fragrance amplifies in warmth.',
+      'Warm (22–30°C)':  '2–3 sprays on pulse points is ideal. Warm weather lets the top notes really shine.',
+      'Mild (15–22°C)':  'Spray on clothing and skin — 3 sprays is a sweet spot for lasting projection.',
+      'Cool (under 15°C)': 'Cold air dampens sillage — apply generously (4–5 sprays) on clothes and neck for best diffusion.',
+    };
+    const tip = tempTips[temp] || 'Apply to pulse points and let the fragrance develop on your skin.';
+
+    return { topPick, alternatives, notes, tip };
+  }
+
+  function init(weatherTemp) {
+    _weatherTemp = weatherTemp;
+    document.getElementById('frag-start-btn').addEventListener('click', start);
+    document.getElementById('frag-cancel-btn').addEventListener('click', showLauncher);
+  }
+
+  return { init };
+})();
+
+
+/* ── Shared chip-rendering helpers ───────────────────────────────────── */
+function renderChips(area, options, _multi, _min, onSelect) {
+  const grid = document.createElement('div');
+  grid.className = 'style-chip-grid';
+  options.forEach(opt => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'style-chip';
+    chip.textContent = opt;
+    chip.addEventListener('click', () => onSelect(opt));
+    grid.appendChild(chip);
+  });
+  area.appendChild(grid);
+}
+
+function renderMultiChips(area, options, min, onConfirm) {
+  const selected = new Set();
+  const grid = document.createElement('div');
+  grid.className = 'style-chip-grid';
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.type = 'button';
+  confirmBtn.className = 'chat-next-btn';
+  confirmBtn.style.marginTop = '.4rem';
+  confirmBtn.style.width = '100%';
+  confirmBtn.textContent = min === 0 ? 'Confirm →' : 'Confirm →';
+  confirmBtn.disabled = min > 0;
+  confirmBtn.style.opacity = min > 0 ? '.5' : '1';
+
+  options.forEach(opt => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'style-chip';
+    chip.textContent = opt;
+    chip.addEventListener('click', () => {
+      if (selected.has(opt)) {
+        selected.delete(opt);
+        chip.classList.remove('selected');
+      } else {
+        selected.add(opt);
+        chip.classList.add('selected');
+      }
+      const ready = min === 0 || selected.size >= min;
+      confirmBtn.disabled = !ready;
+      confirmBtn.style.opacity = ready ? '1' : '.5';
+    });
+    grid.appendChild(chip);
+  });
+
+  confirmBtn.addEventListener('click', () => {
+    if (min > 0 && !selected.size) return;
+    onConfirm([...selected]);
+  });
+
+  area.appendChild(grid);
+  area.appendChild(confirmBtn);
+}
+
+
+/* ── Style page init ─────────────────────────────────────────────────── */
+let _styleWeatherTemp = null;
+let _styleInitDone    = false;
+
+async function initStylePage() {
+  if (_styleInitDone) return;
+  _styleInitDone = true;
+
+  // Fetch São Paulo weather once
+  try {
+    const res  = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-23.5505&longitude=-46.6333&current=temperature_2m,weathercode&timezone=America%2FSao_Paulo');
+    const json = await res.json();
+    _styleWeatherTemp = Math.round(json.current.temperature_2m);
+  } catch { _styleWeatherTemp = null; }
+
+  OutfitBuilder.init(_styleWeatherTemp);
+  FragranceAdvisor.init(_styleWeatherTemp);
+}
+
 
 async function saveProfileName() {
   if (!sbUser || !sbProfile) return;

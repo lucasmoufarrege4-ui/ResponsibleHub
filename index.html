@@ -949,6 +949,66 @@
       </div>
     </div>
 
+    <!-- ══ STYLE PAGE ══════════════════════════════════════════════════ -->
+    <div class="page" id="page-style">
+      <div class="page-header">
+        <span class="page-header-icon">👔</span>
+        <div>
+          <div class="page-header-title">Style &amp; Fragrance</div>
+          <div class="page-header-sub">Your personal AI stylist</div>
+        </div>
+      </div>
+
+      <!-- ── OUTFIT BUILDER ──────────────────────────────────────── -->
+      <div class="card style-advisor-card" id="outfit-card">
+        <div class="style-advisor-launcher" id="outfit-launcher">
+          <div class="style-advisor-icon">👕</div>
+          <div class="style-advisor-info">
+            <div class="style-advisor-title">Build My Outfit</div>
+            <div class="style-advisor-desc">Answer a few questions and get a personalised outfit suggestion</div>
+          </div>
+          <button class="btn btn-study style-advisor-start-btn" id="outfit-start-btn">Start →</button>
+        </div>
+        <div class="style-chat-wrap hidden" id="outfit-chat-wrap">
+          <div class="sched-chat-hdr">
+            <div class="sched-prog-track"><div class="sched-prog-fill" id="outfit-prog-fill"></div></div>
+            <div class="sched-prog-row">
+              <span class="sched-prog-lbl" id="outfit-prog-lbl">Question 1 of 6</span>
+              <button class="sched-cancel-btn" id="outfit-cancel-btn">✕ Cancel</button>
+            </div>
+          </div>
+          <div class="sched-chat-log" id="outfit-chat-log"></div>
+          <div class="sched-chat-answer" id="outfit-chat-answer"></div>
+        </div>
+        <div class="style-result hidden" id="outfit-result"></div>
+      </div>
+
+      <!-- ── FRAGRANCE ADVISOR ────────────────────────────────────── -->
+      <div class="card style-advisor-card" id="frag-card">
+        <div class="style-advisor-launcher" id="frag-launcher">
+          <div class="style-advisor-icon">🌸</div>
+          <div class="style-advisor-info">
+            <div class="style-advisor-title">Fragrance Advisor</div>
+            <div class="style-advisor-desc">Find the perfect scent for any moment</div>
+          </div>
+          <button class="btn btn-study style-advisor-start-btn" id="frag-start-btn">Start →</button>
+        </div>
+        <div class="style-chat-wrap hidden" id="frag-chat-wrap">
+          <div class="sched-chat-hdr">
+            <div class="sched-prog-track"><div class="sched-prog-fill" id="frag-prog-fill"></div></div>
+            <div class="sched-prog-row">
+              <span class="sched-prog-lbl" id="frag-prog-lbl">Question 1 of 5</span>
+              <button class="sched-cancel-btn" id="frag-cancel-btn">✕ Cancel</button>
+            </div>
+          </div>
+          <div class="sched-chat-log" id="frag-chat-log"></div>
+          <div class="sched-chat-answer" id="frag-chat-answer"></div>
+        </div>
+        <div class="style-result hidden" id="frag-result"></div>
+      </div>
+
+    </div><!-- /#page-style -->
+
   </main>
 
   <!-- FLASHCARD REVIEW OVERLAY -->
@@ -1026,6 +1086,10 @@
       <span class="bnav-icon">🏆</span>
       <span class="bnav-label">Board</span>
     </button>
+    <button class="bnav-btn" data-page="style">
+      <span class="bnav-icon">👔</span>
+      <span class="bnav-label">Style</span>
+    </button>
   </nav>
 
 </div>
@@ -1038,6 +1102,6 @@
   <span class="fab-label">Ask AI Tutor</span>
 </button>
 
-<script src="js/main.js?v=10"></script>
+<script src="js/main.js?v=11"></script>
 </body>
 </html>
