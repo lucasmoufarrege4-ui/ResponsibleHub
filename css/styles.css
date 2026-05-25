@@ -868,6 +868,31 @@ body {
 }
 .chat-next-btn:hover { opacity: .88; transform: translateY(-1px); }
 
+/* Activity-list multi-entry UI */
+.chat-act-list { display: flex; flex-direction: column; gap: .45rem; margin-bottom: .55rem; }
+.chat-act-row  { display: flex; align-items: center; gap: .4rem; }
+.chat-act-name { flex: 2; min-width: 0; }
+.chat-act-time { flex: 1; min-width: 80px; max-width: 110px; }
+.chat-act-del  {
+  flex-shrink: 0; width: 26px; height: 26px;
+  border-radius: 50%; border: 1.5px solid var(--border);
+  background: transparent; color: var(--muted);
+  font-size: .72rem; cursor: pointer; line-height: 1;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.chat-act-del:hover { border-color: #e74c3c; color: #e74c3c; background: #e74c3c18; }
+.chat-act-btn-row {
+  display: flex; align-items: center; gap: .55rem; flex-wrap: wrap;
+}
+.chat-act-add-btn {
+  flex: 1; padding: .45rem .7rem; border-radius: 10px;
+  border: 1.5px dashed var(--forest-mid); background: transparent;
+  color: var(--forest-mid); font-size: .82rem; font-weight: 600;
+  cursor: pointer; transition: background .18s, border-style .18s;
+  white-space: nowrap;
+}
+.chat-act-add-btn:hover { background: #2d6a4f12; border-style: solid; }
+
 /* Result buttons row */
 .sched-result-actions {
   display: flex; gap: .6rem; margin-bottom: .6rem; margin-top: .3rem;

@@ -662,7 +662,7 @@ const DayBuilder = (() => {
     { id: 'breakfast', emoji: '🍳', text: 'Did you have breakfast?',                           type: 'yesno', defaultVal: null,    follow: null },
     { id: 'school',    emoji: '🏫', text: 'What time does school start today?',                type: 'time',  defaultVal: '08:00', follow: null },
     { id: 'activity',  emoji: '⚽', text: 'Do you have any sports or activities today?',        type: 'yesno', defaultVal: null,
-      follow: { id: 'activity_detail', emoji: '⚽', text: 'What activity and at what time?',  type: 'text',  defaultVal: null, follow: null }
+      follow: { id: 'activities', emoji: '⚽', text: 'Great! Add your activities below — name and time for each one.', type: 'activity_list', defaultVal: null, follow: null }
     },
     { id: 'homework',  emoji: '📚', text: 'Do you have homework or studying to do?',            type: 'yesno', defaultVal: null,
       follow: { id: 'homework_detail', emoji: '📚', text: 'Which subjects?',                  type: 'text',  defaultVal: null, follow: null }
@@ -769,6 +769,9 @@ const DayBuilder = (() => {
       f.addEventListener('keydown', e => { if (e.key === 'Enter' && f.value) submitAnswer(q, f.value, f.value); });
       setTimeout(() => f.focus(), 80);
 
+    } else if (q.type === 'activity_list') {
+      renderActivityListArea(q);
+
     } else { // text
       area.innerHTML = `
         <div class="chat-field-row">
@@ -782,6 +785,91 @@ const DayBuilder = (() => {
       f.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
       setTimeout(() => f.focus(), 80);
     }
+  }
+
+  /* ── activity-list answer area (multi-activity, up to 4) ── */
+  function renderActivityListArea(q) {
+    const area = document.getElementById('sched-chat-answer');
+    area.innerHTML = '';
+
+    // actList is the local source of truth; each entry = { name, time }
+    const actList = [{ name: '', time: '' }];
+
+    function rebuild() {
+      area.innerHTML = '';
+
+      const listDiv = document.createElement('div');
+      listDiv.className = 'chat-act-list';
+
+      actList.forEach((act, idx) => {
+        const row = document.createElement('div');
+        row.className = 'chat-act-row';
+        row.innerHTML = `
+          <input type="text"  class="chat-field chat-act-name" placeholder="Activity name…" maxlength="60"/>
+          <input type="time"  class="chat-field chat-act-time"/>
+          ${actList.length > 1 ? `<button type="button" class="chat-act-del" title="Remove">✕</button>` : ''}
+        `;
+
+        const nameIn = row.querySelector('.chat-act-name');
+        const timeIn = row.querySelector('.chat-act-time');
+        nameIn.value = act.name;
+        timeIn.value = act.time;
+        nameIn.addEventListener('input', e => { actList[idx].name = e.target.value; });
+        timeIn.addEventListener('input', e => { actList[idx].time = e.target.value; });
+
+        if (actList.length > 1) {
+          row.querySelector('.chat-act-del').addEventListener('click', () => {
+            actList.splice(idx, 1);
+            rebuild();
+          });
+        }
+
+        listDiv.appendChild(row);
+      });
+
+      area.appendChild(listDiv);
+
+      const btnRow = document.createElement('div');
+      btnRow.className = 'chat-act-btn-row';
+
+      if (actList.length < 4) {
+        const addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.className = 'chat-act-add-btn';
+        addBtn.textContent = '+ Add another activity';
+        addBtn.addEventListener('click', () => {
+          actList.push({ name: '', time: '' });
+          rebuild();
+          // focus new row's name field
+          const rows = area.querySelectorAll('.chat-act-name');
+          const last = rows[rows.length - 1];
+          if (last) setTimeout(() => last.focus(), 80);
+        });
+        btnRow.appendChild(addBtn);
+      }
+
+      const doneBtn = document.createElement('button');
+      doneBtn.type = 'button';
+      doneBtn.className = 'chat-next-btn';
+      doneBtn.textContent = 'Done →';
+      doneBtn.addEventListener('click', () => {
+        const filled = actList.filter(a => a.name.trim());
+        if (!filled.length) return;
+        const display = filled.map(a =>
+          a.time ? `${a.name.trim()} @ ${a.time}` : a.name.trim()
+        ).join(', ');
+        submitAnswer(q, filled, display);
+      });
+      btnRow.appendChild(doneBtn);
+
+      area.appendChild(btnRow);
+
+      // focus first name field on initial render
+      const first = area.querySelector('.chat-act-name');
+      if (first && !first.value) setTimeout(() => first.focus(), 80);
+    }
+
+    rebuild();
   }
 
   /* ── submit an answer ── */
@@ -830,17 +918,17 @@ const DayBuilder = (() => {
       entries.push({ t: schoolEnd, label: '🏠 Arrived home' });
     }
 
-    if (ans.activity === 'yes' && ans.activity_detail) {
-      const m = ans.activity_detail.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
-      let actTime = school ? school + 7*60 + 30 : 16*60;
-      if (m) {
-        let h = parseInt(m[1]), mm = m[2] ? parseInt(m[2]) : 0;
-        if (m[3]?.toLowerCase() === 'pm' && h < 12) h += 12;
-        actTime = h*60 + mm;
-      }
-      const rawName = ans.activity_detail.replace(/\d{1,2}(?::\d{2})?\s*(?:am|pm)?/gi,'').replace(/\bat\b/gi,'').trim();
-      const actName = rawName ? rawName.charAt(0).toUpperCase() + rawName.slice(1) : 'Activity';
-      entries.push({ t: actTime, label: `⚽ ${actName}` });
+    if (ans.activity === 'yes' && Array.isArray(ans.activities) && ans.activities.length) {
+      ans.activities.forEach(act => {
+        const name = act.name ? act.name.trim() : 'Activity';
+        const displayName = name.charAt(0).toUpperCase() + name.slice(1);
+        let actTime = school ? school + 7*60 + 30 : 16*60;
+        if (act.time) {
+          const [h, m] = act.time.split(':').map(Number);
+          actTime = h * 60 + m;
+        }
+        entries.push({ t: actTime, label: `⚽ ${displayName}` });
+      });
     }
 
     if (ans.homework === 'yes') {
