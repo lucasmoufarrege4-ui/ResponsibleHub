@@ -2660,12 +2660,26 @@ function raiRender() {
   const el = document.getElementById('rai-messages');
   if (!el) return;
 
-  let html = raiHistory.map(m =>
+  let html = raiHistory.map((m, i) =>
     m.role === 'ai'
       ? `<div class="rai-msg rai-msg-ai">
            <div class="rai-avatar">🤖</div>
            <div class="rai-bubble rai-bubble-ai">${escHtml(m.text)}</div>
-         </div>`
+         </div>
+         ${m.plannerBtn
+           ? m.plannerAdded
+             ? `<div class="rai-planner-capture">
+                  <span class="rai-plan-added">✅ Added to your Planner!</span>
+                </div>`
+             : `<div class="rai-planner-capture" data-idx="${i}">
+                  <button class="rai-add-plan-btn" data-idx="${i}">📋 + Add to Planner</button>
+                  <div class="rai-plan-form hidden" id="rpf-${i}">
+                    <input type="text" class="rai-plan-input" id="rpi-${i}"
+                           placeholder="What goal or tip do you want to add?" maxlength="120"/>
+                    <button class="btn btn-green btn-sm rai-plan-confirm" data-idx="${i}">✅ Add</button>
+                  </div>
+                </div>`
+           : ''}`
       : `<div class="rai-msg rai-msg-user">
            <div class="rai-bubble rai-bubble-user">${escHtml(m.text)}</div>
          </div>`
@@ -2693,7 +2707,57 @@ function raiRender() {
   el.querySelectorAll('.rai-option-btn').forEach(btn =>
     btn.addEventListener('click', () => raiPickOption(btn.dataset.opt))
   );
+  _addRaiPlannerListeners(el);
   el.scrollTop = el.scrollHeight;
+}
+
+function _addRaiPlannerListeners(el) {
+  el.querySelectorAll('.rai-add-plan-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = btn.dataset.idx;
+      const form = document.getElementById(`rpf-${idx}`);
+      if (!form) return;
+      const opening = form.classList.contains('hidden');
+      form.classList.toggle('hidden');
+      if (opening) document.getElementById(`rpi-${idx}`)?.focus();
+    });
+  });
+
+  el.querySelectorAll('.rai-plan-confirm').forEach(btn => {
+    btn.addEventListener('click', () => _raiConfirmAdd(btn.dataset.idx));
+  });
+
+  el.querySelectorAll('.rai-plan-input').forEach(input => {
+    input.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const idx = input.id.replace('rpi-', '');
+      _raiConfirmAdd(idx);
+    });
+  });
+}
+
+async function _raiConfirmAdd(idx) {
+  const input = document.getElementById(`rpi-${idx}`);
+  const text  = input?.value.trim();
+  if (!text) { showToast('✍️ Type a goal or tip first!', ''); return; }
+
+  const confirmBtn = document.querySelector(`.rai-plan-confirm[data-idx="${idx}"]`);
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '…'; }
+
+  await addGoalToPlanner(text);
+
+  // Swap the capture block for a success label in-place (no full re-render)
+  const capture = document.querySelector(`.rai-planner-capture[data-idx="${idx}"]`);
+  if (capture) {
+    capture.removeAttribute('data-idx');
+    capture.innerHTML = `<span class="rai-plan-added">✅ Added to your Planner!</span>`;
+  }
+
+  // Persist the "done" state so re-renders keep the success label
+  const histIdx = parseInt(idx, 10);
+  if (raiHistory[histIdx]) raiHistory[histIdx].plannerAdded = true;
+
+  showToast('✅ Added to your Planner!', 'study-toast');
 }
 
 function raiPickOption(optText) {
@@ -2733,6 +2797,7 @@ function raiSendToClaudeAI() {
   raiHistory.push({
     role: 'ai',
     text: '📊 Your personalized plan is ready in Claude AI — check that tab now!\n\nCome back here anytime to ask me follow-up questions.',
+    plannerBtn: true,
   });
 
   const inputRow = document.getElementById('rai-input-row');
@@ -2766,7 +2831,7 @@ function raiSendFollowup() {
 
     window.open(`https://claude.ai/new?q=${encodeURIComponent(prompt)}`, '_blank', 'noopener');
 
-    raiHistory.push({ role: 'ai', text: '↗ Response ready in Claude AI — check the new tab!' });
+    raiHistory.push({ role: 'ai', text: '↗ Response ready in Claude AI — check the new tab!', plannerBtn: true });
     raiRender();
   }, 1000);
 }

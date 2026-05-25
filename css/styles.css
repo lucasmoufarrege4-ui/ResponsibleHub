@@ -1541,6 +1541,54 @@ body {
   line-height: 1.4;
 }
 
+/* ── Add-to-Planner capture strip (below plannerBtn messages) ────── */
+.rai-planner-capture {
+  padding-left: 2.7rem; /* align past the avatar */
+  margin-top: .25rem;
+  margin-bottom: .3rem;
+  animation: fadeUp .2s ease;
+}
+.rai-add-plan-btn {
+  padding: .28rem .72rem;
+  font-size: .75rem; font-weight: 600;
+  border: 1.5px solid var(--forest);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--forest);
+  cursor: pointer;
+  transition: background .18s, color .18s;
+}
+.rai-add-plan-btn:hover {
+  background: var(--forest);
+  color: #fff;
+}
+.rai-plan-form {
+  display: flex; align-items: center; gap: .45rem;
+  margin-top: .38rem;
+  flex-wrap: wrap;
+}
+.rai-plan-input {
+  flex: 1; min-width: 160px;
+  padding: .42rem .88rem;
+  border: 1.5px solid var(--border);
+  border-radius: 99px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: .82rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color .18s, box-shadow .18s;
+}
+.rai-plan-input:focus {
+  border-color: var(--forest);
+  box-shadow: 0 0 0 2px rgba(45,106,79,.2);
+}
+.rai-plan-added {
+  font-size: .78rem; font-weight: 600;
+  color: var(--forest);
+  opacity: .85;
+}
+
 /* Multiple-choice option buttons inside the chat */
 .rai-options {
   display: flex; flex-direction: column; gap: .42rem;
