@@ -5925,26 +5925,63 @@ const ScentFinder = (() => {
 
   function allNotes(p){ return [...p.top,...p.heart,...p.base]; }
 
-  function similarity(ref, candidate){
-    if(ref.id===candidate.id) return -1; // skip exact same
-    const rNotes = allNotes(ref).map(n=>norm(n));
-    const cNotes = allNotes(candidate).map(n=>norm(n));
-    let shared=0;
-    rNotes.forEach(rn=>{ if(cNotes.some(cn=>cn.includes(rn)||rn.includes(cn))) shared++; });
-    const familyBonus = ref.family===candidate.family ? 2 : 0;
-    return shared + familyBonus;
+  /* Split a note into meaningful tokens (e.g. "Green apple" → ["green","apple"]) */
+  function noteTokens(s){ return norm(s).split(' ').filter(t=>t.length>2); }
+
+  /* Two notes match when they share at least one token — prevents "apple"↔"pineapple" */
+  function notesMatch(a, b){
+    const tA=noteTokens(a), tB=noteTokens(b);
+    return tA.some(t=>tB.includes(t));
+  }
+
+  /* Return the original-cased shared note labels (from ref) that appear in candidate */
+  function getSharedNotes(ref, candidate){
+    const cNotes = allNotes(candidate);
+    return allNotes(ref).filter(rn => cNotes.some(cn => notesMatch(rn, cn)));
+  }
+
+  /* Family overlap: token-based so "Woody Aromatic" ↔ "Woody" both get the bonus */
+  function familiesOverlap(f1, f2){
+    const t1 = norm(f1||'').split(' ').filter(t=>t.length>2);
+    const t2 = norm(f2||'').split(' ').filter(t=>t.length>2);
+    return t1.some(t=>t2.includes(t));
+  }
+
+  /* Compute display percentage: base note overlap + bonuses, clamped [20, 98] */
+  function calcPct(ref, candidate){
+    if(ref.id === candidate.id) return -1; // exclude self
+
+    const shared   = getSharedNotes(ref, candidate);
+    const refCount = Math.max(allNotes(ref).length, 1);
+
+    // Base: proportion of reference notes found in candidate
+    let pct = (shared.length / refCount) * 100;
+
+    // Bonuses
+    if(familiesOverlap(ref.family, candidate.family))  pct += 20;
+    if(ref.mood && candidate.mood &&
+       norm(ref.mood) === norm(candidate.mood))         pct += 10;
+    if(ref.brand && candidate.brand &&
+       norm(ref.brand) === norm(candidate.brand))       pct += 10; // same house = stronger signal
+
+    // Clamp: minimum 20%, maximum 98%
+    pct = Math.max(20, Math.min(98, Math.round(pct)));
+    return pct;
   }
 
   function scoreCandidate(p, ref, budgetKeys, occasion){
-    const sim = similarity(ref, p);
-    if(sim<0) return { score:-999, shared:[], pct:0 };
+    const pct = calcPct(ref, p);
+    if(pct < 0)  return { score:-999, shared:[], pct:0 };   // same fragrance
     if(!budgetKeys.includes(p.priceKey)) return { score:-998, shared:[], pct:0 };
-    const rNotes = allNotes(ref).map(n=>norm(n));
-    const cNotes = allNotes(p).map(n=>norm(n));
-    const shared = rNotes.filter(rn=>cNotes.some(cn=>cn.includes(rn)||rn.includes(cn)));
-    const pct = Math.round((shared.length/Math.max(rNotes.length,1))*100);
-    let score = sim;
-    if(p.occasions.some(o=>o.toLowerCase()===occasion.toLowerCase())) score+=2;
+
+    const shared = getSharedNotes(ref, p);
+
+    // Ranking score is independent of display pct so ordering stays meaningful
+    let score = shared.length;
+    if(norm(ref.family||'') === norm(p.family||'')) score += 3;
+    if(ref.mood && norm(ref.mood) === norm(p.mood||''))   score += 2;
+    if(p.occasions.some(o=>o.toLowerCase()===occasion.toLowerCase())) score += 2;
+
     return { score, shared, pct };
   }
 
@@ -6046,8 +6083,9 @@ const ScentFinder = (() => {
     const refTags = [...ref.top,...ref.heart,...ref.base].slice(0,5);
 
     const cards = scored.map(({p,shared,pct})=>{
+      const sharedNormed  = shared.map(n=>norm(n));
       const sharedDisplay = shared.slice(0,3).map(n=>`<span class="sfinder-note-shared">${escHtml(n)}</span>`).join('');
-      const allT = allNotes(p).filter(n=>!shared.includes(norm(n))).slice(0,3).map(n=>`<span class="sfinder-note">${escHtml(n)}</span>`).join('');
+      const allT = allNotes(p).filter(n=>!sharedNormed.some(sn=>sn===norm(n)||norm(n).includes(sn)||sn.includes(norm(n)))).slice(0,3).map(n=>`<span class="sfinder-note">${escHtml(n)}</span>`).join('');
       return `
         <div class="sfinder-match">
           <div class="sfinder-match-hdr">
