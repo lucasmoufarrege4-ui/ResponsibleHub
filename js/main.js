@@ -4277,7 +4277,7 @@ const OutfitBuilder = (() => {
       id: 'vibe', emoji: '✨',
       text: 'Pick your style vibe:',
       type: 'chips',
-      options: ['Streetwear', 'Smart-casual', 'Minimalist', 'Sporty', 'Vintage', 'Preppy'],
+      options: ['Streetwear', 'Smart-casual', 'Minimalist', 'Sporty', 'Vintage', 'Preppy', 'Old Money'],
     },
     {
       id: 'bottoms', emoji: '👖',
@@ -4454,12 +4454,13 @@ const OutfitBuilder = (() => {
 
     /* top layer */
     const topMap = {
-      'Streetwear':    hot ? ['Graphic tee', 'Oversized tee'] : ['Hoodie', 'Graphic tee'],
-      'Smart-casual':  hot ? ['Linen shirt', 'Polo shirt']    : ['Oxford shirt', 'Knit sweater'],
-      'Minimalist':    hot ? ['Plain white tee', 'Linen tee']  : ['Clean crewneck', 'Monochrome tee'],
-      'Sporty':        hot ? ['Compression tee', 'Tank top']   : ['Quarter-zip', 'Sports hoodie'],
-      'Vintage':       hot ? ['Band tee', 'Henley shirt']      : ['Flannel shirt', 'Vintage sweatshirt'],
-      'Preppy':        hot ? ['Polo shirt', 'Button-down']     : ['Blazer', 'Cable-knit sweater'],
+      'Streetwear':    hot ? ['Graphic tee', 'Oversized tee']          : ['Hoodie', 'Graphic tee'],
+      'Smart-casual':  hot ? ['Linen shirt', 'Polo shirt']              : ['Oxford shirt', 'Knit sweater'],
+      'Minimalist':    hot ? ['Plain white tee', 'Linen tee']           : ['Clean crewneck', 'Monochrome tee'],
+      'Sporty':        hot ? ['Compression tee', 'Tank top']            : ['Quarter-zip', 'Sports hoodie'],
+      'Vintage':       hot ? ['Band tee', 'Henley shirt']               : ['Flannel shirt', 'Vintage sweatshirt'],
+      'Preppy':        hot ? ['Polo shirt', 'Button-down']              : ['Blazer', 'Cable-knit sweater'],
+      'Old Money':     hot ? ['White polo', 'Linen Oxford shirt']       : ['Oxford shirt', 'V-neck merino', 'Blazer'],
     };
     const top = topMap[vibe] || ['Plain tee', 'Light shirt'];
 
@@ -4498,7 +4499,19 @@ const OutfitBuilder = (() => {
       'Mild (15–22°C)':  'A mid-layer like a bomber or light jacket will keep you comfortable all day.',
       'Cool (under 15°C)': 'Layer up! Start with a base, add a sweater, and top with a coat or jacket.',
     };
-    const tip = tips[weather] || 'Dress for comfort and confidence — you\'ve got this!';
+    const baseTip = tips[weather] || 'Dress for comfort and confidence — you\'ve got this!';
+    const oldMoneyTip = vibe === 'Old Money'
+      ? ' Less is more — invest in quality basics and let the fit do the talking.'
+      : '';
+    const tip = baseTip + oldMoneyTip;
+
+    /* Old Money bottom & shoe overrides — tailored > casual */
+    if (vibe === 'Old Money') {
+      const omBottoms = ['Trousers', 'Chinos'].filter(b => bottoms.includes(b));
+      if (omBottoms.length) { bottom.length = 0; bottom.push(...omBottoms.slice(0, 2)); }
+      const omShoes = ['Loafers', 'Dress shoes', 'Boat shoes'].filter(s => shoes.includes(s));
+      if (omShoes.length) { chosenShoes.length = 0; chosenShoes.push(omShoes[0]); }
+    }
 
     return { top, bottom, shoes: chosenShoes, accessories: accs, tip };
   }
@@ -4548,7 +4561,7 @@ const FragranceAdvisor = (() => {
       id: 'vibe', emoji: '✨',
       text: 'What vibe are you going for?',
       type: 'chips',
-      options: ['Fresh & clean', 'Woody & warm', 'Sweet & gourmand', 'Spicy & bold', 'Aquatic & light', 'Floral & soft'],
+      options: ['Fresh & clean', 'Woody & warm', 'Sweet & gourmand', 'Spicy & bold', 'Aquatic & light', 'Floral & soft', 'Sophisticated & classic'],
     },
   ];
 
@@ -4693,7 +4706,7 @@ const FragranceAdvisor = (() => {
      the user's typed name with a simple substring/token match.
   ── */
   const FRAG_DB = [
-    { keys: ['bleu de chanel'],          vibes: ['fresh & clean','woody & warm'],    occasions: ['everyday / school','office / work','special event'], temps: ['warm','mild','cool'], tods: ['morning','afternoon','evening'] },
+    { keys: ['bleu de chanel'],          vibes: ['fresh & clean','woody & warm','sophisticated & classic'], occasions: ['everyday / school','office / work','special event'], temps: ['warm','mild','cool'], tods: ['morning','afternoon','evening'] },
     { keys: ['born in roma','valentino'], vibes: ['spicy & bold','woody & warm'],     occasions: ['date night','special event'],                         temps: ['mild','cool'],        tods: ['evening','night out'] },
     { keys: ['coral fantasy'],           vibes: ['aquatic & light','fresh & clean'], occasions: ['everyday / school','casual hangout','sports / gym'],   temps: ['hot','warm'],         tods: ['morning','afternoon'] },
     { keys: ['le beau','jpg le beau'],   vibes: ['fresh & clean','aquatic & light'], occasions: ['casual hangout','everyday / school'],                  temps: ['hot','warm'],         tods: ['morning','afternoon'] },
@@ -4701,14 +4714,17 @@ const FragranceAdvisor = (() => {
     { keys: ['ultra male'],              vibes: ['sweet & gourmand'],                occasions: ['date night','special event'],                          temps: ['cool'],               tods: ['night out'] },
     { keys: ['la male elixir','elixir'], vibes: ['woody & warm','sweet & gourmand'], occasions: ['date night','special event'],                          temps: ['cool'],               tods: ['evening','night out'] },
     { keys: ['212 forever','forever young','carolina herrera'], vibes: ['fresh & clean','aquatic & light'], occasions: ['everyday / school','casual hangout','sports / gym'], temps: ['hot','warm'], tods: ['morning','afternoon'] },
-    { keys: ['sauvage','dior sauvage'],  vibes: ['fresh & clean','spicy & bold'],    occasions: ['everyday / school','casual hangout','office / work','special event'], temps: ['warm','mild','cool'], tods: ['morning','afternoon','evening'] },
-    { keys: ['ysl y','y edt','y edp'],   vibes: ['fresh & clean','woody & warm'],    occasions: ['everyday / school','casual hangout','office / work'],  temps: ['warm','mild','cool'], tods: ['morning','afternoon','evening'] },
+    { keys: ['sauvage','dior sauvage'],  vibes: ['fresh & clean','spicy & bold','sophisticated & classic'], occasions: ['everyday / school','casual hangout','office / work','special event'], temps: ['warm','mild','cool'], tods: ['morning','afternoon','evening'] },
+    { keys: ['ysl y','y edt','y edp'],   vibes: ['fresh & clean','woody & warm','sophisticated & classic'], occasions: ['everyday / school','casual hangout','office / work'],  temps: ['warm','mild','cool'], tods: ['morning','afternoon','evening'] },
     { keys: ['stronger with you','intensely'], vibes: ['sweet & gourmand','woody & warm'], occasions: ['date night','special event','office / work'],    temps: ['mild','cool'],        tods: ['evening','night out'] },
-    { keys: ['acqua di gio','acqua di giò'], vibes: ['aquatic & light','fresh & clean'], occasions: ['everyday / school','casual hangout','sports / gym','office / work'], temps: ['hot','warm'], tods: ['morning','afternoon'] },
-    { keys: ['acqua di parma','cedro'],  vibes: ['fresh & clean','aquatic & light'], occasions: ['everyday / school','casual hangout'],                  temps: ['hot','warm'],         tods: ['morning','afternoon'] },
+    { keys: ['acqua di gio','acqua di giò','profumo'], vibes: ['aquatic & light','fresh & clean','sophisticated & classic'], occasions: ['everyday / school','casual hangout','sports / gym','office / work','special event'], temps: ['hot','warm','mild'], tods: ['morning','afternoon','evening'] },
+    { keys: ['acqua di parma','cedro'],  vibes: ['fresh & clean','aquatic & light','sophisticated & classic'], occasions: ['everyday / school','casual hangout','office / work'], temps: ['hot','warm','mild'], tods: ['morning','afternoon'] },
     { keys: ['verset harry','harry'],    vibes: ['fresh & clean','aquatic & light'], occasions: ['casual hangout','sports / gym'],                       temps: ['hot','warm'],         tods: ['morning','afternoon'] },
-    { keys: ['bvlgari','bulgari','pour homme'], vibes: ['fresh & clean','woody & warm'], occasions: ['everyday / school','office / work','casual hangout'], temps: ['warm','mild','cool'], tods: ['morning','afternoon','evening'] },
-    { keys: ['mandarine','hermès','hermes eau'], vibes: ['fresh & clean','aquatic & light'], occasions: ['casual hangout','everyday / school'],           temps: ['hot','warm','mild'],   tods: ['morning','afternoon'] },
+    { keys: ['bvlgari','bulgari','pour homme'], vibes: ['fresh & clean','woody & warm','sophisticated & classic'], occasions: ['everyday / school','office / work','casual hangout'], temps: ['warm','mild','cool'], tods: ['morning','afternoon','evening'] },
+    { keys: ['mandarine','hermès','hermes eau'], vibes: ['fresh & clean','aquatic & light','sophisticated & classic'], occasions: ['casual hangout','everyday / school','office / work'], temps: ['hot','warm','mild'], tods: ['morning','afternoon'] },
+    { keys: ['layton','parfums de marly'], vibes: ['sophisticated & classic','woody & warm'], occasions: ['office / work','special event','everyday / school'], temps: ['warm','mild','cool'], tods: ['morning','afternoon','evening'] },
+    { keys: ['pegasus','de marly'],       vibes: ['sophisticated & classic','woody & warm'], occasions: ['special event','date night','office / work'],  temps: ['warm','mild','cool'], tods: ['afternoon','evening'] },
+    { keys: ['tom ford','tf noir'],       vibes: ['sophisticated & classic','spicy & bold'],  occasions: ['special event','date night'],                  temps: ['cool','mild'],        tods: ['evening','night out'] },
   ];
 
   /* Normalise a string for matching */
@@ -4757,12 +4773,13 @@ const FragranceAdvisor = (() => {
 
     /* scent-note profiles by vibe */
     const noteMap = {
-      'Fresh & clean':     ['Citrus', 'Aquatic', 'White musk', 'Light woods'],
-      'Woody & warm':      ['Cedarwood', 'Sandalwood', 'Vetiver', 'Amber'],
-      'Sweet & gourmand':  ['Vanilla', 'Tonka bean', 'Caramel', 'Benzoin'],
-      'Spicy & bold':      ['Black pepper', 'Cardamom', 'Oud', 'Leather'],
-      'Aquatic & light':   ['Sea breeze', 'Marine accord', 'Bergamot', 'Light musk'],
-      'Floral & soft':     ['Rose', 'Jasmine', 'Peony', 'Soft musk'],
+      'Fresh & clean':          ['Citrus', 'Aquatic', 'White musk', 'Light woods'],
+      'Woody & warm':           ['Cedarwood', 'Sandalwood', 'Vetiver', 'Amber'],
+      'Sweet & gourmand':       ['Vanilla', 'Tonka bean', 'Caramel', 'Benzoin'],
+      'Spicy & bold':           ['Black pepper', 'Cardamom', 'Oud', 'Leather'],
+      'Aquatic & light':        ['Sea breeze', 'Marine accord', 'Bergamot', 'Light musk'],
+      'Floral & soft':          ['Rose', 'Jasmine', 'Peony', 'Soft musk'],
+      'Sophisticated & classic':['Cedar', 'Vetiver', 'Bergamot', 'Ambroxan', 'Incense'],
     };
     const notes = noteMap[vibe] || ['Citrus', 'Musk', 'Woods'];
 
@@ -6105,13 +6122,14 @@ const SignatureScent = (() => {
     'Sporty':        ['Fresh & Citrus','Aquatic'],
     'Minimal':       ['Aquatic','Woody','Fresh & Citrus'],
     'Formal':        ['Woody','Spicy & Oriental','Floral'],
+    'Old Money':     ['Woody','Woody Aromatic','Spicy & Oriental','Fresh & Citrus'],
   };
 
   const QUESTIONS = [
     { id:'personality', emoji:'🎭', text:'How would you describe your personality?',
       type:'chips', options:['Confident & bold','Calm & mysterious','Energetic & fun','Romantic & sensitive','Sophisticated & elegant'] },
     { id:'style',       emoji:'👔', text:"What's your daily style?",
-      type:'chips', options:['Streetwear','Smart casual','Sporty','Minimal','Formal'] },
+      type:'chips', options:['Streetwear','Smart casual','Sporty','Minimal','Formal','Old Money'] },
     { id:'tod',         emoji:'🌅', text:'When do you mostly wear fragrance?',
       type:'chips', options:['Morning','All day','Evening','Night out'] },
     { id:'climate',     emoji:'🌡️', text:'Where do you live / what climate?',
@@ -6225,6 +6243,14 @@ const SignatureScent = (() => {
       'Sophisticated & elegant':['Sophisticated','Timeless','Opulent','Luxurious','British'],
     };
     if(p.mood&&(moodMap[a.personality]||[]).includes(p.mood)) score+=2;
+    // Old Money: boost classic/sophisticated moods, penalise sporty/sweet/loud
+    if(a.style==='Old Money'){
+      if(['Sophisticated','Timeless','Earthy','Refined','Classic','British','Deep Aquatic'].includes(p.mood)) score+=4;
+      if(['Sporty','Flashy','Victorious','Urban','Casual'].includes(p.mood)) score-=3;
+      if(p.family==='Sweet & Gourmand'||p.family==='Fresh & Citrus') score-=2;
+      if(['pdm-layton','pdm-pegasus','bdc-edp','adg-profumo-2','adg-prof','tf-noir','tf-oud',
+          'bdc-edt','terre-hermes','prada-homme','silver-mtn','penhaligon-bb'].includes(p.id)) score+=4;
+    }
     return score;
   }
 
@@ -6236,6 +6262,7 @@ const SignatureScent = (() => {
       'Sporty':       'Active and energised, always in motion.',
       'Minimal':      'Clean lines, no excess, pure intention.',
       'Formal':       'Commanding presence, dressed for every room.',
+      'Old Money':    'Quiet luxury — tailored, timeless, never loud.',
     }[a.style]||'';
     const todNote={
       'Morning':    'You like a fresh start that carries through the day.',
