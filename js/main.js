@@ -4687,14 +4687,73 @@ const FragranceAdvisor = (() => {
   }
 
   /* ── fragrance engine ── */
+  /* ── Fragrance knowledge base ──────────────────────────────────────────
+     Each entry maps keywords (lower-case substrings of a fragrance name)
+     to a profile used for scoring. The scorer tests every entry against
+     the user's typed name with a simple substring/token match.
+  ── */
+  const FRAG_DB = [
+    { keys: ['bleu de chanel'],          vibes: ['fresh & clean','woody & warm'],    occasions: ['everyday / school','office / work','special event'], temps: ['warm','mild','cool'], tods: ['morning','afternoon','evening'] },
+    { keys: ['born in roma','valentino'], vibes: ['spicy & bold','woody & warm'],     occasions: ['date night','special event'],                         temps: ['mild','cool'],        tods: ['evening','night out'] },
+    { keys: ['coral fantasy'],           vibes: ['aquatic & light','fresh & clean'], occasions: ['everyday / school','casual hangout','sports / gym'],   temps: ['hot','warm'],         tods: ['morning','afternoon'] },
+    { keys: ['le beau','jpg le beau'],   vibes: ['fresh & clean','aquatic & light'], occasions: ['casual hangout','everyday / school'],                  temps: ['hot','warm'],         tods: ['morning','afternoon'] },
+    { keys: ['la male le parfum'],       vibes: ['sweet & gourmand','spicy & bold'], occasions: ['date night','special event'],                          temps: ['mild','cool'],        tods: ['evening','night out'] },
+    { keys: ['ultra male'],              vibes: ['sweet & gourmand'],                occasions: ['date night','special event'],                          temps: ['cool'],               tods: ['night out'] },
+    { keys: ['la male elixir','elixir'], vibes: ['woody & warm','sweet & gourmand'], occasions: ['date night','special event'],                          temps: ['cool'],               tods: ['evening','night out'] },
+    { keys: ['212 forever','forever young','carolina herrera'], vibes: ['fresh & clean','aquatic & light'], occasions: ['everyday / school','casual hangout','sports / gym'], temps: ['hot','warm'], tods: ['morning','afternoon'] },
+    { keys: ['sauvage','dior sauvage'],  vibes: ['fresh & clean','spicy & bold'],    occasions: ['everyday / school','casual hangout','office / work','special event'], temps: ['warm','mild','cool'], tods: ['morning','afternoon','evening'] },
+    { keys: ['ysl y','y edt','y edp'],   vibes: ['fresh & clean','woody & warm'],    occasions: ['everyday / school','casual hangout','office / work'],  temps: ['warm','mild','cool'], tods: ['morning','afternoon','evening'] },
+    { keys: ['stronger with you','intensely'], vibes: ['sweet & gourmand','woody & warm'], occasions: ['date night','special event','office / work'],    temps: ['mild','cool'],        tods: ['evening','night out'] },
+    { keys: ['acqua di gio','acqua di giò'], vibes: ['aquatic & light','fresh & clean'], occasions: ['everyday / school','casual hangout','sports / gym','office / work'], temps: ['hot','warm'], tods: ['morning','afternoon'] },
+    { keys: ['acqua di parma','cedro'],  vibes: ['fresh & clean','aquatic & light'], occasions: ['everyday / school','casual hangout'],                  temps: ['hot','warm'],         tods: ['morning','afternoon'] },
+    { keys: ['verset harry','harry'],    vibes: ['fresh & clean','aquatic & light'], occasions: ['casual hangout','sports / gym'],                       temps: ['hot','warm'],         tods: ['morning','afternoon'] },
+    { keys: ['bvlgari','bulgari','pour homme'], vibes: ['fresh & clean','woody & warm'], occasions: ['everyday / school','office / work','casual hangout'], temps: ['warm','mild','cool'], tods: ['morning','afternoon','evening'] },
+    { keys: ['mandarine','hermès','hermes eau'], vibes: ['fresh & clean','aquatic & light'], occasions: ['casual hangout','everyday / school'],           temps: ['hot','warm','mild'],   tods: ['morning','afternoon'] },
+  ];
+
+  /* Normalise a string for matching */
+  function normStr(s) { return s.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim(); }
+
+  /* Return the DB profile that best matches a typed fragrance name, or null */
+  function lookupFrag(name) {
+    const n = normStr(name);
+    // Exact or substring key match first
+    for (const entry of FRAG_DB) {
+      if (entry.keys.some(k => n.includes(k) || k.includes(n))) return entry;
+    }
+    // Token overlap fallback (≥1 meaningful token matches)
+    const tokens = n.split(' ').filter(t => t.length > 3);
+    for (const entry of FRAG_DB) {
+      if (tokens.some(tok => entry.keys.some(k => k.includes(tok)))) return entry;
+    }
+    return null;
+  }
+
+  /* Score a fragrance name against the user's chosen occasion/temp/tod/vibe */
+  function scoreOwned(name, occasion, temp, tod, vibe) {
+    const profile = lookupFrag(name);
+    if (!profile) return 0; // unknown → neutral
+
+    const occ = occasion.toLowerCase();
+    const tmp = temp.toLowerCase();    // 'hot (30°c+)' etc.
+    const t   = tod.toLowerCase();
+    const v   = vibe.toLowerCase();
+
+    let score = 0;
+    if (profile.vibes.some(pv => pv.toLowerCase() === v))            score += 4;
+    if (profile.occasions.some(po => occ.includes(po.toLowerCase()) || po.toLowerCase().includes(occ))) score += 3;
+    if (profile.temps.some(pt => tmp.startsWith(pt)))                score += 2;
+    if (profile.tods.some(pt => t.startsWith(pt.toLowerCase())))     score += 2;
+
+    return score;
+  }
+
   function buildFragResult(a) {
-    const occasion = a.occasion  || 'Casual hangout';
+    const occasion = a.occasion    || 'Casual hangout';
     const temp     = a.temperature || 'Warm (22–30°C)';
-    const tod      = a.timeofday || 'Afternoon';
-    const vibe     = a.vibe     || 'Fresh & clean';
-    const hot  = temp.startsWith('Hot');
-    const cool = temp.startsWith('Cool') || temp.startsWith('Mild');
-    const evening = tod === 'Evening' || tod === 'Night out';
+    const tod      = a.timeofday   || 'Afternoon';
+    const vibe     = a.vibe        || 'Fresh & clean';
+    const ownedRaw = (a.owned || '').trim();
 
     /* scent-note profiles by vibe */
     const noteMap = {
@@ -4707,57 +4766,37 @@ const FragranceAdvisor = (() => {
     };
     const notes = noteMap[vibe] || ['Citrus', 'Musk', 'Woods'];
 
-    /* fragrance pick logic */
-    const fragMatrix = {
-      'Fresh & clean': {
-        hot:     { day: 'Acqua di Gio – Giorgio Armani', night: 'Bleu de Chanel EDT' },
-        cool:    { day: 'CK One – Calvin Klein',          night: 'Dior Sauvage EDT'  },
-      },
-      'Woody & warm': {
-        hot:     { day: 'Tom Ford Oud Wood',          night: 'Aventus – Creed'         },
-        cool:    { day: 'Terre d\'Hermès',             night: 'Dior Fahrenheit'         },
-      },
-      'Sweet & gourmand': {
-        hot:     { day: 'Thierry Mugler A*Men',       night: 'La Nuit de L\'Homme – YSL' },
-        cool:    { day: 'Paco Rabanne 1 Million',      night: 'Viktor & Rolf Spicebomb'   },
-      },
-      'Spicy & bold': {
-        hot:     { day: 'Spicebomb Extreme – V&R',    night: 'Tom Ford Black Orchid'  },
-        cool:    { day: 'Ambre Nuit – Dior',           night: 'Le Male – JPG'          },
-      },
-      'Aquatic & light': {
-        hot:     { day: 'Davidoff Cool Water',        night: 'Issey Miyake L\'Eau d\'Issey' },
-        cool:    { day: 'Polo Blue – Ralph Lauren',    night: 'Versace Pour Homme'            },
-      },
-      'Floral & soft': {
-        hot:     { day: 'Light Blue – Dolce & Gabbana', night: 'Coco Mademoiselle – Chanel' },
-        cool:    { day: 'Flowerbomb – Viktor & Rolf',   night: 'Black Opium – YSL'           },
-      },
-    };
-
-    const matrix = fragMatrix[vibe] || fragMatrix['Fresh & clean'];
-    const slot   = hot ? matrix.hot : matrix.cool;
-    const topPick = evening ? slot.night : slot.day;
-
-    /* alternatives */
-    const altMap = {
-      'Fresh & clean':    ['Versace Man Eau Fraîche', 'Bvlgari Aqva', 'L\'Eau d\'Issey'],
-      'Woody & warm':     ['Sauvage EDP – Dior', 'Encre Noire – Lalique', 'Santal 33 – Le Labo'],
-      'Sweet & gourmand': ['Invictus – Paco Rabanne', 'Million Lucky – PR', 'Eros – Versace'],
-      'Spicy & bold':     ['Oud for Greatness – Initio', 'Black – Bulgari', 'Eros Flame – Versace'],
-      'Aquatic & light':  ['Homme Sport – Chanel', 'Allure Homme – Chanel', 'Blue Label – Burberry'],
-      'Floral & soft':    ['La Vie est Belle – Lancôme', 'Miss Dior Blooming', 'Daisy – Marc Jacobs'],
-    };
-    const alternatives = (altMap[vibe] || ['Try a local niche boutique for unique picks']).slice(0, 3);
-
     /* application tip */
     const tempTips = {
-      'Hot (30°C+)':     'In heat, apply to pulse points (wrists, neck) — go lighter with 1–2 sprays; fragrance amplifies in warmth.',
-      'Warm (22–30°C)':  '2–3 sprays on pulse points is ideal. Warm weather lets the top notes really shine.',
-      'Mild (15–22°C)':  'Spray on clothing and skin — 3 sprays is a sweet spot for lasting projection.',
+      'Hot (30°C+)':       'In heat, apply to pulse points (wrists, neck) — go lighter with 1–2 sprays; fragrance amplifies in warmth.',
+      'Warm (22–30°C)':    '2–3 sprays on pulse points is ideal. Warm weather lets the top notes really shine.',
+      'Mild (15–22°C)':    'Spray on clothing and skin — 3 sprays is a sweet spot for lasting projection.',
       'Cool (under 15°C)': 'Cold air dampens sillage — apply generously (4–5 sprays) on clothes and neck for best diffusion.',
     };
     const tip = tempTips[temp] || 'Apply to pulse points and let the fragrance develop on your skin.';
+
+    /* ── Parse owned list ── */
+    const ownedList = (ownedRaw === '(none listed)' || !ownedRaw)
+      ? []
+      : ownedRaw.split(',').map(s => s.trim()).filter(Boolean);
+
+    /* ── If nothing listed: generic fallback (no collection to pick from) ── */
+    if (!ownedList.length) {
+      return {
+        topPick: 'Add your fragrances in question 1 for a personalised pick!',
+        alternatives: ['Type your collection separated by commas', 'e.g. Bleu de Chanel, Dior Sauvage, Acqua di Gio'],
+        notes,
+        tip,
+      };
+    }
+
+    /* ── Score every owned fragrance and rank ── */
+    const ranked = ownedList
+      .map(name => ({ name, score: scoreOwned(name, occasion, temp, tod, vibe) }))
+      .sort((a, b) => b.score - a.score);
+
+    const topPick      = ranked[0].name;
+    const alternatives = ranked.slice(1, 4).map(r => r.name);
 
     return { topPick, alternatives, notes, tip };
   }
