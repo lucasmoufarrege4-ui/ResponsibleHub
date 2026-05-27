@@ -3400,3 +3400,48 @@ body.light-mode .sched-action-btn {
   cursor: pointer; transition: border-color .18s, background .18s;
 }
 .style-restart-btn:hover { border-color: var(--forest-mid); background: var(--forest-mid); color: #fff; }
+
+/* ── Perfume Finder result card ───────────────────────────────────────── */
+.pfinder-result-card {
+  background: linear-gradient(145deg, #1a2a1a 0%, #2d4a2d 60%, #1f3a2f 100%);
+  border-radius: 16px; padding: 1.1rem 1rem 1rem; color: #fff;
+  margin-bottom: .8rem;
+}
+.pfinder-result-title {
+  font-size: 1.05rem; font-weight: 800; margin-bottom: .85rem;
+  display: flex; align-items: center; gap: .4rem;
+}
+
+.pfinder-pick {
+  border-radius: 12px; padding: .75rem .85rem; margin-bottom: .6rem;
+  background: rgba(255,255,255,.09);
+}
+.pfinder-pick--gold   { border-left: 3px solid #ffd700; }
+.pfinder-pick--silver { border-left: 3px solid #c0c0c0; }
+.pfinder-pick--bronze { border-left: 3px solid #cd7f32; }
+
+.pfinder-pick-hdr {
+  display: flex; align-items: baseline; gap: .45rem; margin-bottom: .2rem;
+  flex-wrap: wrap;
+}
+.pfinder-medal   { font-size: 1rem; flex-shrink: 0; }
+.pfinder-pick-name  { font-size: .92rem; font-weight: 800; }
+.pfinder-pick-brand { font-size: .75rem; opacity: .7; font-weight: 500; }
+.pfinder-pick-price {
+  font-size: .74rem; font-weight: 700;
+  background: rgba(255,255,255,.15); display: inline-block;
+  padding: .15rem .55rem; border-radius: 20px; margin-bottom: .35rem;
+}
+.pfinder-pick-why { font-size: .8rem; opacity: .88; line-height: 1.45; margin-bottom: .4rem; }
+
+.pfinder-tags { display: flex; flex-wrap: wrap; gap: .3rem; }
+.pfinder-tag {
+  font-size: .72rem; font-weight: 600;
+  background: rgba(255,255,255,.12); border-radius: 20px;
+  padding: .18rem .55rem;
+}
+
+.pfinder-tip {
+  margin-top: .65rem; font-size: .8rem; opacity: .82; line-height: 1.45;
+  border-top: 1px solid rgba(255,255,255,.18); padding-top: .55rem;
+}

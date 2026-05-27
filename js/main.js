@@ -4871,6 +4871,476 @@ function renderMultiChips(area, options, min, onConfirm) {
 
 
 /* ── Style page init ─────────────────────────────────────────────────── */
+/* ── Perfume Finder ──────────────────────────────────────────────────── */
+const PerfumeFinder = (() => {
+
+  let _weatherTemp = null;
+
+  /* ── 40+ perfume database ────────────────────────────────────────── */
+  const DB = [
+    // ── Fresh & Citrus ────────────────────────────────────────────────
+    { name:'Acqua di Gio EDT', brand:'Giorgio Armani', price:'R$350–500', priceKey:'mid',
+      family:'Fresh & citrus', occasions:['Daily wear','Work/school','Sport'],
+      climates:['Hot & humid','Warm'], tods:['Morning','All day'],
+      tags:['Aquatic','Citrus','Marine','Musk'],
+      why:'An icon for hot days — light, aquatic, effortless.' },
+    { name:'Acqua di Parma Colonia', brand:'Acqua di Parma', price:'R$800–1200', priceKey:'premium',
+      family:'Fresh & citrus', occasions:['Daily wear','Work/school','Special event'],
+      climates:['Hot & humid','Warm','Mixed seasons'], tods:['Morning','All day'],
+      tags:['Citrus','Lavender','Rosemary','Clean'],
+      why:'Italian elegance — a refined citrus that works from desk to dinner.' },
+    { name:'Davidoff Cool Water EDT', brand:'Davidoff', price:'R$120–200', priceKey:'budget',
+      family:'Fresh & citrus', occasions:['Daily wear','Sport'],
+      climates:['Hot & humid','Warm'], tods:['Morning','All day'],
+      tags:['Aquatic','Mint','Lavender','Musk'],
+      why:'Classic and affordable — fresh aquatic with great longevity for sport.' },
+    { name:'212 Men NYC EDT', brand:'Carolina Herrera', price:'R$250–400', priceKey:'mid',
+      family:'Fresh & citrus', occasions:['Daily wear','Work/school','Going out'],
+      climates:['Hot & humid','Warm','Mixed seasons'], tods:['Morning','All day','Evening'],
+      tags:['Citrus','Apple','Sandalwood','White musk'],
+      why:'Urban, versatile and energetic — built for city life.' },
+    { name:'Versace Man Eau Fraîche', brand:'Versace', price:'R$220–380', priceKey:'mid',
+      family:'Fresh & citrus', occasions:['Daily wear','Work/school','Sport'],
+      climates:['Hot & humid','Warm'], tods:['Morning','All day'],
+      tags:['Citrus','Lemon','Musk','Cedar'],
+      why:'Breezy Italian freshness — one of the best warm-weather daily fragrances.' },
+    { name:'Polo Blue EDT', brand:'Ralph Lauren', price:'R$280–420', priceKey:'mid',
+      family:'Fresh & citrus', occasions:['Daily wear','Sport','Going out'],
+      climates:['Hot & humid','Warm'], tods:['Morning','All day'],
+      tags:['Aquatic','Melon','Sage','Suede'],
+      why:'Classic American freshness with a sporty edge — universally liked.' },
+    { name:'Issey Miyake L\'Eau d\'Issey EDT', brand:'Issey Miyake', price:'R$250–400', priceKey:'mid',
+      family:'Fresh & citrus', occasions:['Daily wear','Work/school'],
+      climates:['Hot & humid','Warm','Mixed seasons'], tods:['Morning','All day'],
+      tags:['Aquatic','Yuzu','Cyclamen','Musk'],
+      why:'Minimalist and clean — the scent of pure water on skin.' },
+
+    // ── Woody & Earthy ────────────────────────────────────────────────
+    { name:'Bleu de Chanel EDP', brand:'Chanel', price:'R$700–1000', priceKey:'premium',
+      family:'Woody & earthy', occasions:['Work/school','Going out','Special event','Date night'],
+      climates:['Warm','Mixed seasons','Cool'], tods:['All day','Evening'],
+      tags:['Woody','Cedar','Vetiver','Amber'],
+      why:'Timeless sophistication — works from boardroom to black-tie.' },
+    { name:'Dior Sauvage EDT', brand:'Dior', price:'R$600–900', priceKey:'premium',
+      family:'Woody & earthy', occasions:['Daily wear','Work/school','Going out','Date night'],
+      climates:['Warm','Mixed seasons','Cool'], tods:['All day','Evening'],
+      tags:['Fresh','Pepper','Ambroxan','Cedar'],
+      why:'The world\'s best-selling fragrance — fresh woody powerhouse.' },
+    { name:'YSL Y EDP', brand:'Yves Saint Laurent', price:'R$550–800', priceKey:'premium',
+      family:'Woody & earthy', occasions:['Work/school','Going out','Special event'],
+      climates:['Warm','Mixed seasons','Cool'], tods:['All day','Evening'],
+      tags:['Apple','Ginger','Cedar','Ambergris'],
+      why:'Modern, magnetic and long-lasting — the sophisticated younger crowd.' },
+    { name:'Terre d\'Hermès EDT', brand:'Hermès', price:'R$700–1000', priceKey:'premium',
+      family:'Woody & earthy', occasions:['Work/school','Special event'],
+      climates:['Mixed seasons','Cool'], tods:['All day','Evening'],
+      tags:['Flint','Orange','Vetiver','Cedar'],
+      why:'Earthy and mineral — distinguished and effortlessly intellectual.' },
+    { name:'Encre Noire EDT', brand:'Lalique', price:'R$250–400', priceKey:'mid',
+      family:'Woody & earthy', occasions:['Going out','Date night','Special event'],
+      climates:['Mixed seasons','Cool'], tods:['Evening','Night'],
+      tags:['Vetiver','Dark','Smoky','Musk'],
+      why:'Dark vetiver masterpiece — smells expensive at an accessible price.' },
+    { name:'Bvlgari Pour Homme EDT', brand:'Bvlgari', price:'R$320–500', priceKey:'mid',
+      family:'Woody & earthy', occasions:['Daily wear','Work/school'],
+      climates:['Warm','Mixed seasons'], tods:['Morning','All day'],
+      tags:['Tea','Cedar','Musk','Clean'],
+      why:'Clean and refined — the ultimate office/school safe choice.' },
+    { name:'Azzaro Wanted EDT', brand:'Azzaro', price:'R$220–380', priceKey:'mid',
+      family:'Woody & earthy', occasions:['Going out','Date night'],
+      climates:['Warm','Mixed seasons'], tods:['Evening','Night'],
+      tags:['Cardamom','Juniper','Cedar','Vetiver'],
+      why:'Bold and charismatic — magnetic on a night out.' },
+
+    // ── Sweet & Gourmand ──────────────────────────────────────────────
+    { name:'Paco Rabanne 1 Million EDT', brand:'Paco Rabanne', price:'R$350–550', priceKey:'mid',
+      family:'Sweet & gourmand', occasions:['Going out','Date night','Special event'],
+      climates:['Mixed seasons','Cool'], tods:['Evening','Night'],
+      tags:['Cinnamon','Leather','Amber','Gold'],
+      why:'Bold, flashy and addictive — perfect for nights out.' },
+    { name:'Viktor & Rolf Spicebomb', brand:'Viktor & Rolf', price:'R$450–700', priceKey:'premium',
+      family:'Sweet & gourmand', occasions:['Going out','Date night'],
+      climates:['Cool'], tods:['Evening','Night'],
+      tags:['Chili','Cinnamon','Vetiver','Tobacco'],
+      why:'Explosive spicy-sweet bomb — unforgettable in the cold.' },
+    { name:'Stronger With You Intensely EDP', brand:'Armani', price:'R$500–750', priceKey:'premium',
+      family:'Sweet & gourmand', occasions:['Date night','Special event','Going out'],
+      climates:['Mixed seasons','Cool'], tods:['Evening','Night'],
+      tags:['Vanilla','Chestnut','Cedarwood','Musk'],
+      why:'Warm, sweet and incredibly seductive — the ultimate date night scent.' },
+    { name:'Invictus EDT', brand:'Paco Rabanne', price:'R$350–550', priceKey:'mid',
+      family:'Sweet & gourmand', occasions:['Sport','Going out','Daily wear'],
+      climates:['Hot & humid','Warm'], tods:['Morning','All day'],
+      tags:['Grapefruit','Marine','Ambergris','Guaiac'],
+      why:'Sporty, fresh-sweet and victorious — wildly popular for good reason.' },
+    { name:'Eros EDT', brand:'Versace', price:'R$300–500', priceKey:'mid',
+      family:'Sweet & gourmand', occasions:['Going out','Date night'],
+      climates:['Warm','Mixed seasons'], tods:['Evening','Night'],
+      tags:['Mint','Apple','Tonka','Vanilla'],
+      why:'Fresh-sweet powerhouse — enormous projection and compliment-getter.' },
+    { name:'Valentino Born in Roma Uomo EDP', brand:'Valentino', price:'R$600–900', priceKey:'premium',
+      family:'Sweet & gourmand', occasions:['Special event','Date night','Going out'],
+      climates:['Mixed seasons','Cool'], tods:['Evening','Night'],
+      tags:['Bourbon','Vanilla','Vetiver','Smoky'],
+      why:'Artisanal warmth and depth — a special-occasion statement.' },
+    { name:'La Nuit de L\'Homme EDT', brand:'YSL', price:'R$500–750', priceKey:'premium',
+      family:'Sweet & gourmand', occasions:['Date night','Special event'],
+      climates:['Cool','Mixed seasons'], tods:['Evening','Night'],
+      tags:['Cardamom','Cedar','Coumarin','Lavender'],
+      why:'Seductive and addictive — one of the greatest date-night fragrances.' },
+
+    // ── Spicy & Oriental ──────────────────────────────────────────────
+    { name:'Dior Fahrenheit EDT', brand:'Dior', price:'R$600–900', priceKey:'premium',
+      family:'Spicy & oriental', occasions:['Special event','Date night','Going out'],
+      climates:['Cool','Mixed seasons'], tods:['Evening','Night'],
+      tags:['Leather','Violet','Vetiver','Amber'],
+      why:'Daring, vintage and powerful — for men who own the room.' },
+    { name:'Le Male Le Parfum', brand:'Jean Paul Gaultier', price:'R$500–750', priceKey:'premium',
+      family:'Spicy & oriental', occasions:['Date night','Special event'],
+      climates:['Cool'], tods:['Evening','Night'],
+      tags:['Lavender','Vanilla','Amber','Leather'],
+      why:'Intense and deeply masculine — the definitive evening oriental.' },
+    { name:'Spicebomb Extreme EDP', brand:'Viktor & Rolf', price:'R$500–800', priceKey:'premium',
+      family:'Spicy & oriental', occasions:['Date night','Special event'],
+      climates:['Cool'], tods:['Evening','Night'],
+      tags:['Lava','Tobacco','Vanilla','Black pepper'],
+      why:'Scorching oriental heat — best worn on cold nights.' },
+    { name:'Tom Ford Noir EDP', brand:'Tom Ford', price:'R$900–1400', priceKey:'luxury',
+      family:'Spicy & oriental', occasions:['Special event','Date night'],
+      climates:['Cool','Mixed seasons'], tods:['Evening','Night'],
+      tags:['Myrrh','Rose','Oud','Ambergris'],
+      why:'Luxurious, dark and sensual — when nothing but the best will do.' },
+    { name:'Guerlain Habit Rouge EDT', brand:'Guerlain', price:'R$500–800', priceKey:'premium',
+      family:'Spicy & oriental', occasions:['Special event','Going out'],
+      climates:['Cool','Mixed seasons'], tods:['Evening','Night'],
+      tags:['Citrus','Incense','Leather','Vanilla'],
+      why:'The original "oriental" — refined, historic and utterly distinctive.' },
+    { name:'Azzaro Pour Homme EDT', brand:'Azzaro', price:'R$220–380', priceKey:'mid',
+      family:'Spicy & oriental', occasions:['Daily wear','Work/school'],
+      climates:['Mixed seasons','Cool'], tods:['All day','Evening'],
+      tags:['Lavender','Anise','Basil','Oak moss'],
+      why:'Old-school fougère at a bargain price — deeply underrated.' },
+    { name:'La Male Elixir EDP', brand:'Jean Paul Gaultier', price:'R$500–700', priceKey:'premium',
+      family:'Spicy & oriental', occasions:['Date night','Special event'],
+      climates:['Cool'], tods:['Evening','Night'],
+      tags:['Lavender','Mint','Vanilla','Honey'],
+      why:'Polarising and addictive — intensely sweet spicy for cold nights.' },
+
+    // ── Floral ────────────────────────────────────────────────────────
+    { name:'Chanel Allure Homme EDT', brand:'Chanel', price:'R$750–1100', priceKey:'premium',
+      family:'Floral', occasions:['Work/school','Special event','Daily wear'],
+      climates:['Warm','Mixed seasons'], tods:['All day','Evening'],
+      tags:['Vanilla','Mandarin','Iris','Vetiver'],
+      why:'Chanel\'s most elegant everyday — subtle floral with timeless class.' },
+    { name:'Givenchy Gentlemen Only EDT', brand:'Givenchy', price:'R$400–600', priceKey:'mid',
+      family:'Floral', occasions:['Work/school','Going out'],
+      climates:['Warm','Mixed seasons'], tods:['All day','Evening'],
+      tags:['Iris','Geranium','Patchouli','Vetiver'],
+      why:'Refined and modern — a sophisticated floral for the confident man.' },
+    { name:'Hermes Eau de Mandarine Ambrée', brand:'Hermès', price:'R$450–700', priceKey:'mid',
+      family:'Floral', occasions:['Daily wear','Work/school'],
+      climates:['Hot & humid','Warm','Mixed seasons'], tods:['Morning','All day'],
+      tags:['Mandarine','Amber','Musk','Light woods'],
+      why:'Effortlessly warm citrus-floral — unique and conversations-starting.' },
+    { name:'Penhaligon\'s Blenheim Bouquet', brand:'Penhaligon\'s', price:'R$900–1400', priceKey:'luxury',
+      family:'Floral', occasions:['Special event','Work/school'],
+      climates:['Warm','Mixed seasons'], tods:['Morning','All day'],
+      tags:['Lime','Pine','Black pepper','Musk'],
+      why:'British royalty in a bottle — crisp, floral-fresh and utterly refined.' },
+
+    // ── Aquatic ───────────────────────────────────────────────────────
+    { name:'Acqua di Gio Profumo EDP', brand:'Giorgio Armani', price:'R$600–900', priceKey:'premium',
+      family:'Aquatic', occasions:['Going out','Work/school','Special event'],
+      climates:['Hot & humid','Warm','Mixed seasons'], tods:['All day','Evening'],
+      tags:['Incense','Marine','Patchouli','Musk'],
+      why:'The grown-up Acqua di Gio — smoky aquatic with much more depth.' },
+    { name:'Bleu de Chanel EDT', brand:'Chanel', price:'R$650–950', priceKey:'premium',
+      family:'Aquatic', occasions:['Daily wear','Work/school','Going out'],
+      climates:['Warm','Mixed seasons'], tods:['Morning','All day'],
+      tags:['Citrus','Grapefruit','Incense','Cedar'],
+      why:'Fresh and refined with a woody dry-down — iconic French elegance.' },
+    { name:'Joop! Homme EDT', brand:'Joop!', price:'R$150–250', priceKey:'budget',
+      family:'Aquatic', occasions:['Going out','Date night'],
+      climates:['Warm','Mixed seasons'], tods:['Evening','Night'],
+      tags:['Lavender','Jasmine','Tobacco','Vanilla'],
+      why:'Budget beast — rich, sweet-aquatic and surprisingly long-lasting.' },
+    { name:'Nautica Voyage EDT', brand:'Nautica', price:'R$120–200', priceKey:'budget',
+      family:'Aquatic', occasions:['Daily wear','Sport'],
+      climates:['Hot & humid','Warm'], tods:['Morning','All day'],
+      tags:['Apple','Lotus','Aquatic','Cedar'],
+      why:'Wallet-friendly aquatic freshness — punches way above its price.' },
+    { name:'Versace Pour Homme EDT', brand:'Versace', price:'R$280–450', priceKey:'mid',
+      family:'Aquatic', occasions:['Daily wear','Work/school','Going out'],
+      climates:['Hot & humid','Warm'], tods:['Morning','All day'],
+      tags:['Citrus','Hyacinth','Neroli','Cedar'],
+      why:'Mediterranean freshness — clean, masculine and universally appealing.' },
+    { name:'Bulgari Aqva Marine EDT', brand:'Bvlgari', price:'R$300–500', priceKey:'mid',
+      family:'Aquatic', occasions:['Daily wear','Sport'],
+      climates:['Hot & humid','Warm'], tods:['Morning','All day'],
+      tags:['Seawater','Posidonia','Musk','Amber'],
+      why:'Deep-sea freshness — one of the cleanest aquatics ever made.' },
+    { name:'Dolce & Gabbana Light Blue EDT', brand:'D&G', price:'R$300–480', priceKey:'mid',
+      family:'Aquatic', occasions:['Daily wear','Going out','Date night'],
+      climates:['Hot & humid','Warm'], tods:['All day','Evening'],
+      tags:['Sicilian citrus','Apple','Cedarwood','Musk'],
+      why:'Mediterranean holiday in a bottle — joyful, fresh and approachable.' },
+
+    // ── Extra versatile picks ─────────────────────────────────────────
+    { name:'Prada L\'Homme EDT', brand:'Prada', price:'R$550–800', priceKey:'premium',
+      family:'Floral', occasions:['Work/school','Special event','Daily wear'],
+      climates:['Warm','Mixed seasons','Cool'], tods:['All day','Evening'],
+      tags:['Iris','Amber wood','Sandalwood','Vetiver'],
+      why:'Understated luxury — the gentleman\'s choice that never shouts.' },
+    { name:'Giorgio Armani Acqua di Giò Absolu', brand:'Giorgio Armani', price:'R$600–900', priceKey:'premium',
+      family:'Aquatic', occasions:['Going out','Special event','Date night'],
+      climates:['Warm','Mixed seasons'], tods:['All day','Evening'],
+      tags:['Marine','Patchouli','Incense','Vetiver'],
+      why:'Richer, darker take on the classic — all the compliments, more depth.' },
+    { name:'Narciso Rodriguez For Him EDP', brand:'Narciso Rodriguez', price:'R$500–750', priceKey:'premium',
+      family:'Woody & earthy', occasions:['Date night','Special event','Going out'],
+      climates:['Mixed seasons','Cool'], tods:['Evening','Night'],
+      tags:['Musk','Amber','Vetiver','Cedar'],
+      why:'Smooth, skin-close musk that people lean in to smell — seductive.' },
+    { name:'Maison Margiela Replica Beach Walk', brand:'Maison Margiela', price:'R$750–1100', priceKey:'luxury',
+      family:'Fresh & citrus', occasions:['Daily wear','Going out'],
+      climates:['Hot & humid','Warm'], tods:['Morning','All day'],
+      tags:['Lemon','Bergamot','Coconut','Musk'],
+      why:'Smells exactly like a tropical beach — joyful and unique.' },
+    { name:'Memo Paris African Leather', brand:'Memo Paris', price:'R$1400+', priceKey:'luxury',
+      family:'Spicy & oriental', occasions:['Special event','Date night'],
+      climates:['Cool','Mixed seasons'], tods:['Evening','Night'],
+      tags:['Leather','Saffron','Oud','Vanilla'],
+      why:'Niche statement scent — for when you want to be unforgettable.' },
+  ];
+
+  /* Price key mapping — "No limit" matches everything */
+  const PRICE_MAP = {
+    'Under R$200':  ['budget'],
+    'R$200-500':    ['budget','mid'],
+    'R$500-1000':   ['mid','premium'],
+    'R$1000+':      ['premium','luxury'],
+    'No limit':     ['budget','mid','premium','luxury'],
+  };
+
+  const QUESTIONS = [
+    { id:'budget',   emoji:'💰', text:"What's your budget?",
+      type:'chips', options:['Under R$200','R$200-500','R$500-1000','R$1000+','No limit'] },
+    { id:'occasion', emoji:'🎯', text:"What's the main occasion?",
+      type:'chips', options:['Daily wear','Work/school','Going out','Sport','Special event','Date night'] },
+    { id:'climate',  emoji:'🌡️', text:'What climate do you mostly live in?',
+      type:'chips', options:['Hot & humid','Warm','Mixed seasons','Cool'], autoFill: true },
+    { id:'family',   emoji:'✨', text:'What scent family do you prefer?',
+      type:'chips', options:['Fresh & citrus','Woody & earthy','Sweet & gourmand','Spicy & oriental','Floral','Aquatic'] },
+    { id:'tod',      emoji:'🕐', text:'When do you mostly wear it?',
+      type:'chips', options:['Morning','All day','Evening','Night'] },
+    { id:'reference',emoji:'💭', text:'Any fragrance you already love the style of? (optional)',
+      type:'text',  placeholder:'e.g. something like Bleu de Chanel…' },
+  ];
+
+  let queue = [], answers = {}, currentIdx = 0;
+
+  function tempToClimate(t) {
+    if (t === null) return null;
+    if (t >= 28) return 'Hot & humid';
+    if (t >= 22) return 'Warm';
+    if (t >= 15) return 'Mixed seasons';
+    return 'Cool';
+  }
+
+  function showLauncher() {
+    document.getElementById('pfinder-launcher').classList.remove('hidden');
+    document.getElementById('pfinder-chat-wrap').classList.add('hidden');
+    const r = document.getElementById('pfinder-result');
+    r.classList.add('hidden'); r.innerHTML = '';
+  }
+
+  function start() {
+    queue = QUESTIONS.map(q => ({ ...q }));
+    answers = {}; currentIdx = 0;
+    document.getElementById('pfinder-launcher').classList.add('hidden');
+    const r = document.getElementById('pfinder-result');
+    r.classList.add('hidden'); r.innerHTML = '';
+    document.getElementById('pfinder-chat-wrap').classList.remove('hidden');
+    document.getElementById('pfinder-chat-log').innerHTML = '';
+    document.getElementById('pfinder-chat-answer').innerHTML = '';
+    askNext();
+  }
+
+  function updateProgress() {
+    const pct = (currentIdx / queue.length) * 100;
+    document.getElementById('pfinder-prog-fill').style.width = pct + '%';
+    document.getElementById('pfinder-prog-lbl').textContent =
+      `Question ${Math.min(currentIdx + 1, queue.length)} of ${queue.length}`;
+  }
+
+  function addQ(q) {
+    const log = document.getElementById('pfinder-chat-log');
+    const d = document.createElement('div');
+    d.className = 'chat-bubble chat-q-bubble';
+    d.innerHTML = `<span class="chat-bbl-emoji">${q.emoji}</span><span class="chat-bbl-txt">${q.text}</span>`;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function addA(text) {
+    const log = document.getElementById('pfinder-chat-log');
+    const d = document.createElement('div');
+    d.className = 'chat-bubble chat-a-bubble';
+    d.textContent = text;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function askNext() {
+    if (currentIdx >= queue.length) { finish(); return; }
+    const q = queue[currentIdx];
+    updateProgress();
+    addQ(q);
+
+    // Auto-fill climate from weather
+    if (q.id === 'climate' && _weatherTemp !== null) {
+      const auto = tempToClimate(_weatherTemp);
+      if (auto) {
+        setTimeout(() => submitAnswer(q, auto, `${auto} (São Paulo, auto-detected)`), 380);
+        return;
+      }
+    }
+    renderAnswerArea(q);
+  }
+
+  function renderAnswerArea(q) {
+    const area = document.getElementById('pfinder-chat-answer');
+    area.innerHTML = '';
+    if (q.type === 'chips') {
+      renderChips(area, q.options, false, 1, val => submitAnswer(q, val, val));
+    } else if (q.type === 'text') {
+      area.innerHTML = `
+        <div class="chat-field-row chat-field-row--textarea">
+          <textarea class="chat-field chat-field--textarea" id="pfinder-text-field" rows="2"
+            placeholder="${escHtml(q.placeholder || 'Type here… or leave blank')}"></textarea>
+          <button type="button" class="chat-next-btn" id="pfinder-next-btn">Next →</button>
+        </div>`;
+      const f = area.querySelector('#pfinder-text-field');
+      const b = area.querySelector('#pfinder-next-btn');
+      b.addEventListener('click', () => {
+        const v = f.value.trim() || '(none)';
+        submitAnswer(q, v, v);
+      });
+      setTimeout(() => f.focus(), 80);
+    }
+  }
+
+  function submitAnswer(q, val, label) {
+    answers[q.id] = val;
+    addA(label);
+    document.getElementById('pfinder-chat-answer').innerHTML = '';
+    currentIdx++;
+    setTimeout(askNext, 320);
+  }
+
+  /* ── Recommendation engine ─────────────────────────────────────────── */
+  function scorePerf(p, a) {
+    const budgetKeys  = PRICE_MAP[a.budget] || PRICE_MAP['No limit'];
+    const occ         = a.occasion || '';
+    const climate     = a.climate  || '';
+    const family      = a.family   || '';
+    const tod         = a.tod      || '';
+
+    let score = 0;
+
+    // Hard filter: budget must match
+    if (!budgetKeys.includes(p.priceKey)) return -999;
+
+    // Soft scoring
+    if (p.family.toLowerCase() === family.toLowerCase())            score += 5;
+    if (p.occasions.includes(occ))                                   score += 4;
+    if (p.climates.includes(climate))                                score += 3;
+    if (p.tods.includes(tod))                                        score += 2;
+
+    // Reference fragrance bonus — if any tag or name word overlaps
+    const ref = (a.reference || '').toLowerCase();
+    if (ref && ref !== '(none)') {
+      const refTokens = ref.split(/\W+/).filter(t => t.length > 2);
+      const haystack  = (p.name + ' ' + p.brand + ' ' + p.tags.join(' ')).toLowerCase();
+      if (refTokens.some(t => haystack.includes(t))) score += 3;
+    }
+
+    return score;
+  }
+
+  function buildResult(a) {
+    const ranked = DB
+      .map(p => ({ p, s: scorePerf(p, a) }))
+      .filter(x => x.s > -999)
+      .sort((a, b) => b.s - a.s);
+
+    // If nothing passes budget filter, relax to all
+    const pool = ranked.length ? ranked : DB.map(p => ({ p, s: 0 }));
+
+    const [first, second, third] = pool;
+
+    const tipsByOcc = {
+      'Daily wear':    '💡 Tip: For daily wear buy a 100ml bottle — better value per spray.',
+      'Work/school':   '💡 Tip: Try before you buy at a Sephora or O Boticário store.',
+      'Going out':     '💡 Tip: Department stores often give samples — test overnight before buying.',
+      'Sport':         '💡 Tip: Look for EDT concentration — lighter and better for active use.',
+      'Special event': '💡 Tip: Check Mercado Livre for grey-market prices — often 30–40% cheaper.',
+      'Date night':    '💡 Tip: Apply to chest and neck 30 min before going out for best performance.',
+    };
+    const tip = tipsByOcc[a.occasion] || '💡 Tip: Always test on skin — fragrances smell different on everyone.';
+
+    return { first, second, third, tip };
+  }
+
+  function medal(emoji, rank, p, score) {
+    if (!p) return '';
+    const tagPills = p.p.tags.slice(0, 4).map(t =>
+      `<span class="pfinder-tag">${t}</span>`).join('');
+    return `
+      <div class="pfinder-pick pfinder-pick--${rank}">
+        <div class="pfinder-pick-hdr">
+          <span class="pfinder-medal">${emoji}</span>
+          <div class="pfinder-pick-name">${p.p.name}</div>
+          <div class="pfinder-pick-brand">${p.p.brand}</div>
+        </div>
+        <div class="pfinder-pick-price">${p.p.price}</div>
+        <div class="pfinder-pick-why">${p.p.why}</div>
+        <div class="pfinder-tags">${tagPills}</div>
+      </div>`;
+  }
+
+  function finish() {
+    document.getElementById('pfinder-prog-fill').style.width = '100%';
+    document.getElementById('pfinder-prog-lbl').textContent = 'Done!';
+    document.getElementById('pfinder-chat-answer').innerHTML = '';
+
+    const { first, second, third, tip } = buildResult(answers);
+
+    const el = document.getElementById('pfinder-result');
+    el.classList.remove('hidden');
+    el.innerHTML = `
+      <div class="pfinder-result-card">
+        <div class="pfinder-result-title">🛍️ Your Perfume Matches</div>
+        ${medal('🥇','gold',   first,  1)}
+        ${medal('🥈','silver', second, 2)}
+        ${medal('🥉','bronze', third,  3)}
+        <div class="pfinder-tip">${tip}</div>
+      </div>
+      <button class="style-restart-btn" id="pfinder-restart-btn">🔄 Start Over</button>`;
+    el.querySelector('#pfinder-restart-btn').addEventListener('click', showLauncher);
+    document.getElementById('pfinder-chat-wrap').classList.add('hidden');
+  }
+
+  function init(weatherTemp) {
+    _weatherTemp = weatherTemp;
+    document.getElementById('pfinder-start-btn').addEventListener('click', start);
+    document.getElementById('pfinder-cancel-btn').addEventListener('click', showLauncher);
+  }
+
+  return { init };
+})();
+
+
 let _styleWeatherTemp = null;
 let _styleInitDone    = false;
 
@@ -4887,6 +5357,7 @@ async function initStylePage() {
 
   OutfitBuilder.init(_styleWeatherTemp);
   FragranceAdvisor.init(_styleWeatherTemp);
+  PerfumeFinder.init(_styleWeatherTemp);
 }
 
 
