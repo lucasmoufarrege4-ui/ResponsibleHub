@@ -5442,7 +5442,8 @@ const SCENT_DB = [
     top:['Bergamot','Pepper'],
     heart:['Sichuan pepper','Lavender','Pink pepper','Vetiver','Patchouli'],
     base:['Ambroxan','Cedar','Labdanum'],
-    avoidTags:[], personality:['Confident & bold','Energetic & fun'] },
+    avoidTags:[], personality:['Confident & bold','Energetic & fun'],
+    aliases:['sauvage edt','dior sauvage edt','sauvage dior','sauvage'] },
 
   { id:'ysl-y-edp', name:'YSL Y EDP', brand:'Yves Saint Laurent', price:'R$550–800', priceKey:'premium',
     family:'Woody', mood:'Modern', climate:['Warm','Mixed','Cool'],
@@ -5504,10 +5505,11 @@ const SCENT_DB = [
   { id:'swi-int', name:'Stronger With You Intensely EDP', brand:'Armani', price:'R$500–750', priceKey:'premium',
     family:'Sweet & Gourmand', mood:'Seductive', climate:['Mixed','Cool'],
     occasions:['Date night','Going out'], tods:['Evening','Night'],
-    top:['Chestnut','Cardamom','Sage'],
+    top:['Pink pepper','Cardamom','Sage'],
     heart:['Lavender','Violet','Hedione'],
-    base:['Vanilla','Cashmere wood','Musk'],
-    avoidTags:['Very sweet'], personality:['Romantic & sensitive','Confident & bold'] },
+    base:['Vanilla','Caramel','Musk'],
+    avoidTags:['Very sweet'], personality:['Romantic & sensitive','Confident & bold'],
+    aliases:['stronger with you intensely','stronger intensely','armani intensely','swi'] },
 
   { id:'1m', name:'1 Million EDT', brand:'Paco Rabanne', price:'R$350–550', priceKey:'mid',
     family:'Sweet & Gourmand', mood:'Flashy', climate:['Mixed','Cool'],
@@ -5531,7 +5533,8 @@ const SCENT_DB = [
     top:['Fresh mint','Green apple','Lemon'],
     heart:['Tonka bean','Ambroxan','Geranium'],
     base:['Vanilla','Vetiver','Oakmoss','Cedarwood'],
-    avoidTags:['Very sweet'], personality:['Confident & bold','Romantic & sensitive'] },
+    avoidTags:['Very sweet'], personality:['Confident & bold','Romantic & sensitive'],
+    aliases:['eros edt','versace eros edt','eros versace edt'] },
 
   { id:'born-roma', name:'Born in Roma Uomo EDP', brand:'Valentino', price:'R$600–900', priceKey:'premium',
     family:'Sweet & Gourmand', mood:'Artistic', climate:['Mixed','Cool'],
@@ -5749,7 +5752,85 @@ const SCENT_DB = [
     top:['Bergamot','Mandarin'],
     heart:['Anise','Geranium','Rose'],
     base:['Tonka bean','Vanilla','Sandalwood'],
-    avoidTags:['Very sweet'], personality:['Calm & mysterious','Romantic & sensitive'] },
+    avoidTags:['Very sweet'], personality:['Calm & mysterious','Romantic & sensitive'],
+    aliases:['pi givenchy'] },
+
+  /* ── Parfums de Marly ───────────────────────────────────────────── */
+  { id:'pdm-layton', name:'Layton EDP', brand:'Parfums de Marly', price:'R$1200–1800', priceKey:'luxury',
+    family:'Woody Aromatic', mood:'Sophisticated', climate:['Warm','Mixed','Cool'],
+    occasions:['Work','Going out','Special event','Date night'], tods:['All day','Evening'],
+    top:['Bergamot','Apple','Lavender'],
+    heart:['Geranium','Violet','Jasmine'],
+    base:['Sandalwood','Vanilla','Musk'],
+    avoidTags:['Florals'], personality:['Sophisticated & elegant','Confident & bold'],
+    why:'A crowd-pleasing masterpiece — sweet-woody with impeccable projection and versatility.',
+    aliases:['layton','parfums de marly layton','de marly layton'] },
+
+  { id:'pdm-herod', name:'Herod EDP', brand:'Parfums de Marly', price:'R$1200–1800', priceKey:'luxury',
+    family:'Spicy & Oriental', mood:'Bold', climate:['Cool','Mixed'],
+    occasions:['Date night','Going out','Special event'], tods:['Evening','Night'],
+    top:['Cinnamon','Pepper'],
+    heart:['Tobacco','Iris'],
+    base:['Vanilla','Cedar','Musk'],
+    avoidTags:['Smoky'], personality:['Confident & bold','Calm & mysterious'],
+    why:'Dark, smoky tobacco and warm spice — a brooding, magnetic evening statement.',
+    aliases:['herod','parfums de marly herod','de marly herod'] },
+
+  { id:'pdm-pegasus', name:'Pegasus EDP', brand:'Parfums de Marly', price:'R$1200–1800', priceKey:'luxury',
+    family:'Sweet & Gourmand', mood:'Romantic', climate:['Warm','Mixed','Cool'],
+    occasions:['Date night','Going out','Daily'], tods:['All day','Evening'],
+    top:['Bergamot','Lavender'],
+    heart:['Almond','Heliotrope'],
+    base:['Sandalwood','Vanilla','Musk'],
+    avoidTags:['Very sweet'], personality:['Romantic & sensitive','Sophisticated & elegant'],
+    why:'Dreamy almond-vanilla with lavender freshness — soft, elegant and deeply likeable.',
+    aliases:['pegasus','parfums de marly pegasus','de marly pegasus'] },
+
+  /* ── Emporio Armani Stronger With You ───────────────────────────── */
+  { id:'swi-orig', name:'Stronger With You EDT', brand:'Emporio Armani', price:'R$400–600', priceKey:'mid',
+    family:'Woody Spicy', mood:'Confident', climate:['Warm','Mixed'],
+    occasions:['Daily','Work','Going out'], tods:['All day','Evening'],
+    top:['Pink pepper','Ginger'],
+    heart:['Sage','Chestnut'],
+    base:['Vetiver','Musk'],
+    avoidTags:[], personality:['Confident & bold','Energetic & fun'],
+    why:'Fresh-spicy and energetic — the everyday versatile counterpart to the Intensely.',
+    aliases:['stronger with you edt','stronger with you original','armani stronger edt'] },
+
+  /* note: Stronger With You Intensely already in DB as id:'swi-int' — add aliases */
+
+  /* ── Dior Sauvage EDP ───────────────────────────────────────────── */
+  { id:'sauvage-edp', name:'Sauvage EDP', brand:'Dior', price:'R$650–950', priceKey:'premium',
+    family:'Woody Aromatic', mood:'Bold', climate:['Warm','Mixed','Cool'],
+    occasions:['Daily','Work','Going out','Date night'], tods:['All day','Evening'],
+    top:['Bergamot','Pepper'],
+    heart:['Lavender','Sichuan pepper'],
+    base:['Ambroxan','Cedar','Labdanum'],
+    avoidTags:[], personality:['Confident & bold','Sophisticated & elegant'],
+    why:'Deeper and more resinous than the EDT — the same DNA with richer projection.',
+    aliases:['sauvage edp','dior sauvage edp','sauvage eau de parfum'] },
+
+  /* ── Acqua di Gio Profumo (separate entry from Profumo EDP above) ─ */
+  { id:'adg-profumo-2', name:'Acqua di Gio Profumo EDP', brand:'Giorgio Armani', price:'R$600–900', priceKey:'premium',
+    family:'Aquatic', mood:'Calm', climate:['Hot & humid','Warm','Mixed'],
+    occasions:['Going out','Work','Special event'], tods:['All day','Evening'],
+    top:['Bergamot','Sea notes'],
+    heart:['Geranium','Sage','Rosemary'],
+    base:['Patchouli','Incense','Musk'],
+    avoidTags:[], personality:['Calm & mysterious','Sophisticated & elegant'],
+    why:'A meditative aquatic with incense depth — calm, assured, memorable.',
+    aliases:['acqua di gio profumo','gio profumo','adg profumo','profumo armani'] },
+
+  /* ── Versace Eros (canonical entry — merges with existing 'eros') ─ */
+  { id:'eros-v2', name:'Eros EDP', brand:'Versace', price:'R$380–580', priceKey:'mid',
+    family:'Fresh & Citrus', mood:'Bold', climate:['Warm','Mixed'],
+    occasions:['Going out','Date night'], tods:['Evening','Night'],
+    top:['Mint','Apple','Lemon'],
+    heart:['Tonka bean','Ambroxan','Geranium'],
+    base:['Vanilla','Vetiver','Oakmoss'],
+    avoidTags:['Very sweet'], personality:['Confident & bold','Energetic & fun'],
+    why:'Mint-fresh opening crashing into warm vanilla — explosive, bold and unforgettable.',
+    aliases:['eros edp','versace eros edp','eros versace'] },
 ];
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -5779,18 +5860,49 @@ const ScentFinder = (() => {
 
   function lookupRef(input){
     const n = norm(input);
-    // 1. Check against DB name + brand
+
+    // 1. Alias exact match (highest priority — handles partials like "layton", "sauvage")
+    for(const p of SCENT_DB){
+      if((p.aliases||[]).some(a=>{ const na=norm(a); return na===n||n.includes(na)||na.includes(n); })) return p;
+    }
+
+    // 2. Full name / brand substring
     for(const p of SCENT_DB){
       const hay = norm(p.name+' '+p.brand);
       if(hay.includes(n)||n.includes(norm(p.name))) return p;
     }
-    // 2. Token overlap (≥2 tokens or 1 long token)
+
+    // 3. Single meaningful keyword that uniquely identifies a fragrance
+    //    (e.g. "layton", "herod", "pegasus", "sauvage", "intensely")
+    const KEYWORDS = {
+      'layton':['pdm-layton'], 'herod':['pdm-herod'], 'pegasus':['pdm-pegasus'],
+      'sauvage':['sauvage-edt','sauvage-edp'], 'profumo':['adg-prof','adg-profumo-2'],
+      'intensely':['swi-int'], 'stronger':['swi-int','swi-orig'],
+      'invictus':['invictus'], 'fahrenheit':['fahrenheit'],
+      'encre':['encre-noire'], 'terra':['terre-hermes'], 'terre':['terre-hermes'],
+      'eros':['eros'], 'layton':['pdm-layton'], 'replica':['replica-beach'],
+    };
+    for(const [kw,ids] of Object.entries(KEYWORDS)){
+      if(n.includes(kw)){
+        // If multiple candidates for a keyword, pick the one whose name best matches
+        const candidates = SCENT_DB.filter(p=>ids.includes(p.id));
+        if(candidates.length===1) return candidates[0];
+        // Tie-break: more tokens of n found in name
+        const scored = candidates.map(p=>({
+          p, hits: n.split(' ').filter(t=>t.length>2&&norm(p.name+' '+p.brand).includes(t)).length
+        })).sort((a,b)=>b.hits-a.hits);
+        return scored[0].p;
+      }
+    }
+
+    // 4. Token overlap fallback (≥2 tokens or 1 long token ≥6 chars)
     const toks = n.split(' ').filter(t=>t.length>3);
     for(const p of SCENT_DB){
-      const hay = norm(p.name+' '+p.brand+' '+[...p.top,...p.heart,...p.base].join(' '));
+      const hay = norm(p.name+' '+p.brand+' '+(p.aliases||[]).join(' '));
       const hits = toks.filter(t=>hay.includes(t));
-      if(hits.length>=2||(hits.length===1&&hits[0].length>5)) return p;
+      if(hits.length>=2||(hits.length===1&&hits[0].length>=6)) return p;
     }
+
     return null;
   }
 
