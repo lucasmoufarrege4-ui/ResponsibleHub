@@ -3445,3 +3445,62 @@ body.light-mode .sched-action-btn {
   margin-top: .65rem; font-size: .8rem; opacity: .82; line-height: 1.45;
   border-top: 1px solid rgba(255,255,255,.18); padding-top: .55rem;
 }
+
+/* ── Scent Finder result card ──────────────────────────────────────────── */
+.sfinder-card {
+  background: linear-gradient(145deg, #0f2027 0%, #203a43 55%, #2c5364 100%);
+  border-radius: 16px; padding: 1.1rem 1rem 1rem; color: #fff;
+  margin-bottom: .8rem;
+}
+.sfinder-title {
+  font-size: 1.05rem; font-weight: 800; margin-bottom: .75rem;
+}
+.sfinder-ref-profile {
+  background: rgba(255,255,255,.09); border-radius: 10px;
+  padding: .6rem .75rem; margin-bottom: .85rem;
+}
+.sfinder-ref-label {
+  font-size: .72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .05em; opacity: .7; margin-bottom: .2rem;
+}
+
+.sfinder-match {
+  background: rgba(255,255,255,.08); border-radius: 12px;
+  padding: .7rem .8rem; margin-bottom: .55rem;
+  border-left: 3px solid rgba(255,255,255,.3);
+}
+.sfinder-match-hdr {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: .5rem; flex-wrap: wrap; margin-bottom: .15rem;
+}
+.sfinder-match-name { font-size: .92rem; font-weight: 800; }
+.sfinder-pct {
+  font-size: .72rem; font-weight: 700;
+  background: rgba(255,255,255,.18); border-radius: 20px;
+  padding: .15rem .5rem; white-space: nowrap; flex-shrink: 0;
+}
+.sfinder-match-brand { font-size: .75rem; opacity: .65; margin-bottom: .35rem; }
+.sfinder-notes-row   { display: flex; flex-wrap: wrap; gap: .3rem; margin-bottom: .35rem; }
+.sfinder-note-shared {
+  font-size: .72rem; font-weight: 700;
+  background: rgba(255,215,0,.25); border: 1px solid rgba(255,215,0,.4);
+  border-radius: 20px; padding: .15rem .5rem; color: #ffe87c;
+}
+.sfinder-note {
+  font-size: .72rem; font-weight: 600;
+  background: rgba(255,255,255,.1); border-radius: 20px; padding: .15rem .5rem;
+}
+.sfinder-why { font-size: .78rem; opacity: .82; line-height: 1.4; }
+
+/* ── Signature Scent extra styles ─────────────────────────────────────── */
+.sig-profile-box {
+  background: rgba(255,255,255,.1); border-radius: 10px;
+  padding: .65rem .75rem; margin-bottom: .85rem;
+}
+.sig-profile-label {
+  font-size: .72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .05em; opacity: .7; margin-bottom: .3rem;
+}
+.sig-profile-text {
+  font-size: .84rem; line-height: 1.5; opacity: .92;
+}

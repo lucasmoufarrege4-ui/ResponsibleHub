@@ -5341,6 +5341,856 @@ const PerfumeFinder = (() => {
 })();
 
 
+/* ══════════════════════════════════════════════════════════════════════
+   SHARED SCENT DATABASE  (53 fragrances — top / heart / base notes)
+   Used by both ScentFinder and SignatureScent modules.
+══════════════════════════════════════════════════════════════════════ */
+const SCENT_DB = [
+  /* ── Fresh & Citrus ─────────────────────────────────────────────── */
+  { id:'adg-edt', name:'Acqua di Gio EDT', brand:'Giorgio Armani', price:'R$350–500', priceKey:'mid',
+    family:'Fresh & Citrus', mood:'Relaxed', climate:['Hot & humid','Warm'],
+    occasions:['Daily','Sport','Work'], tods:['Morning','All day'],
+    top:['Bergamot','Lemon','Lime','Green tangerine'],
+    heart:['Jasmine','Rosemary','Persimmon','Rock rose'],
+    base:['White cedar','Oakmoss','Musk'],
+    avoidTags:[], personality:['Energetic & fun','Calm & mysterious'] },
+
+  { id:'adg-prof', name:'Acqua di Gio Profumo EDP', brand:'Giorgio Armani', price:'R$600–900', priceKey:'premium',
+    family:'Aquatic', mood:'Sophisticated', climate:['Hot & humid','Warm','Mixed'],
+    occasions:['Going out','Work','Date night'], tods:['All day','Evening'],
+    top:['Bergamot','Marine accord'],
+    heart:['Sage','Geranium','Rosemary'],
+    base:['Incense','Patchouli','Musk'],
+    avoidTags:[], personality:['Sophisticated & elegant','Confident & bold'] },
+
+  { id:'adp-colonia', name:'Acqua di Parma Colonia', brand:'Acqua di Parma', price:'R$800–1200', priceKey:'premium',
+    family:'Fresh & Citrus', mood:'Classic', climate:['Hot & humid','Warm','Mixed'],
+    occasions:['Daily','Work','Going out'], tods:['Morning','All day'],
+    top:['Calabrian lemon','Sweet orange','Bergamot'],
+    heart:['Lavender','Rosemary','Verbena'],
+    base:['Vetiver','Sandalwood','Musk'],
+    avoidTags:[], personality:['Sophisticated & elegant','Calm & mysterious'] },
+
+  { id:'212-nyc', name:'212 Men NYC EDT', brand:'Carolina Herrera', price:'R$250–400', priceKey:'mid',
+    family:'Fresh & Citrus', mood:'Urban', climate:['Hot & humid','Warm','Mixed'],
+    occasions:['Daily','Work','Going out'], tods:['Morning','All day'],
+    top:['Bergamot','Cardamom','Green leaves'],
+    heart:['Dry woods','Violet','Cactus'],
+    base:['Sandalwood','Musk','White musk'],
+    avoidTags:[], personality:['Energetic & fun','Calm & mysterious'] },
+
+  { id:'cool-water', name:'Cool Water EDT', brand:'Davidoff', price:'R$120–200', priceKey:'budget',
+    family:'Aquatic', mood:'Sporty', climate:['Hot & humid','Warm'],
+    occasions:['Daily','Sport'], tods:['Morning','All day'],
+    top:['Sea water','Mint','Lavender','Green nuances'],
+    heart:['Jasmine','Geranium','Rosemary','Sandalwood'],
+    base:['Cedarwood','Musk','Tobacco'],
+    avoidTags:[], personality:['Energetic & fun','Confident & bold'] },
+
+  { id:'versace-efr', name:'Versace Man Eau Fraîche', brand:'Versace', price:'R$220–380', priceKey:'mid',
+    family:'Fresh & Citrus', mood:'Light', climate:['Hot & humid','Warm'],
+    occasions:['Daily','Sport'], tods:['Morning','All day'],
+    top:['Lemon','Bergamot','Carambola'],
+    heart:['Rosewood','Cedar','Tarragon'],
+    base:['White musk','Blond wood','Musk'],
+    avoidTags:[], personality:['Energetic & fun','Calm & mysterious'] },
+
+  { id:'polo-blue', name:'Polo Blue EDT', brand:'Ralph Lauren', price:'R$280–420', priceKey:'mid',
+    family:'Aquatic', mood:'Sporty', climate:['Hot & humid','Warm'],
+    occasions:['Daily','Sport','Going out'], tods:['Morning','All day'],
+    top:['Watermelon','Melon','Cucumber'],
+    heart:['Suede','Sage','Basil'],
+    base:['Musk','Vetiver','Suede'],
+    avoidTags:[], personality:['Energetic & fun','Confident & bold'] },
+
+  { id:'nautica', name:'Nautica Voyage EDT', brand:'Nautica', price:'R$120–200', priceKey:'budget',
+    family:'Aquatic', mood:'Fresh', climate:['Hot & humid','Warm'],
+    occasions:['Daily','Sport'], tods:['Morning','All day'],
+    top:['Green leaves','Lemon','Apple'],
+    heart:['Lotus','Mimosa','Marine accord'],
+    base:['Cedarwood','Musk','Oakmoss'],
+    avoidTags:[], personality:['Energetic & fun','Calm & mysterious'] },
+
+  { id:'bvlgari-aqva', name:'Bvlgari Aqva Marine EDT', brand:'Bvlgari', price:'R$300–500', priceKey:'mid',
+    family:'Aquatic', mood:'Clean', climate:['Hot & humid','Warm'],
+    occasions:['Daily','Sport'], tods:['Morning','All day'],
+    top:['Posidonia','Seaweed','Petrichor'],
+    heart:['Musk','Amber','Mineral accord'],
+    base:['Sandalwood','White musk','Amber'],
+    avoidTags:[], personality:['Calm & mysterious','Energetic & fun'] },
+
+  { id:'issey', name:"L'Eau d'Issey EDT", brand:'Issey Miyake', price:'R$250–400', priceKey:'mid',
+    family:'Aquatic', mood:'Minimalist', climate:['Hot & humid','Warm','Mixed'],
+    occasions:['Daily','Work'], tods:['Morning','All day'],
+    top:['Yuzu','Bergamot','Cyclamen'],
+    heart:['Coriander','Lily of the valley','Nutmeg'],
+    base:['Sandalwood','Musk','Amber'],
+    avoidTags:[], personality:['Calm & mysterious','Sophisticated & elegant'] },
+
+  /* ── Woody & Earthy ─────────────────────────────────────────────── */
+  { id:'bdc-edp', name:'Bleu de Chanel EDP', brand:'Chanel', price:'R$700–1000', priceKey:'premium',
+    family:'Woody', mood:'Sophisticated', climate:['Warm','Mixed','Cool'],
+    occasions:['Work','Going out','Date night'], tods:['All day','Evening'],
+    top:['Grapefruit','Bergamot','Lemon'],
+    heart:['Labdanum','Ginger','Nutmeg','Jasmine'],
+    base:['Incense','Vetiver','Cedar','Sandalwood'],
+    avoidTags:[], personality:['Sophisticated & elegant','Confident & bold'] },
+
+  { id:'sauvage-edt', name:'Dior Sauvage EDT', brand:'Dior', price:'R$600–900', priceKey:'premium',
+    family:'Woody', mood:'Bold', climate:['Warm','Mixed','Cool'],
+    occasions:['Daily','Work','Going out','Date night'], tods:['All day','Evening'],
+    top:['Bergamot','Pepper'],
+    heart:['Sichuan pepper','Lavender','Pink pepper','Vetiver','Patchouli'],
+    base:['Ambroxan','Cedar','Labdanum'],
+    avoidTags:[], personality:['Confident & bold','Energetic & fun'] },
+
+  { id:'ysl-y-edp', name:'YSL Y EDP', brand:'Yves Saint Laurent', price:'R$550–800', priceKey:'premium',
+    family:'Woody', mood:'Modern', climate:['Warm','Mixed','Cool'],
+    occasions:['Work','Going out','Date night'], tods:['All day','Evening'],
+    top:['Apple','Bergamot','Ginger'],
+    heart:['Violet','Geranium','Juniper'],
+    base:['Ambergris','Cedar','Cashmere wood'],
+    avoidTags:[], personality:['Sophisticated & elegant','Confident & bold'] },
+
+  { id:'terre-hermes', name:"Terre d'Hermès EDT", brand:'Hermès', price:'R$700–1000', priceKey:'premium',
+    family:'Woody', mood:'Earthy', climate:['Mixed','Cool'],
+    occasions:['Work','Going out'], tods:['All day','Evening'],
+    top:['Orange','Grapefruit'],
+    heart:['Pepper','Flint','Geranium','Pelargonium'],
+    base:['Vetiver','Cedar','Benzoin'],
+    avoidTags:[], personality:['Sophisticated & elegant','Calm & mysterious'] },
+
+  { id:'encre-noire', name:'Encre Noire EDT', brand:'Lalique', price:'R$250–400', priceKey:'mid',
+    family:'Woody', mood:'Dark', climate:['Mixed','Cool'],
+    occasions:['Going out','Date night'], tods:['Evening','Night'],
+    top:['Cypress','Aldehydes'],
+    heart:['Vetiver','Cashmere wood'],
+    base:['Musk','Haitian vetiver'],
+    avoidTags:[], personality:['Calm & mysterious','Confident & bold'] },
+
+  { id:'bvl-ph', name:'Bvlgari Pour Homme EDT', brand:'Bvlgari', price:'R$320–500', priceKey:'mid',
+    family:'Woody', mood:'Clean', climate:['Warm','Mixed'],
+    occasions:['Daily','Work'], tods:['Morning','All day'],
+    top:['Bergamot','Lemon','Green tea'],
+    heart:['Iris','Geranium','Black pepper'],
+    base:['Sandalwood','Oakmoss','Musk'],
+    avoidTags:[], personality:['Sophisticated & elegant','Calm & mysterious'] },
+
+  { id:'narciso-edp', name:'Narciso Rodriguez For Him EDP', brand:'Narciso Rodriguez', price:'R$500–750', priceKey:'premium',
+    family:'Woody', mood:'Seductive', climate:['Mixed','Cool'],
+    occasions:['Date night','Going out'], tods:['Evening','Night'],
+    top:['Cardamom','Bergamot'],
+    heart:['Musc','Rose','Amber'],
+    base:['Vetiver','Cedar','Sandalwood'],
+    avoidTags:['Heavy musk'], personality:['Romantic & sensitive','Calm & mysterious'] },
+
+  { id:'prada-homme', name:"Prada L'Homme EDT", brand:'Prada', price:'R$550–800', priceKey:'premium',
+    family:'Woody', mood:'Refined', climate:['Warm','Mixed','Cool'],
+    occasions:['Work','Going out'], tods:['All day','Evening'],
+    top:['Bergamot','Geranium'],
+    heart:['Iris','Neroli'],
+    base:['Amber wood','Sandalwood','Vetiver'],
+    avoidTags:[], personality:['Sophisticated & elegant','Calm & mysterious'] },
+
+  { id:'ck-one', name:'CK One EDT', brand:'Calvin Klein', price:'R$150–250', priceKey:'budget',
+    family:'Fresh & Citrus', mood:'Casual', climate:['Hot & humid','Warm'],
+    occasions:['Daily','Sport'], tods:['Morning','All day'],
+    top:['Bergamot','Lemon','Pineapple','Papaya'],
+    heart:['Jasmine','Rose','Violet','Orris'],
+    base:['Sandalwood','Musk','Amber'],
+    avoidTags:[], personality:['Energetic & fun','Calm & mysterious'] },
+
+  /* ── Sweet & Gourmand ───────────────────────────────────────────── */
+  { id:'swi-int', name:'Stronger With You Intensely EDP', brand:'Armani', price:'R$500–750', priceKey:'premium',
+    family:'Sweet & Gourmand', mood:'Seductive', climate:['Mixed','Cool'],
+    occasions:['Date night','Going out'], tods:['Evening','Night'],
+    top:['Chestnut','Cardamom','Sage'],
+    heart:['Lavender','Violet','Hedione'],
+    base:['Vanilla','Cashmere wood','Musk'],
+    avoidTags:['Very sweet'], personality:['Romantic & sensitive','Confident & bold'] },
+
+  { id:'1m', name:'1 Million EDT', brand:'Paco Rabanne', price:'R$350–550', priceKey:'mid',
+    family:'Sweet & Gourmand', mood:'Flashy', climate:['Mixed','Cool'],
+    occasions:['Going out','Date night'], tods:['Evening','Night'],
+    top:['Blood mandarin','Grapefruit','Mint'],
+    heart:['Rose','Cinnamon','Spices'],
+    base:['Leather','Amber','Patchouli','Blond wood'],
+    avoidTags:['Very sweet'], personality:['Confident & bold','Energetic & fun'] },
+
+  { id:'invictus', name:'Invictus EDT', brand:'Paco Rabanne', price:'R$350–550', priceKey:'mid',
+    family:'Fresh & Citrus', mood:'Victorious', climate:['Hot & humid','Warm'],
+    occasions:['Daily','Sport','Going out'], tods:['Morning','All day'],
+    top:['Grapefruit','Sea notes','Green mandarin'],
+    heart:['Bay laurel','Jasmine'],
+    base:['Guaiac wood','Oakmoss','Ambergris'],
+    avoidTags:[], personality:['Confident & bold','Energetic & fun'] },
+
+  { id:'eros', name:'Eros EDT', brand:'Versace', price:'R$300–500', priceKey:'mid',
+    family:'Sweet & Gourmand', mood:'Bold', climate:['Warm','Mixed'],
+    occasions:['Going out','Date night'], tods:['Evening','Night'],
+    top:['Fresh mint','Green apple','Lemon'],
+    heart:['Tonka bean','Ambroxan','Geranium'],
+    base:['Vanilla','Vetiver','Oakmoss','Cedarwood'],
+    avoidTags:['Very sweet'], personality:['Confident & bold','Romantic & sensitive'] },
+
+  { id:'born-roma', name:'Born in Roma Uomo EDP', brand:'Valentino', price:'R$600–900', priceKey:'premium',
+    family:'Sweet & Gourmand', mood:'Artistic', climate:['Mixed','Cool'],
+    occasions:['Going out','Date night'], tods:['Evening','Night'],
+    top:['Bourbon','Cardamom','Bergamot'],
+    heart:['Black musk','Smoky notes','Tonka bean'],
+    base:['Vanilla','Vetiver','Cedarwood'],
+    avoidTags:['Smoky'], personality:['Romantic & sensitive','Sophisticated & elegant'] },
+
+  { id:'ln-homme', name:"La Nuit de L'Homme EDT", brand:'YSL', price:'R$500–750', priceKey:'premium',
+    family:'Sweet & Gourmand', mood:'Seductive', climate:['Cool','Mixed'],
+    occasions:['Date night','Going out'], tods:['Evening','Night'],
+    top:['Cardamom','Bergamot'],
+    heart:['Cedar','Coumarin'],
+    base:['Labdanum','Vetiver','Caraway'],
+    avoidTags:['Very sweet'], personality:['Romantic & sensitive','Calm & mysterious'] },
+
+  { id:'ultra-male', name:'Ultra Male JPG EDT', brand:'Jean Paul Gaultier', price:'R$400–600', priceKey:'mid',
+    family:'Sweet & Gourmand', mood:'Intense', climate:['Cool'],
+    occasions:['Date night','Going out'], tods:['Evening','Night'],
+    top:['Pear','Bergamot','Lavender'],
+    heart:['Cinnamon','Rose','Mint'],
+    base:['Vanilla','Caramel','Sandalwood'],
+    avoidTags:['Very sweet'], personality:['Confident & bold','Energetic & fun'] },
+
+  { id:'lm-elixir', name:'La Male Elixir EDP', brand:'Jean Paul Gaultier', price:'R$500–700', priceKey:'premium',
+    family:'Sweet & Gourmand', mood:'Dark Sweet', climate:['Cool'],
+    occasions:['Date night','Going out'], tods:['Evening','Night'],
+    top:['Lavender','Mint','Honey'],
+    heart:['Cinnamon','Iris','Clove'],
+    base:['Vanilla','Sandalwood','Amber'],
+    avoidTags:['Very sweet','Heavy musk'], personality:['Confident & bold','Romantic & sensitive'] },
+
+  /* ── Spicy & Oriental ───────────────────────────────────────────── */
+  { id:'spicebomb', name:'Spicebomb EDT', brand:'Viktor & Rolf', price:'R$450–700', priceKey:'premium',
+    family:'Spicy & Oriental', mood:'Explosive', climate:['Cool','Mixed'],
+    occasions:['Going out','Date night'], tods:['Evening','Night'],
+    top:['Grapefruit','Bergamot'],
+    heart:['Cinnamon','Saffron','Elemi','Chili pepper'],
+    base:['Vetiver','Leather','Tobacco','Papyrus'],
+    avoidTags:['Smoky'], personality:['Confident & bold','Energetic & fun'] },
+
+  { id:'spicebomb-ext', name:'Spicebomb Extreme EDP', brand:'Viktor & Rolf', price:'R$500–800', priceKey:'premium',
+    family:'Spicy & Oriental', mood:'Volcanic', climate:['Cool'],
+    occasions:['Date night','Going out'], tods:['Evening','Night'],
+    top:['Lava','Lavender'],
+    heart:['Tobacco','Vanilla','Saffron'],
+    base:['Black pepper','Benzoin','Papyrus'],
+    avoidTags:['Smoky'], personality:['Confident & bold','Romantic & sensitive'] },
+
+  { id:'lm-parfum', name:'La Male Le Parfum EDP', brand:'Jean Paul Gaultier', price:'R$500–750', priceKey:'premium',
+    family:'Spicy & Oriental', mood:'Intense', climate:['Cool'],
+    occasions:['Date night','Going out'], tods:['Evening','Night'],
+    top:['Lavender','Bergamot'],
+    heart:['Iris','Vanilla','Clove'],
+    base:['Leather','Amber','Musk'],
+    avoidTags:['Heavy musk'], personality:['Confident & bold','Romantic & sensitive'] },
+
+  { id:'fahrenheit', name:'Fahrenheit EDT', brand:'Dior', price:'R$600–900', priceKey:'premium',
+    family:'Spicy & Oriental', mood:'Daring', climate:['Cool','Mixed'],
+    occasions:['Going out','Date night'], tods:['Evening','Night'],
+    top:['Hawthorn','Mandarin','Lavender'],
+    heart:['Leather','Nutmeg','Violet'],
+    base:['Vetiver','Sandalwood','Amber'],
+    avoidTags:['Smoky'], personality:['Confident & bold','Calm & mysterious'] },
+
+  { id:'tf-noir', name:'Tom Ford Noir EDP', brand:'Tom Ford', price:'R$900–1400', priceKey:'luxury',
+    family:'Spicy & Oriental', mood:'Opulent', climate:['Cool','Mixed'],
+    occasions:['Date night','Going out'], tods:['Evening','Night'],
+    top:['Bergamot','Lemon','Pepper'],
+    heart:['Rose','Geranium','Amber'],
+    base:['Myrrh','Oud','Patchouli'],
+    avoidTags:['Oud'], personality:['Sophisticated & elegant','Calm & mysterious'] },
+
+  { id:'habit-rouge', name:'Habit Rouge EDT', brand:'Guerlain', price:'R$500–800', priceKey:'premium',
+    family:'Spicy & Oriental', mood:'Classic', climate:['Cool','Mixed'],
+    occasions:['Going out','Date night'], tods:['Evening','Night'],
+    top:['Bergamot','Lemon','Neroli'],
+    heart:['Rose','Cinnamon','Clove'],
+    base:['Sandalwood','Amber','Vanilla'],
+    avoidTags:[], personality:['Sophisticated & elegant','Romantic & sensitive'] },
+
+  { id:'azzaro-ph', name:'Azzaro Pour Homme EDT', brand:'Azzaro', price:'R$220–380', priceKey:'mid',
+    family:'Spicy & Oriental', mood:'Classic', climate:['Mixed','Cool'],
+    occasions:['Daily','Work'], tods:['All day','Evening'],
+    top:['Lavender','Basil','Bergamot'],
+    heart:['Anise','Carnation','Sandalwood'],
+    base:['Oak moss','Cedar','Vetiver'],
+    avoidTags:[], personality:['Sophisticated & elegant','Calm & mysterious'] },
+
+  /* ── Floral & Fresh ─────────────────────────────────────────────── */
+  { id:'allure-homme', name:'Allure Homme EDT', brand:'Chanel', price:'R$750–1100', priceKey:'premium',
+    family:'Floral', mood:'Timeless', climate:['Warm','Mixed'],
+    occasions:['Daily','Work','Going out'], tods:['All day','Evening'],
+    top:['Bergamot','Mandarin','Lemon'],
+    heart:['Vanilla','Tonka bean','Iris'],
+    base:['Sandalwood','Vetiver','Cedar'],
+    avoidTags:['Florals'], personality:['Sophisticated & elegant','Calm & mysterious'] },
+
+  { id:'givenchy-go', name:'Gentlemen Only EDT', brand:'Givenchy', price:'R$400–600', priceKey:'mid',
+    family:'Floral', mood:'Modern Classic', climate:['Warm','Mixed'],
+    occasions:['Work','Going out'], tods:['All day','Evening'],
+    top:['Bergamot','Lemon','Grapefruit'],
+    heart:['Iris','Geranium','Galbanum'],
+    base:['Patchouli','Vetiver','Cedar'],
+    avoidTags:['Florals'], personality:['Sophisticated & elegant','Confident & bold'] },
+
+  { id:'hermes-mand', name:'Eau de Mandarine Ambrée', brand:'Hermès', price:'R$450–700', priceKey:'mid',
+    family:'Fresh & Citrus', mood:'Warm Citrus', climate:['Hot & humid','Warm','Mixed'],
+    occasions:['Daily','Work'], tods:['Morning','All day'],
+    top:['Mandarin','Bergamot','Lemon zest'],
+    heart:['Orange blossom','Amber','Musk'],
+    base:['Sandalwood','Patchouli','Amber'],
+    avoidTags:[], personality:['Sophisticated & elegant','Calm & mysterious'] },
+
+  { id:'bdc-edt', name:'Bleu de Chanel EDT', brand:'Chanel', price:'R$650–950', priceKey:'premium',
+    family:'Fresh & Citrus', mood:'Refined', climate:['Warm','Mixed'],
+    occasions:['Daily','Work','Going out'], tods:['Morning','All day'],
+    top:['Grapefruit','Lemon','Mint'],
+    heart:['Ginger','Nutmeg','Jasmine'],
+    base:['Incense','Vetiver','Cedar','White musk'],
+    avoidTags:[], personality:['Sophisticated & elegant','Confident & bold'] },
+
+  { id:'light-blue-dg', name:'Light Blue EDT', brand:'D&G', price:'R$300–480', priceKey:'mid',
+    family:'Aquatic', mood:'Mediterranean', climate:['Hot & humid','Warm'],
+    occasions:['Daily','Going out','Date night'], tods:['All day','Evening'],
+    top:['Sicilian lemon','Apple','Cedar'],
+    heart:['Bamboo','Jasmine','White rose'],
+    base:['Cedarwood','Musk','Amber'],
+    avoidTags:['Florals'], personality:['Energetic & fun','Romantic & sensitive'] },
+
+  { id:'joop', name:'Joop! Homme EDT', brand:'Joop!', price:'R$150–250', priceKey:'budget',
+    family:'Sweet & Gourmand', mood:'Bold Night', climate:['Warm','Mixed'],
+    occasions:['Going out','Date night'], tods:['Evening','Night'],
+    top:['Bergamot','Orange','Lemon'],
+    heart:['Jasmine','Lily of the valley','Ylang-ylang'],
+    base:['Tobacco','Tonka bean','Sandalwood','Vanilla'],
+    avoidTags:['Florals','Very sweet'], personality:['Confident & bold','Energetic & fun'] },
+
+  { id:'tf-oud', name:'Tom Ford Oud Wood EDP', brand:'Tom Ford', price:'R$900–1400', priceKey:'luxury',
+    family:'Spicy & Oriental', mood:'Luxurious', climate:['Cool','Mixed'],
+    occasions:['Date night','Going out'], tods:['Evening','Night'],
+    top:['Oud wood','Rosewood','Cardamom'],
+    heart:['Sandalwood','Vetiver','Tonka bean'],
+    base:['Amber','Musk','Vanilla'],
+    avoidTags:['Oud'], personality:['Sophisticated & elegant','Calm & mysterious'] },
+
+  { id:'memo-leather', name:'African Leather EDP', brand:'Memo Paris', price:'R$1400+', priceKey:'luxury',
+    family:'Spicy & Oriental', mood:'Statement', climate:['Cool','Mixed'],
+    occasions:['Date night','Going out'], tods:['Evening','Night'],
+    top:['Saffron','Cardamom','Pink pepper'],
+    heart:['Leather','Oud','Rose'],
+    base:['Vanilla','Patchouli','Musk'],
+    avoidTags:['Oud','Smoky'], personality:['Sophisticated & elegant','Confident & bold'] },
+
+  { id:'replica-beach', name:'Replica Beach Walk EDT', brand:'Maison Margiela', price:'R$750–1100', priceKey:'luxury',
+    family:'Fresh & Citrus', mood:'Joyful', climate:['Hot & humid','Warm'],
+    occasions:['Daily','Going out'], tods:['Morning','All day'],
+    top:['Lemon','Bergamot','Aldehydes'],
+    heart:['Ylang-ylang','Coconut','Cyclamen'],
+    base:['Musk','Sandalwood','Ambergris'],
+    avoidTags:['Florals'], personality:['Energetic & fun','Romantic & sensitive'] },
+
+  { id:'penhaligon-bb', name:'Blenheim Bouquet EDT', brand:"Penhaligon's", price:'R$900–1400', priceKey:'luxury',
+    family:'Fresh & Citrus', mood:'British', climate:['Warm','Mixed'],
+    occasions:['Work','Going out'], tods:['Morning','All day'],
+    top:['Lemon','Lime','Pine'],
+    heart:['Pepper','Nutmeg','Cloves'],
+    base:['Musk','Sandalwood','Oakmoss'],
+    avoidTags:[], personality:['Sophisticated & elegant','Calm & mysterious'] },
+
+  { id:'wanted-azzaro', name:'Wanted EDT', brand:'Azzaro', price:'R$220–380', priceKey:'mid',
+    family:'Woody', mood:'Magnetic', climate:['Warm','Mixed'],
+    occasions:['Going out','Date night'], tods:['Evening','Night'],
+    top:['Cardamom','Grapefruit','Red apple'],
+    heart:['Juniper','Hawthorn','Geranium'],
+    base:['Cedar','Vetiver','Leather'],
+    avoidTags:[], personality:['Confident & bold','Energetic & fun'] },
+
+  { id:'abso-gio', name:'Acqua di Giò Absolu EDP', brand:'Giorgio Armani', price:'R$600–900', priceKey:'premium',
+    family:'Aquatic', mood:'Deep Aquatic', climate:['Warm','Mixed'],
+    occasions:['Going out','Date night'], tods:['All day','Evening'],
+    top:['Bergamot','Green tangerine'],
+    heart:['Rosemary','Geranium'],
+    base:['Incense','Patchouli','Vetiver'],
+    avoidTags:[], personality:['Calm & mysterious','Sophisticated & elegant'] },
+
+  { id:'ch-herrera', name:'CH Men EDT', brand:'Carolina Herrera', price:'R$300–480', priceKey:'mid',
+    family:'Woody', mood:'Sophisticated', climate:['Mixed','Cool'],
+    occasions:['Work','Going out'], tods:['All day','Evening'],
+    top:['Bergamot','Grapefruit','Green leaves'],
+    heart:['Tobacco','Tonka bean','Leather'],
+    base:['Mahogany','Sandalwood','Amber'],
+    avoidTags:['Smoky'], personality:['Sophisticated & elegant','Confident & bold'] },
+
+  { id:'silver-mtn', name:'Silver Mountain Water EDT', brand:'Creed', price:'R$900–1400', priceKey:'luxury',
+    family:'Aquatic', mood:'Alpine', climate:['Warm','Mixed'],
+    occasions:['Work','Going out'], tods:['All day','Evening'],
+    top:['Bergamot','Mandarin','Green tea'],
+    heart:['Black currant','Peach'],
+    base:['Musk','Sandalwood','Vetiver'],
+    avoidTags:[], personality:['Sophisticated & elegant','Calm & mysterious'] },
+
+  { id:'ysl-la-nuit-b', name:"L'Homme Ultime EDP", brand:'YSL', price:'R$500–750', priceKey:'premium',
+    family:'Woody', mood:'Intense Woody', climate:['Mixed','Cool'],
+    occasions:['Going out','Date night'], tods:['Evening','Night'],
+    top:['Ginger','Bergamot','Neroli'],
+    heart:['Iris','Juniper'],
+    base:['Cedar','Vetiveryl acetate','Musk'],
+    avoidTags:[], personality:['Sophisticated & elegant','Confident & bold'] },
+
+  { id:'givenchy-pi', name:'Pi EDT', brand:'Givenchy', price:'R$350–550', priceKey:'mid',
+    family:'Sweet & Gourmand', mood:'Mathematical', climate:['Cool','Mixed'],
+    occasions:['Going out','Date night'], tods:['Evening','Night'],
+    top:['Bergamot','Mandarin'],
+    heart:['Anise','Geranium','Rose'],
+    base:['Tonka bean','Vanilla','Sandalwood'],
+    avoidTags:['Very sweet'], personality:['Calm & mysterious','Romantic & sensitive'] },
+];
+
+/* ══════════════════════════════════════════════════════════════════════
+   SCENT PROFILE FINDER  —  "Find Similar Scents"
+══════════════════════════════════════════════════════════════════════ */
+const ScentFinder = (() => {
+
+  const PRICE_MAP = {
+    'Under R$200':['budget'],
+    'R$200-500':  ['budget','mid'],
+    'R$500-1000': ['mid','premium'],
+    'R$1000+':    ['premium','luxury'],
+  };
+
+  const QUESTIONS = [
+    { id:'reference', emoji:'🌸', text:'Type a fragrance you love the smell of',
+      type:'text', placeholder:'e.g. Stronger With You Intensely, Dior Sauvage…' },
+    { id:'budget',    emoji:'💰', text:"What's your budget?",
+      type:'chips',  options:['Under R$200','R$200-500','R$500-1000','R$1000+'] },
+    { id:'occasion',  emoji:'🎯', text:'For what occasion?',
+      type:'chips',  options:['Daily','Going out','Date night','Work','Sport'] },
+  ];
+
+  let queue=[], answers={}, currentIdx=0;
+
+  function norm(s){ return s.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); }
+
+  function lookupRef(input){
+    const n = norm(input);
+    // 1. Check against DB name + brand
+    for(const p of SCENT_DB){
+      const hay = norm(p.name+' '+p.brand);
+      if(hay.includes(n)||n.includes(norm(p.name))) return p;
+    }
+    // 2. Token overlap (≥2 tokens or 1 long token)
+    const toks = n.split(' ').filter(t=>t.length>3);
+    for(const p of SCENT_DB){
+      const hay = norm(p.name+' '+p.brand+' '+[...p.top,...p.heart,...p.base].join(' '));
+      const hits = toks.filter(t=>hay.includes(t));
+      if(hits.length>=2||(hits.length===1&&hits[0].length>5)) return p;
+    }
+    return null;
+  }
+
+  function allNotes(p){ return [...p.top,...p.heart,...p.base]; }
+
+  function similarity(ref, candidate){
+    if(ref.id===candidate.id) return -1; // skip exact same
+    const rNotes = allNotes(ref).map(n=>norm(n));
+    const cNotes = allNotes(candidate).map(n=>norm(n));
+    let shared=0;
+    rNotes.forEach(rn=>{ if(cNotes.some(cn=>cn.includes(rn)||rn.includes(cn))) shared++; });
+    const familyBonus = ref.family===candidate.family ? 2 : 0;
+    return shared + familyBonus;
+  }
+
+  function scoreCandidate(p, ref, budgetKeys, occasion){
+    const sim = similarity(ref, p);
+    if(sim<0) return { score:-999, shared:[], pct:0 };
+    if(!budgetKeys.includes(p.priceKey)) return { score:-998, shared:[], pct:0 };
+    const rNotes = allNotes(ref).map(n=>norm(n));
+    const cNotes = allNotes(p).map(n=>norm(n));
+    const shared = rNotes.filter(rn=>cNotes.some(cn=>cn.includes(rn)||rn.includes(cn)));
+    const pct = Math.round((shared.length/Math.max(rNotes.length,1))*100);
+    let score = sim;
+    if(p.occasions.some(o=>o.toLowerCase()===occasion.toLowerCase())) score+=2;
+    return { score, shared, pct };
+  }
+
+  function showLauncher(){
+    document.getElementById('sfinder-launcher').classList.remove('hidden');
+    document.getElementById('sfinder-chat-wrap').classList.add('hidden');
+    const r=document.getElementById('sfinder-result');
+    r.classList.add('hidden'); r.innerHTML='';
+  }
+
+  function start(){
+    queue=QUESTIONS.map(q=>({...q})); answers={}; currentIdx=0;
+    document.getElementById('sfinder-launcher').classList.add('hidden');
+    const r=document.getElementById('sfinder-result');
+    r.classList.add('hidden'); r.innerHTML='';
+    document.getElementById('sfinder-chat-wrap').classList.remove('hidden');
+    document.getElementById('sfinder-chat-log').innerHTML='';
+    document.getElementById('sfinder-chat-answer').innerHTML='';
+    askNext();
+  }
+
+  function updateProgress(){
+    const pct=(currentIdx/queue.length)*100;
+    document.getElementById('sfinder-prog-fill').style.width=pct+'%';
+    document.getElementById('sfinder-prog-lbl').textContent=
+      `Question ${Math.min(currentIdx+1,queue.length)} of ${queue.length}`;
+  }
+
+  function addQ(q){
+    const log=document.getElementById('sfinder-chat-log');
+    const d=document.createElement('div'); d.className='chat-bubble chat-q-bubble';
+    d.innerHTML=`<span class="chat-bbl-emoji">${q.emoji}</span><span class="chat-bbl-txt">${q.text}</span>`;
+    log.appendChild(d); log.scrollTop=log.scrollHeight;
+  }
+  function addA(text){
+    const log=document.getElementById('sfinder-chat-log');
+    const d=document.createElement('div'); d.className='chat-bubble chat-a-bubble';
+    d.textContent=text; log.appendChild(d); log.scrollTop=log.scrollHeight;
+  }
+
+  function renderAnswerArea(q){
+    const area=document.getElementById('sfinder-chat-answer'); area.innerHTML='';
+    if(q.type==='chips'){
+      renderChips(area,q.options,false,1,val=>submitAnswer(q,val,val));
+    } else {
+      area.innerHTML=`
+        <div class="chat-field-row chat-field-row--textarea">
+          <textarea class="chat-field chat-field--textarea" id="sfinder-tf" rows="2"
+            placeholder="${escHtml(q.placeholder||'Type here…')}"></textarea>
+          <button type="button" class="chat-next-btn" id="sfinder-nb">Next →</button>
+        </div>`;
+      const f=area.querySelector('#sfinder-tf'), b=area.querySelector('#sfinder-nb');
+      b.addEventListener('click',()=>{ const v=f.value.trim(); if(v) submitAnswer(q,v,v); });
+      setTimeout(()=>f.focus(),80);
+    }
+  }
+
+  function submitAnswer(q,val,label){
+    answers[q.id]=val; addA(label);
+    document.getElementById('sfinder-chat-answer').innerHTML='';
+    currentIdx++; setTimeout(askNext,320);
+  }
+
+  function askNext(){
+    if(currentIdx>=queue.length){ finish(); return; }
+    const q=queue[currentIdx]; updateProgress(); addQ(q); renderAnswerArea(q);
+  }
+
+  function finish(){
+    document.getElementById('sfinder-prog-fill').style.width='100%';
+    document.getElementById('sfinder-prog-lbl').textContent='Done!';
+    document.getElementById('sfinder-chat-answer').innerHTML='';
+
+    const ref       = lookupRef(answers.reference||'');
+    const budgetKeys= PRICE_MAP[answers.budget]||['budget','mid','premium'];
+    const occasion  = answers.occasion||'Daily';
+
+    const el=document.getElementById('sfinder-result'); el.classList.remove('hidden');
+
+    if(!ref){
+      el.innerHTML=`
+        <div class="sfinder-card">
+          <div class="sfinder-title">🔍 Similar Scents</div>
+          <p style="opacity:.8;font-size:.88rem;">Sorry, I couldn't find "<strong>${escHtml(answers.reference)}</strong>" in my database.
+          Try a more common name, e.g. "Dior Sauvage" or "Bleu de Chanel".</p>
+        </div>
+        <button class="style-restart-btn" id="sfinder-rb">🔄 Try Again</button>`;
+      el.querySelector('#sfinder-rb').addEventListener('click',showLauncher);
+      document.getElementById('sfinder-chat-wrap').classList.add('hidden');
+      return;
+    }
+
+    const scored = SCENT_DB
+      .map(p=>({ p, ...scoreCandidate(p,ref,budgetKeys,occasion) }))
+      .filter(x=>x.score>-998)
+      .sort((a,b)=>b.score-a.score)
+      .slice(0,4);
+
+    const refTags = [...ref.top,...ref.heart,...ref.base].slice(0,5);
+
+    const cards = scored.map(({p,shared,pct})=>{
+      const sharedDisplay = shared.slice(0,3).map(n=>`<span class="sfinder-note-shared">${escHtml(n)}</span>`).join('');
+      const allT = allNotes(p).filter(n=>!shared.includes(norm(n))).slice(0,3).map(n=>`<span class="sfinder-note">${escHtml(n)}</span>`).join('');
+      return `
+        <div class="sfinder-match">
+          <div class="sfinder-match-hdr">
+            <div class="sfinder-match-name">${escHtml(p.name)}</div>
+            <div class="sfinder-pct">${pct}% similar</div>
+          </div>
+          <div class="sfinder-match-brand">${escHtml(p.brand)} · ${escHtml(p.price)}</div>
+          <div class="sfinder-notes-row">${sharedDisplay}${allT}</div>
+          <div class="sfinder-why">${escHtml(p.why||'Similar scent profile and character.')}</div>
+        </div>`;
+    }).join('');
+
+    const refTagPills = refTags.map(t=>`<span class="pfinder-tag">${escHtml(t)}</span>`).join('');
+
+    el.innerHTML=`
+      <div class="sfinder-card">
+        <div class="sfinder-title">🔍 Similar to ${escHtml(ref.name)}</div>
+        <div class="sfinder-ref-profile">
+          <div class="sfinder-ref-label">Scent profile of your reference:</div>
+          <div class="pfinder-tags" style="margin-top:.3rem">${refTagPills}</div>
+        </div>
+        ${cards}
+      </div>
+      <button class="style-restart-btn" id="sfinder-rb">🔄 Start Over</button>`;
+    el.querySelector('#sfinder-rb').addEventListener('click',showLauncher);
+    document.getElementById('sfinder-chat-wrap').classList.add('hidden');
+  }
+
+  function init(){
+    document.getElementById('sfinder-start-btn').addEventListener('click',start);
+    document.getElementById('sfinder-cancel-btn').addEventListener('click',showLauncher);
+  }
+  return { init };
+})();
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   SIGNATURE SCENT  —  "Your Signature Scent"
+══════════════════════════════════════════════════════════════════════ */
+const SignatureScent = (() => {
+
+  let _weatherTemp = null;
+
+  const PRICE_MAP = {
+    'Under R$200':['budget'],
+    'R$200-500':  ['budget','mid'],
+    'R$500-1000': ['mid','premium'],
+    'R$1000+':    ['premium','luxury'],
+  };
+
+  const AVOID_MAP = {
+    'Oud':        (p)=>p.base.some(n=>/oud/i.test(n))||p.heart.some(n=>/oud/i.test(n)),
+    'Florals':    (p)=>['Jasmine','Rose','Ylang-ylang','Peony','Lily','Violet','Geranium','Lavender']
+                       .some(fl=>[...p.top,...p.heart,...p.base].some(n=>n.toLowerCase().includes(fl.toLowerCase()))),
+    'Very sweet': (p)=>p.family==='Sweet & Gourmand'||[...p.base,...p.heart].some(n=>/vanilla|caramel|tonka|honey/i.test(n)),
+    'Smoky':      (p)=>[...p.top,...p.heart,...p.base].some(n=>/smok|tobacco|incense|leather/i.test(n)),
+    'Heavy musk': (p)=>[...p.base].some(n=>/musk/i.test(n))&&p.strength==='heavy',
+    'None':       ()=>false,
+  };
+
+  const PERSONALITY_DESC = {
+    'Confident & bold':       'You wear fragrance as armour — assertive, magnetic, unforgettable.',
+    'Calm & mysterious':      'Your scent is a whisper, not a shout — intriguing, effortless, unique.',
+    'Energetic & fun':        'You radiate energy — fresh, spontaneous, and always in motion.',
+    'Romantic & sensitive':   'You\'re drawn to warmth and depth — sensual, heartfelt, poetic.',
+    'Sophisticated & elegant':'Refinement is your signature — timeless, curated, impeccable.',
+  };
+
+  const STYLE_FAMILY_BOOST = {
+    'Streetwear':    ['Fresh & Citrus','Sweet & Gourmand','Aquatic'],
+    'Smart casual':  ['Woody','Fresh & Citrus','Floral'],
+    'Sporty':        ['Fresh & Citrus','Aquatic'],
+    'Minimal':       ['Aquatic','Woody','Fresh & Citrus'],
+    'Formal':        ['Woody','Spicy & Oriental','Floral'],
+  };
+
+  const QUESTIONS = [
+    { id:'personality', emoji:'🎭', text:'How would you describe your personality?',
+      type:'chips', options:['Confident & bold','Calm & mysterious','Energetic & fun','Romantic & sensitive','Sophisticated & elegant'] },
+    { id:'style',       emoji:'👔', text:"What's your daily style?",
+      type:'chips', options:['Streetwear','Smart casual','Sporty','Minimal','Formal'] },
+    { id:'tod',         emoji:'🌅', text:'When do you mostly wear fragrance?',
+      type:'chips', options:['Morning','All day','Evening','Night out'] },
+    { id:'climate',     emoji:'🌡️', text:'Where do you live / what climate?',
+      type:'chips', options:['Hot & humid','Warm','Mixed','Cool'], autoFill:true },
+    { id:'budget',      emoji:'💰', text:'Budget?',
+      type:'chips', options:['Under R$200','R$200-500','R$500-1000','R$1000+'] },
+    { id:'avoid',       emoji:'🚫', text:'Any notes you dislike? (pick all that apply)',
+      type:'multichips', options:['Oud','Florals','Very sweet','Smoky','Heavy musk','None'] },
+  ];
+
+  let queue=[], answers={}, currentIdx=0;
+
+  function tempToClimate(t){
+    if(t===null) return null;
+    if(t>=28) return 'Hot & humid';
+    if(t>=22) return 'Warm';
+    if(t>=15) return 'Mixed';
+    return 'Cool';
+  }
+
+  function showLauncher(){
+    document.getElementById('sig-launcher').classList.remove('hidden');
+    document.getElementById('sig-chat-wrap').classList.add('hidden');
+    const r=document.getElementById('sig-result');
+    r.classList.add('hidden'); r.innerHTML='';
+  }
+
+  function start(){
+    queue=QUESTIONS.map(q=>({...q})); answers={}; currentIdx=0;
+    document.getElementById('sig-launcher').classList.add('hidden');
+    const r=document.getElementById('sig-result');
+    r.classList.add('hidden'); r.innerHTML='';
+    document.getElementById('sig-chat-wrap').classList.remove('hidden');
+    document.getElementById('sig-chat-log').innerHTML='';
+    document.getElementById('sig-chat-answer').innerHTML='';
+    askNext();
+  }
+
+  function updateProgress(){
+    const pct=(currentIdx/queue.length)*100;
+    document.getElementById('sig-prog-fill').style.width=pct+'%';
+    document.getElementById('sig-prog-lbl').textContent=
+      `Question ${Math.min(currentIdx+1,queue.length)} of ${queue.length}`;
+  }
+
+  function addQ(q){
+    const log=document.getElementById('sig-chat-log');
+    const d=document.createElement('div'); d.className='chat-bubble chat-q-bubble';
+    d.innerHTML=`<span class="chat-bbl-emoji">${q.emoji}</span><span class="chat-bbl-txt">${q.text}</span>`;
+    log.appendChild(d); log.scrollTop=log.scrollHeight;
+  }
+  function addA(text){
+    const log=document.getElementById('sig-chat-log');
+    const d=document.createElement('div'); d.className='chat-bubble chat-a-bubble';
+    d.textContent=text; log.appendChild(d); log.scrollTop=log.scrollHeight;
+  }
+
+  function renderAnswerArea(q){
+    const area=document.getElementById('sig-chat-answer'); area.innerHTML='';
+    if(q.type==='chips'){
+      renderChips(area,q.options,false,1,val=>submitAnswer(q,val,val));
+    } else if(q.type==='multichips'){
+      renderMultiChips(area,q.options,0,vals=>submitAnswer(q,vals,vals.join(', ')||'None'));
+    }
+  }
+
+  function submitAnswer(q,val,label){
+    answers[q.id]=val; addA(label);
+    document.getElementById('sig-chat-answer').innerHTML='';
+    currentIdx++; setTimeout(askNext,320);
+  }
+
+  function askNext(){
+    if(currentIdx>=queue.length){ finish(); return; }
+    const q=queue[currentIdx]; updateProgress(); addQ(q);
+    if(q.id==='climate'&&_weatherTemp!==null){
+      const auto=tempToClimate(_weatherTemp);
+      if(auto){ setTimeout(()=>submitAnswer(q,auto,`${auto} (São Paulo, auto-detected)`),380); return; }
+    }
+    renderAnswerArea(q);
+  }
+
+  function scoreFragrance(p, a){
+    const budgetKeys = PRICE_MAP[a.budget]||['budget','mid','premium'];
+    if(!budgetKeys.includes(p.priceKey)) return -999;
+
+    // Apply dislikes filter
+    const dislikes = Array.isArray(a.avoid) ? a.avoid : (a.avoid?[a.avoid]:[]);
+    for(const d of dislikes){
+      if(d!=='None' && AVOID_MAP[d] && AVOID_MAP[d](p)) return -998;
+    }
+
+    let score=0;
+    // Personality match
+    if(p.personality&&p.personality.includes(a.personality)) score+=5;
+    // Style → family boost
+    const favFamilies = STYLE_FAMILY_BOOST[a.style]||[];
+    if(favFamilies.includes(p.family)) score+=3;
+    // Climate
+    if(p.climate&&p.climate.includes(a.climate)) score+=3;
+    // Time of day
+    const todMap={'Morning':'Morning','All day':'All day','Evening':'Evening','Night out':'Night'};
+    const tod=todMap[a.tod]||a.tod;
+    if(p.tods&&p.tods.includes(tod)) score+=2;
+    // Mood bonus
+    const moodMap={
+      'Confident & bold':      ['Bold','Flashy','Explosive','Volcanic','Daring','Victorious'],
+      'Calm & mysterious':     ['Earthy','Dark','Minimalist','Refined','Alpine'],
+      'Energetic & fun':       ['Sporty','Urban','Casual','Light','Joyful','Fresh','Victorious'],
+      'Romantic & sensitive':  ['Seductive','Intense','Artistic','Classic'],
+      'Sophisticated & elegant':['Sophisticated','Timeless','Opulent','Luxurious','British'],
+    };
+    if(p.mood&&(moodMap[a.personality]||[]).includes(p.mood)) score+=2;
+    return score;
+  }
+
+  function buildScentsPersonality(a){
+    const base=PERSONALITY_DESC[a.personality]||'';
+    const styleNote={
+      'Streetwear':   'Street-cool edge with urban attitude.',
+      'Smart casual': 'Effortlessly put-together, day to night.',
+      'Sporty':       'Active and energised, always in motion.',
+      'Minimal':      'Clean lines, no excess, pure intention.',
+      'Formal':       'Commanding presence, dressed for every room.',
+    }[a.style]||'';
+    const todNote={
+      'Morning':    'You like a fresh start that carries through the day.',
+      'All day':    'You need a scent that works from morning meeting to evening plans.',
+      'Evening':    'You come alive after sunset — your fragrance follows.',
+      'Night out':  'The night is yours. Your scent makes sure everyone knows it.',
+    }[a.tod]||'';
+    return `${base} ${styleNote} ${todNote}`.trim();
+  }
+
+  function finish(){
+    document.getElementById('sig-prog-fill').style.width='100%';
+    document.getElementById('sig-prog-lbl').textContent='Done!';
+    document.getElementById('sig-chat-answer').innerHTML='';
+
+    const ranked = SCENT_DB
+      .map(p=>({ p, score:scoreFragrance(p,answers) }))
+      .filter(x=>x.score>-998)
+      .sort((a,b)=>b.score-a.score);
+
+    const pool = ranked.length ? ranked : SCENT_DB.map(p=>({p,score:0}));
+    const [top,...rest] = pool;
+    const alts = rest.slice(0,2);
+
+    const scentPersonality = buildScentsPersonality(answers);
+
+    function pickCard(item, medal){
+      const tags=[...item.p.top,...item.p.heart,...item.p.base].slice(0,5)
+        .map(t=>`<span class="pfinder-tag">${escHtml(t)}</span>`).join('');
+      return `
+        <div class="pfinder-pick pfinder-pick--${medal==='🥇'?'gold':medal==='🥈'?'silver':'bronze'}">
+          <div class="pfinder-pick-hdr">
+            <span class="pfinder-medal">${medal}</span>
+            <div class="pfinder-pick-name">${escHtml(item.p.name)}</div>
+            <div class="pfinder-pick-brand">${escHtml(item.p.brand)}</div>
+          </div>
+          <div class="pfinder-pick-price">${escHtml(item.p.price)}</div>
+          <div class="pfinder-pick-why">${escHtml(item.p.why||'Matches your profile.')}</div>
+          <div class="pfinder-tags">${tags}</div>
+        </div>`;
+    }
+
+    const el=document.getElementById('sig-result'); el.classList.remove('hidden');
+    el.innerHTML=`
+      <div class="pfinder-result-card">
+        <div class="pfinder-result-title">✨ Your Signature Scent</div>
+        <div class="sig-profile-box">
+          <div class="sig-profile-label">Your Scent Personality</div>
+          <div class="sig-profile-text">${escHtml(scentPersonality)}</div>
+        </div>
+        ${pickCard(top,'🥇')}
+        ${alts.map((a,i)=>pickCard(a,i===0?'🥈':'🥉')).join('')}
+      </div>
+      <button class="style-restart-btn" id="sig-rb">🔄 Start Over</button>`;
+    el.querySelector('#sig-rb').addEventListener('click',showLauncher);
+    document.getElementById('sig-chat-wrap').classList.add('hidden');
+  }
+
+  function init(wt){
+    _weatherTemp=wt;
+    document.getElementById('sig-start-btn').addEventListener('click',start);
+    document.getElementById('sig-cancel-btn').addEventListener('click',showLauncher);
+  }
+  return { init };
+})();
+
+
 let _styleWeatherTemp = null;
 let _styleInitDone    = false;
 
@@ -5358,6 +6208,8 @@ async function initStylePage() {
   OutfitBuilder.init(_styleWeatherTemp);
   FragranceAdvisor.init(_styleWeatherTemp);
   PerfumeFinder.init(_styleWeatherTemp);
+  ScentFinder.init();
+  SignatureScent.init(_styleWeatherTemp);
 }
 
 
